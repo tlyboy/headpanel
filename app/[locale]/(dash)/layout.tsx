@@ -5,6 +5,7 @@ import { SidebarNav } from '@/components/sidebar-nav'
 import { MobileNav } from '@/components/mobile-nav'
 import { ModeToggle } from '@/components/mode-toggle'
 import { LanguageToggle } from '@/components/language-toggle'
+import { GitHubLink } from '@/components/github-link'
 import { Button } from '@/components/ui/button'
 import { logout } from './actions'
 
@@ -45,6 +46,7 @@ export default async function DashLayout({
           <span className="text-muted-foreground hidden text-sm sm:inline">
             {session.sub} · {scopeLabel}
           </span>
+          <GitHubLink />
           <LanguageToggle />
           <ModeToggle />
           <form action={logout}>
