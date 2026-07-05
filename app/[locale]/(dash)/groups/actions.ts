@@ -1,0 +1,68 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
+import { eq } from 'drizzle-orm'
+import { requireSuper } from '@/lib/auth'
+import { audit, db } from '@/lib/db'
+import { admins } from '@/lib/db/schema'
+import { createGroup, createGroupAdmin, deleteGroup } from '@/lib/groups'
+import { HeadscaleError } from '@/lib/headscale'
+
+export interface GroupResult {
+  ok: boolean
+  error?: string
+}
+
+function errMsg(e: unknown, unknownMessage: string): string {
+  if (e instanceof HeadscaleError) return e.message
+  return e instanceof Error ? e.message : unknownMessage
+}
+
+// Create a group: create a user in headscale → save to the database → recalculate the ACL → issue the group admin account.
+// Check that the account name is available first, to avoid getting stuck issuing the account after the group is created (reduces incomplete setups).
+export async function createGroupAction(input: {
+  name: string
+  slug: string
+  adminUsername: string
+  adminPassword: string
+}): Promise<GroupResult> {
+  const session = await requireSuper()
+  const t = await getTranslations('actionErrors')
+  const username = input.adminUsername.trim()
+  if (!username) return { ok: false, error: t('groupAdminRequired') }
+  if (input.adminPassword.length < 6)
+    return { ok: false, error: t('groupAdminPasswordLength') }
+  const dup = db.select().from(admins).where(eq(admins.username, username)).get()
+  if (dup) return { ok: false, error: t('accountExists', { username }) }
+
+  try {
+    const group = await createGroup({ name: input.name, slug: input.slug })
+    createGroupAdmin({
+      groupId: group.id,
+      username,
+      password: input.adminPassword,
+    })
+    await audit('group.create', group.slug, `admin=${username}`, {
+      groupId: group.id,
+      actor: session.sub,
+    })
+    revalidatePath('/groups')
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: errMsg(e, t('unknown')) }
+  }
+}
+
+export async function deleteGroupAction(id: number): Promise<GroupResult> {
+  const session = await requireSuper()
+  const t = await getTranslations('actionErrors')
+  try {
+    await deleteGroup(id)
+    await audit('group.delete', String(id), undefined, { actor: session.sub })
+    revalidatePath('/groups')
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: errMsg(e, t('unknown')) }
+  }
+}
