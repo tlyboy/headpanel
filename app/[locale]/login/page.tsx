@@ -1,6 +1,7 @@
 'use client'
 
 import { useActionState } from 'react'
+import { siGithub } from 'simple-icons'
 import { useTranslations } from 'next-intl'
 import { login, type LoginState } from './actions'
 import { Button } from '@/components/ui/button'
@@ -14,6 +15,7 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { LanguageToggle } from '@/components/language-toggle'
+import { ModeToggle } from '@/components/mode-toggle'
 
 const initial: LoginState = {}
 
@@ -23,8 +25,32 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-svh items-center justify-center p-4">
-      <div className="absolute top-4 right-4">
+      <div className="absolute top-4 right-4 flex items-center gap-2">
+        <Button
+          asChild
+          variant="secondary"
+          size="icon"
+          className="size-8"
+          title="GitHub"
+          aria-label="GitHub"
+        >
+          <a
+            href="https://github.com/tlyboy/headpanel"
+            target="_blank"
+            rel="noreferrer"
+          >
+            <svg
+              aria-hidden="true"
+              className="size-4 fill-current"
+              role="img"
+              viewBox="0 0 24 24"
+            >
+              <path d={siGithub.path} />
+            </svg>
+          </a>
+        </Button>
         <LanguageToggle />
+        <ModeToggle />
       </div>
       <Card className="w-full max-w-sm">
         <CardHeader>
