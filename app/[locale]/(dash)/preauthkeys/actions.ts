@@ -5,10 +5,13 @@ import { getTranslations } from 'next-intl/server'
 import { eq } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth'
 import { getGroup, visibleGroups } from '@/lib/groups'
-import { audit, db } from '@/lib/db'
+import { auditAfter, db } from '@/lib/db'
 import { preauthKeys } from '@/lib/db/schema'
-import { createPreAuthKey, HeadscaleError } from '@/lib/headscale'
-import { headscaleCli } from '@/lib/headscale-cli'
+import {
+  createPreAuthKey,
+  deletePreAuthKey,
+  HeadscaleError,
+} from '@/lib/headscale'
 
 // review: no tag; joins without a ticket → quarantined and pending approval
 // direct: includes the group's ok_tag; admitted immediately (communication within the group is allowed)
@@ -32,8 +35,10 @@ export async function createKeyAction(input: {
   days: number
   mode: AccessMode
 }): Promise<KeyResult> {
-  const session = await requireSession()
-  const t = await getTranslations('actionErrors')
+  const [session, t] = await Promise.all([
+    requireSession(),
+    getTranslations('actionErrors'),
+  ])
   // Verify the target group is visible in the session (prevent unauthorized key creation for another group)
   const group = getGroup(input.groupId)
   if (!group || !visibleGroups(session).some((g) => g.id === group.id)) {
@@ -67,7 +72,7 @@ export async function createKeyAction(input: {
     } catch {
       // Failure to back up the plaintext does not affect key creation.
     }
-    await audit(
+    auditAfter(
       'preauthkey.create',
       k.id,
       `group=${group.slug} reusable=${input.reusable} ephemeral=${input.ephemeral} days=${days} mode=${input.mode}`,
@@ -80,12 +85,12 @@ export async function createKeyAction(input: {
   }
 }
 
-// Delete key: headscale supports `preauthkeys delete` (physical deletion; removed from the list).
-// The REST API does not support deletion by id, so use the CLI to delete by id (available when the backend and headscale run on the same host).
-// --force skips interactive confirmation (required because execFile has no TTY). After deletion, the key disappears from the list and cannot be recovered.
+// Both v0.28 and v0.29 support DELETE /api/v1/preauthkey?id=..., so Headscale does not need to run on the same host.
 export async function deleteKeyAction(id: string): Promise<KeyResult> {
-  const session = await requireSession()
-  const t = await getTranslations('actionErrors')
+  const [session, t] = await Promise.all([
+    requireSession(),
+    getTranslations('actionErrors'),
+  ])
   // Use the local group_id to validate ownership (only super can delete older keys with no local record).
   const local = db
     .select()
@@ -98,13 +103,13 @@ export async function deleteKeyAction(id: string): Promise<KeyResult> {
     }
   }
   try {
-    await headscaleCli(['preauthkeys', 'delete', '-i', String(id), '--force'])
+    await deletePreAuthKey(id)
     try {
       db.delete(preauthKeys).where(eq(preauthKeys.headscaleId, id)).run()
     } catch {
       /* Failure to delete the local plaintext record can be ignored. */
     }
-    await audit('preauthkey.delete', id, undefined, {
+    auditAfter('preauthkey.delete', id, undefined, {
       groupId: local?.groupId ?? null,
       actor: session.sub,
     })

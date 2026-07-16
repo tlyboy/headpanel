@@ -33,20 +33,18 @@ import {
 import { useCurrentOrigin } from '@/lib/use-current-origin'
 import { deleteKeyAction } from './actions'
 
-const HS = process.env.NEXT_PUBLIC_HEADSCALE_URL
-
-if (!HS) {
-  throw new Error('NEXT_PUBLIC_HEADSCALE_URL is required')
-}
-
 export function KeyRowActions({
   id,
   plaintext,
   modeLabel,
+  headscaleUrl,
+  panelBasePath,
 }: {
   id: string
   plaintext?: string
   modeLabel: string
+  headscaleUrl: string
+  panelBasePath: string
 }) {
   const t = useTranslations('keyActions')
   const common = useTranslations('common')
@@ -54,7 +52,7 @@ export function KeyRowActions({
   const [pending, start] = useTransition()
   const [cmdOpen, setCmdOpen] = useState(false)
   const [delOpen, setDelOpen] = useState(false)
-  const panel = useCurrentOrigin()
+  const panel = `${useCurrentOrigin()}${panelBasePath}`
 
   function del() {
     start(async () => {
@@ -94,32 +92,30 @@ export function KeyRowActions({
         <DialogContent className="sm:max-w-2xl">
           <DialogHeader>
             <DialogTitle>{t('commandsTitle', { mode: modeLabel })}</DialogTitle>
-            <DialogDescription>
-              {t('commandsDescription')}
-            </DialogDescription>
+            <DialogDescription>{t('commandsDescription')}</DialogDescription>
           </DialogHeader>
           {plaintext ? (
             <div className="flex flex-col gap-3">
               <CmdBlock label="PreAuthKey" cmd={plaintext} />
               <CmdBlock
                 label={t('linuxInstall')}
-                cmd={`curl -fsSL ${panel}/api/scripts/install-tailscale.sh -o /tmp/ts-install.sh && sudo env HEADSCALE_URL="${HS}" bash /tmp/ts-install.sh ${plaintext}`}
+                cmd={`curl -fsSL ${panel}/api/scripts/install-tailscale.sh -o /tmp/ts-install.sh && sudo env HEADSCALE_URL="${headscaleUrl}" bash /tmp/ts-install.sh ${plaintext}`}
               />
               <CmdBlock
                 label={t('macInstall')}
-                cmd={`P=$(curl -fsSL https://pkgs.tailscale.com/stable/ | grep -oE 'Tailscale-[0-9.]+-macos\\.pkg' | head -1) && curl -fsSL "https://pkgs.tailscale.com/stable/$P" -o /tmp/ts.pkg && sudo installer -pkg /tmp/ts.pkg -target / && sudo ln -sf "/Applications/Tailscale.app/Contents/MacOS/Tailscale" /usr/local/bin/tailscale && sudo tailscale up --login-server=${HS} --authkey=${plaintext}`}
+                cmd={`P=$(curl -fsSL https://pkgs.tailscale.com/stable/ | grep -oE 'Tailscale-[0-9.]+-macos\\.pkg' | head -1) && curl -fsSL "https://pkgs.tailscale.com/stable/$P" -o /tmp/ts.pkg && sudo installer -pkg /tmp/ts.pkg -target / && sudo ln -sf "/Applications/Tailscale.app/Contents/MacOS/Tailscale" /usr/local/bin/tailscale && sudo tailscale up --login-server=${headscaleUrl} --authkey=${plaintext}`}
               />
               <CmdBlock
                 label={t('windowsInstall')}
-                cmd={`iwr ${panel}/api/scripts/install-tailscale.ps1 -OutFile $env:TEMP\\ts.ps1; & $env:TEMP\\ts.ps1 -AuthKey "${plaintext}" -HeadscaleUrl "${HS}"`}
+                cmd={`iwr ${panel}/api/scripts/install-tailscale.ps1 -OutFile $env:TEMP\\ts.ps1; & $env:TEMP\\ts.ps1 -AuthKey "${plaintext}" -HeadscaleUrl "${headscaleUrl}"`}
               />
               <CmdBlock
                 label={t('directUp')}
-                cmd={`sudo tailscale up --login-server=${HS} --authkey=${plaintext}`}
+                cmd={`sudo tailscale up --login-server=${headscaleUrl} --authkey=${plaintext}`}
               />
             </div>
           ) : (
-            <p className="text-muted-foreground text-sm">
+            <p className="text-sm text-muted-foreground">
               {t('missingPlaintext')}
             </p>
           )}
@@ -135,7 +131,9 @@ export function KeyRowActions({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>
+              {common('cancel')}
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
               onClick={(e) => {

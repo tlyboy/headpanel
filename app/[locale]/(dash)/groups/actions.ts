@@ -4,7 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { eq } from 'drizzle-orm'
 import { requireSuper } from '@/lib/auth'
-import { audit, db } from '@/lib/db'
+import { auditAfter, db } from '@/lib/db'
 import { admins } from '@/lib/db/schema'
 import { createGroup, createGroupAdmin, deleteGroup } from '@/lib/groups'
 import { HeadscaleError } from '@/lib/headscale'
@@ -27,13 +27,19 @@ export async function createGroupAction(input: {
   adminUsername: string
   adminPassword: string
 }): Promise<GroupResult> {
-  const session = await requireSuper()
-  const t = await getTranslations('actionErrors')
+  const [session, t] = await Promise.all([
+    requireSuper(),
+    getTranslations('actionErrors'),
+  ])
   const username = input.adminUsername.trim()
   if (!username) return { ok: false, error: t('groupAdminRequired') }
   if (input.adminPassword.length < 6)
     return { ok: false, error: t('groupAdminPasswordLength') }
-  const dup = db.select().from(admins).where(eq(admins.username, username)).get()
+  const dup = db
+    .select()
+    .from(admins)
+    .where(eq(admins.username, username))
+    .get()
   if (dup) return { ok: false, error: t('accountExists', { username }) }
 
   try {
@@ -43,7 +49,7 @@ export async function createGroupAction(input: {
       username,
       password: input.adminPassword,
     })
-    await audit('group.create', group.slug, `admin=${username}`, {
+    auditAfter('group.create', group.slug, `admin=${username}`, {
       groupId: group.id,
       actor: session.sub,
     })
@@ -55,11 +61,13 @@ export async function createGroupAction(input: {
 }
 
 export async function deleteGroupAction(id: number): Promise<GroupResult> {
-  const session = await requireSuper()
-  const t = await getTranslations('actionErrors')
+  const [session, t] = await Promise.all([
+    requireSuper(),
+    getTranslations('actionErrors'),
+  ])
   try {
     await deleteGroup(id)
-    await audit('group.delete', String(id), undefined, { actor: session.sub })
+    auditAfter('group.delete', String(id), undefined, { actor: session.sub })
     revalidatePath('/groups')
     return { ok: true }
   } catch (e) {

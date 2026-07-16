@@ -3,8 +3,11 @@
 import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { requireSuper } from '@/lib/auth'
-import { audit } from '@/lib/db'
-import { updateHeadscaleIpv4Prefix } from '@/lib/headscale-config'
+import { auditAfter } from '@/lib/db'
+import {
+  requireHeadscaleHostControl,
+  updateHeadscaleIpv4Prefix,
+} from '@/lib/headscale-config'
 import { listNodes } from '@/lib/headscale'
 
 export interface ActionResult {
@@ -20,15 +23,18 @@ function fail(e: unknown, unknownMessage: string): ActionResult {
 export async function updateIpv4PrefixAction(
   ipv4Prefix: string,
 ): Promise<ActionResult> {
-  const session = await requireSuper()
-  const t = await getTranslations('actionErrors')
+  const [session, t] = await Promise.all([
+    requireSuper(),
+    getTranslations('actionErrors'),
+  ])
+  requireHeadscaleHostControl()
   try {
     const nodes = await listNodes()
     const used = new Set(
       nodes.flatMap((n) => n.ipAddresses.filter((ip) => ip.includes('.'))),
     )
     const result = await updateHeadscaleIpv4Prefix(ipv4Prefix)
-    await audit(
+    auditAfter(
       'network.prefix.v4.update',
       ipv4Prefix.trim(),
       `backup=${result.backupPath}; used_ipv4=${[...used].join(',') || 'none'}`,

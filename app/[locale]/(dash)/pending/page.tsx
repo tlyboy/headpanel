@@ -16,8 +16,10 @@ import { PendingRowActions } from './row-actions'
 export const dynamic = 'force-dynamic'
 
 export default async function PendingPage() {
-  const session = await requireSession()
-  const t = await getTranslations('pending')
+  const [session, t] = await Promise.all([
+    requireSession(),
+    getTranslations('pending'),
+  ])
   const all = scopeNodes(session, await syncAndListNodes())
   const pending = all.filter((n) => n.status === 'pending')
 
@@ -25,7 +27,7 @@ export default async function PendingPage() {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           {t('description', { count: pending.length })}
         </p>
       </div>
@@ -47,7 +49,7 @@ export default async function PendingPage() {
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="text-muted-foreground py-8 text-center"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   {t('empty')}
                 </TableCell>
@@ -65,7 +67,7 @@ export default async function PendingPage() {
                   <TableCell className="text-xs">
                     {n.tags.join(', ') || '—'}
                   </TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
+                  <TableCell className="text-xs text-muted-foreground">
                     {fmtTime(n.createdAt)}
                   </TableCell>
                   <TableCell className="text-right">

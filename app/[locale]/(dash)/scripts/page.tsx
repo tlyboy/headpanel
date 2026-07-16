@@ -1,5 +1,6 @@
 import { Download } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
+import { getPanelBasePath } from '@/lib/panel-base-path'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -46,6 +47,7 @@ const GROUPS: {
 ]
 
 export default async function ScriptsPage() {
+  const basePath = getPanelBasePath()
   const [t, common] = await Promise.all([
     getTranslations('scripts'),
     getTranslations('common'),
@@ -55,16 +57,16 @@ export default async function ScriptsPage() {
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <p className="text-muted-foreground text-sm">
-          {t('description')}
-        </p>
+        <p className="text-sm text-muted-foreground">{t('description')}</p>
       </div>
 
       {GROUPS.map((g) => (
         <Card key={g.titleKey}>
           <CardHeader>
             <CardTitle>{t(g.titleKey)}</CardTitle>
-            <CardDescription>{t('scriptCount', { count: g.items.length })}</CardDescription>
+            <CardDescription>
+              {t('scriptCount', { count: g.items.length })}
+            </CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {g.items.map((it) => (
@@ -74,12 +76,12 @@ export default async function ScriptsPage() {
               >
                 <div className="min-w-0">
                   <div className="font-mono text-sm">{it.file}</div>
-                  <div className="text-muted-foreground text-xs">
+                  <div className="text-xs text-muted-foreground">
                     {t(it.descKey)}
                   </div>
                 </div>
                 <Button asChild size="sm" variant="outline">
-                  <a href={`/api/scripts/${it.file}`} download>
+                  <a href={`${basePath}/api/scripts/${it.file}`} download>
                     <Download className="size-4" />
                     {common('download')}
                   </a>
@@ -90,7 +92,7 @@ export default async function ScriptsPage() {
         </Card>
       ))}
 
-      <UninstallCommands />
+      <UninstallCommands basePath={basePath} />
     </div>
   )
 }

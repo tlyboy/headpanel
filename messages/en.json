@@ -67,7 +67,8 @@
     "hasPending": "Nodes waiting for approval",
     "noPending": "No pending nodes",
     "allGroups": "All groups",
-    "total": "{count} total"
+    "total": "{count} total",
+    "apiConnected": "API connected"
   },
   "audit": {
     "title": "Audit log",
