@@ -58,6 +58,8 @@ pnpm build
 
 ### Production deployment
 
+Complete guide: [Deploy Headscale and Headpanel](docs/deployment.md).
+
 The production script deploys with systemd while keeping runtime secrets out of
 Git. Install `.env.example` as `/etc/headpanel/headpanel.env` on the server,
 replace its values, and set its mode to `600`. Values must be compatible with
