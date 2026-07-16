@@ -34,6 +34,10 @@ if [[ -x /root/.local/share/fnm/fnm ]]; then
   eval "$(/root/.local/share/fnm/fnm env --shell bash --use-on-cd --version-file-strategy=recursive --corepack-enabled --resolve-engines)"
 fi
 
+if command -v corepack >/dev/null 2>&1; then
+  corepack enable pnpm
+fi
+
 node_bin="$(command -v node || true)"
 pnpm_bin="$(command -v pnpm || true)"
 if [[ -z "${node_bin}" || -z "${pnpm_bin}" ]]; then
