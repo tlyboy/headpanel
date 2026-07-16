@@ -54,6 +54,8 @@ pnpm build
 
 ### 生产部署
 
+完整教程：[部署 Headscale 与 Headpanel](docs/deployment.zh.md)。
+
 生产部署脚本使用 systemd，运行时密钥不进入 Git。将 `.env.example` 安装到服务器上的
 `/etc/headpanel/headpanel.env`，填写真实配置并设置权限为 `600`。环境文件值需要兼容
 systemd `EnvironmentFile` 格式，包含空格或特殊字符时请使用双引号。
