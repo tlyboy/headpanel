@@ -17,9 +17,9 @@ type CommandLabelKey =
   | 'windowsUninstallTailscaleCommand'
   | 'windowsUninstallZerotierCommand'
 
-export function UninstallCommands() {
+export function UninstallCommands({ basePath }: { basePath: string }) {
   const t = useTranslations('scripts')
-  const panel = useCurrentOrigin()
+  const panel = `${useCurrentOrigin()}${basePath}`
 
   const cmds: { labelKey: CommandLabelKey; cmd: string }[] = [
     {
@@ -44,9 +44,7 @@ export function UninstallCommands() {
     <Card>
       <CardHeader>
         <CardTitle>{t('remoteUninstall')}</CardTitle>
-        <CardDescription>
-          {t('remoteUninstallDescription')}
-        </CardDescription>
+        <CardDescription>{t('remoteUninstallDescription')}</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-3">
         {cmds.map((c) => (

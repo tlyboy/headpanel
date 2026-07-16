@@ -41,6 +41,7 @@ interface NavItem {
   label: NavLabel
   icon: LucideIcon
   superOnly?: boolean
+  hostControlOnly?: boolean
 }
 
 const items: NavItem[] = [
@@ -49,18 +50,33 @@ const items: NavItem[] = [
   { href: '/pending', label: 'pending', icon: ClockAlert },
   { href: '/preauthkeys', label: 'preauthKeys', icon: KeyRound },
   { href: '/groups', label: 'groups', icon: Boxes, superOnly: true },
-  { href: '/network', label: 'network', icon: Network, superOnly: true },
+  {
+    href: '/network',
+    label: 'network',
+    icon: Network,
+    superOnly: true,
+    hostControlOnly: true,
+  },
   { href: '/scripts', label: 'scripts', icon: Download },
   { href: '/audit', label: 'audit', icon: ScrollText },
 ]
 
-export function SidebarNav({ isSuper = false }: { isSuper?: boolean }) {
+export function SidebarNav({
+  isSuper = false,
+  hostControl = false,
+}: {
+  isSuper?: boolean
+  hostControl?: boolean
+}) {
   const pathname = usePathname()
   const t = useTranslations('nav')
   return (
     <nav className="flex flex-col gap-1 p-2">
       {items
-        .filter((it) => isSuper || !it.superOnly)
+        .filter(
+          (it) =>
+            (isSuper || !it.superOnly) && (hostControl || !it.hostControlOnly),
+        )
         .map(({ href, label, icon: Icon }) => {
           const active = pathname === href || pathname.startsWith(href + '/')
           return (

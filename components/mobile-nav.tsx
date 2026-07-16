@@ -12,7 +12,13 @@ import {
 } from '@/components/ui/sheet'
 import { SidebarNav } from './sidebar-nav'
 
-export function MobileNav({ isSuper = false }: { isSuper?: boolean }) {
+export function MobileNav({
+  isSuper = false,
+  hostControl = false,
+}: {
+  isSuper?: boolean
+  hostControl?: boolean
+}) {
   const [open, setOpen] = useState(false)
   const nav = useTranslations('nav')
   const common = useTranslations('common')
@@ -34,7 +40,7 @@ export function MobileNav({ isSuper = false }: { isSuper?: boolean }) {
         </SheetTitle>
         {/* 点任意导航项后冒泡到此处关闭抽屉 */}
         <div className="overflow-y-auto" onClick={() => setOpen(false)}>
-          <SidebarNav isSuper={isSuper} />
+          <SidebarNav isSuper={isSuper} hostControl={hostControl} />
         </div>
       </SheetContent>
     </Sheet>

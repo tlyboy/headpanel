@@ -3,7 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { requireSession, type Session } from '@/lib/auth'
-import { audit } from '@/lib/db'
+import { auditAfter } from '@/lib/db'
 import { groupForNode } from '@/lib/groups'
 import { setNodeNote } from '@/lib/nodes-sync'
 import {
@@ -35,8 +35,10 @@ export async function renameNodeAction(
   id: string,
   newName: string,
 ): Promise<ActionResult> {
-  const session = await requireSession()
-  const t = await getTranslations('actionErrors')
+  const [session, t] = await Promise.all([
+    requireSession(),
+    getTranslations('actionErrors'),
+  ])
   const name = newName.trim()
   if (!name) return { ok: false, error: t('nodeNameRequired') }
   // headscale 节点名规则：字母数字和连字符
@@ -46,7 +48,10 @@ export async function renameNodeAction(
   try {
     const group = await assertNode(session, id)
     await renameNode(id, name)
-    await audit('node.rename', id, name, { groupId: group.id, actor: session.sub })
+    auditAfter('node.rename', id, name, {
+      groupId: group.id,
+      actor: session.sub,
+    })
     revalidatePath('/nodes')
     return { ok: true }
   } catch (e) {
@@ -55,12 +60,17 @@ export async function renameNodeAction(
 }
 
 export async function expireNodeAction(id: string): Promise<ActionResult> {
-  const session = await requireSession()
-  const t = await getTranslations('actionErrors')
+  const [session, t] = await Promise.all([
+    requireSession(),
+    getTranslations('actionErrors'),
+  ])
   try {
     const group = await assertNode(session, id)
     await expireNode(id)
-    await audit('node.expire', id, undefined, { groupId: group.id, actor: session.sub })
+    auditAfter('node.expire', id, undefined, {
+      groupId: group.id,
+      actor: session.sub,
+    })
     revalidatePath('/nodes')
     return { ok: true }
   } catch (e) {
@@ -69,12 +79,17 @@ export async function expireNodeAction(id: string): Promise<ActionResult> {
 }
 
 export async function deleteNodeAction(id: string): Promise<ActionResult> {
-  const session = await requireSession()
-  const t = await getTranslations('actionErrors')
+  const [session, t] = await Promise.all([
+    requireSession(),
+    getTranslations('actionErrors'),
+  ])
   try {
     const group = await assertNode(session, id)
     await deleteNode(id)
-    await audit('node.delete', id, undefined, { groupId: group.id, actor: session.sub })
+    auditAfter('node.delete', id, undefined, {
+      groupId: group.id,
+      actor: session.sub,
+    })
     revalidatePath('/nodes')
     return { ok: true }
   } catch (e) {
@@ -86,13 +101,15 @@ export async function saveNoteAction(
   id: string,
   note: string,
 ): Promise<ActionResult> {
-  const session = await requireSession()
-  const t = await getTranslations('actionErrors')
+  const [session, t] = await Promise.all([
+    requireSession(),
+    getTranslations('actionErrors'),
+  ])
   if (note.length > 200) return { ok: false, error: t('noteTooLong') }
   try {
     const group = await assertNode(session, id)
     setNodeNote(id, note)
-    await audit('node.note', id, note.trim() || t('noteCleared'), {
+    auditAfter('node.note', id, note.trim() || t('noteCleared'), {
       groupId: group.id,
       actor: session.sub,
     })

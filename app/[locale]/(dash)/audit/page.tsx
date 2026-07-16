@@ -16,8 +16,10 @@ import {
 export const dynamic = 'force-dynamic'
 
 export default async function AuditPage() {
-  const session = await requireSession()
-  const t = await getTranslations('audit')
+  const [session, t] = await Promise.all([
+    requireSession(),
+    getTranslations('audit'),
+  ])
   // 组管理员只看本组审计；super 看全部
   const base = db.select().from(auditLog).$dynamic()
   const rows = (
@@ -33,9 +35,7 @@ export default async function AuditPage() {
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <p className="text-muted-foreground text-sm">
-          {t('description')}
-        </p>
+        <p className="text-sm text-muted-foreground">{t('description')}</p>
       </div>
 
       <div className="rounded-md border">
@@ -54,21 +54,26 @@ export default async function AuditPage() {
               <TableRow>
                 <TableCell
                   colSpan={5}
-                  className="text-muted-foreground py-8 text-center"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   {t('empty')}
                 </TableCell>
               </TableRow>
             ) : (
               rows.map((r) => (
-                <TableRow key={r.id}>
-                  <TableCell className="text-muted-foreground text-xs">
+                <TableRow
+                  key={r.id}
+                  className="[contain-intrinsic-size:0_49px] [content-visibility:auto]"
+                >
+                  <TableCell className="text-xs text-muted-foreground">
                     {fmtTime(r.ts.replace(' ', 'T') + 'Z')}
                   </TableCell>
                   <TableCell className="text-xs">{r.actor ?? '—'}</TableCell>
-                  <TableCell className="font-mono text-xs">{r.action}</TableCell>
+                  <TableCell className="font-mono text-xs">
+                    {r.action}
+                  </TableCell>
                   <TableCell className="text-xs">{r.target ?? '—'}</TableCell>
-                  <TableCell className="text-muted-foreground text-xs">
+                  <TableCell className="text-xs text-muted-foreground">
                     {r.detail ?? '—'}
                   </TableCell>
                 </TableRow>

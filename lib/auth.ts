@@ -1,6 +1,7 @@
 import 'server-only'
 
 import { randomBytes, scryptSync, timingSafeEqual } from 'node:crypto'
+import { cache } from 'react'
 import { cookies } from 'next/headers'
 import { getLocale } from 'next-intl/server'
 import { SignJWT, jwtVerify } from 'jose'
@@ -61,7 +62,11 @@ export function ensureSeedAdmin() {
 // 校验账号密码，成功返回该账号；失败返回 null
 export function authenticate(username: string, password: string) {
   ensureSeedAdmin()
-  const row = db.select().from(admins).where(eq(admins.username, username)).get()
+  const row = db
+    .select()
+    .from(admins)
+    .where(eq(admins.username, username))
+    .get()
   if (!row) return null
   if (!verifyPassword(password, row.passwordHash)) return null
   return row
@@ -90,19 +95,21 @@ export async function destroySession() {
   jar.delete(COOKIE)
 }
 
-export async function getSession(): Promise<Session | null> {
-  const jar = await cookies()
-  const token = jar.get(COOKIE)?.value
-  if (!token) return null
-  try {
-    const { payload } = await jwtVerify(token, secret())
-    const role: Role = payload.role === 'super' ? 'super' : 'group'
-    const gid = typeof payload.gid === 'number' ? payload.gid : null
-    return { sub: String(payload.sub ?? ''), role, gid }
-  } catch {
-    return null
-  }
-}
+export const getSession = cache(
+  async function getSession(): Promise<Session | null> {
+    const jar = await cookies()
+    const token = jar.get(COOKIE)?.value
+    if (!token) return null
+    try {
+      const { payload } = await jwtVerify(token, secret())
+      const role: Role = payload.role === 'super' ? 'super' : 'group'
+      const gid = typeof payload.gid === 'number' ? payload.gid : null
+      return { sub: String(payload.sub ?? ''), role, gid }
+    } catch {
+      return null
+    }
+  },
+)
 
 // 在受保护的 page / server action 内调用：未登录直接 redirect
 export async function requireSession(): Promise<Session> {

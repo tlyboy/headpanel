@@ -2,6 +2,7 @@ import 'server-only'
 
 import { chmodSync, existsSync, mkdirSync } from 'node:fs'
 import { dirname } from 'node:path'
+import { after } from 'next/server'
 import Database from 'better-sqlite3'
 import { drizzle } from 'drizzle-orm/better-sqlite3'
 import { auditLog } from './schema'
@@ -77,9 +78,9 @@ CREATE TABLE IF NOT EXISTS preauth_keys (
 
   // 给已存在的旧库幂等补列（sqlite 无 ADD COLUMN IF NOT EXISTS，先查 table_info）
   function addColumnIfMissing(table: string, column: string, ddl: string) {
-    const cols = sqlite
-      .prepare(`PRAGMA table_info(${table})`)
-      .all() as { name: string }[]
+    const cols = sqlite.prepare(`PRAGMA table_info(${table})`).all() as {
+      name: string
+    }[]
     if (!cols.some((c) => c.name === column)) {
       sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`)
     }
@@ -89,7 +90,9 @@ CREATE TABLE IF NOT EXISTS preauth_keys (
   addColumnIfMissing('audit_log', 'group_id', 'group_id INTEGER')
   addColumnIfMissing('audit_log', 'actor', 'actor TEXT')
   addColumnIfMissing('groups', 'hs_user_name', 'hs_user_name TEXT')
-  sqlite.exec('UPDATE groups SET hs_user_name = slug WHERE hs_user_name IS NULL')
+  sqlite.exec(
+    'UPDATE groups SET hs_user_name = slug WHERE hs_user_name IS NULL',
+  )
 
   return instance
 }
@@ -130,6 +133,15 @@ export async function audit(
   } catch {
     // 审计失败不应阻断主流程
   }
+}
+
+export function auditAfter(
+  action: string,
+  target?: string,
+  detail?: string,
+  opts?: { groupId?: number | null; actor?: string | null },
+) {
+  after(() => audit(action, target, detail, opts))
 }
 
 export { schema }

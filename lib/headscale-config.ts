@@ -20,6 +20,33 @@ export interface UpdateNetworkResult {
   backupPath: string
 }
 
+const HOST_CONTROL_ENV = 'HEADSCALE_HOST_CONTROL'
+const HOST_CONTROL_PATHS = [
+  'HEADSCALE_CONFIG_PATH',
+  'HEADSCALE_BIN',
+  'SYSTEMCTL_BIN',
+] as const
+
+// API-only 部署无需主机权限。旧部署未设置开关时，如果三个本机路径都存在于
+// 环境变量中则保持原行为；纯控制平面只配置 API URL/key 时会自动关闭。
+export function isHeadscaleHostControlEnabled(): boolean {
+  const explicit = process.env[HOST_CONTROL_ENV]?.trim().toLowerCase()
+  if (explicit) {
+    if (['1', 'true', 'yes', 'on'].includes(explicit)) return true
+    if (['0', 'false', 'no', 'off'].includes(explicit)) return false
+    throw new Error(`${HOST_CONTROL_ENV} must be true or false`)
+  }
+  return HOST_CONTROL_PATHS.every((name) => Boolean(process.env[name]))
+}
+
+export function requireHeadscaleHostControl(): void {
+  if (!isHeadscaleHostControlEnabled()) {
+    throw new Error(
+      'Headscale host control is disabled; this operation requires local config and service access',
+    )
+  }
+}
+
 function parseIpv4(ip: string): number {
   const parts = ip.split('.')
   if (parts.length !== 4) throw new Error('Invalid IPv4 address format')
@@ -41,12 +68,9 @@ function mask(prefixLen: number): number {
 }
 
 function formatIpv4(n: number): string {
-  return [
-    (n >>> 24) & 255,
-    (n >>> 16) & 255,
-    (n >>> 8) & 255,
-    n & 255,
-  ].join('.')
+  return [(n >>> 24) & 255, (n >>> 16) & 255, (n >>> 8) & 255, n & 255].join(
+    '.',
+  )
 }
 
 export function validateTailscaleIpv4Prefix(cidr: string): string {
@@ -71,13 +95,17 @@ export function validateTailscaleIpv4Prefix(cidr: string): string {
   const tailscaleBase = parseIpv4('100.64.0.0')
   const tailscaleMask = mask(10)
   if ((network & tailscaleMask) !== tailscaleBase) {
-    throw new Error('IPv4 prefix must be inside the Tailscale 100.64.0.0/10 range')
+    throw new Error(
+      'IPv4 prefix must be inside the Tailscale 100.64.0.0/10 range',
+    )
   }
 
   return `${formatIpv4(network)}/${prefixLen}`
 }
 
-function parsePrefixes(config: string): Omit<HeadscaleNetworkConfig, 'configPath'> {
+function parsePrefixes(
+  config: string,
+): Omit<HeadscaleNetworkConfig, 'configPath'> {
   const block = config.match(/^prefixes:\n((?:^[ \t]+.*\n?)*)/m)
   if (!block?.[1]) throw new Error('Could not find the prefixes config block')
 
@@ -87,7 +115,8 @@ function parsePrefixes(config: string): Omit<HeadscaleNetworkConfig, 'configPath
 
   return {
     ipv4Prefix: v4,
-    ipv6Prefix: body.match(/^[ \t]+v6:[ \t]*([^#\n]+).*$/m)?.[1]?.trim() ?? null,
+    ipv6Prefix:
+      body.match(/^[ \t]+v6:[ \t]*([^#\n]+).*$/m)?.[1]?.trim() ?? null,
     allocation:
       body.match(/^[ \t]+allocation:[ \t]*([^#\n]+).*$/m)?.[1]?.trim() ?? null,
   }
@@ -127,6 +156,7 @@ async function runCommand(bin: string, args: string[]): Promise<void> {
 }
 
 export async function readHeadscaleNetworkConfig(): Promise<HeadscaleNetworkConfig> {
+  requireHeadscaleHostControl()
   const configPath = requiredEnv('HEADSCALE_CONFIG_PATH')
   const config = await readFile(/* turbopackIgnore: true */ configPath, 'utf8')
   return { configPath, ...parsePrefixes(config) }
@@ -135,11 +165,13 @@ export async function readHeadscaleNetworkConfig(): Promise<HeadscaleNetworkConf
 export async function updateHeadscaleIpv4Prefix(
   nextPrefix: string,
 ): Promise<UpdateNetworkResult> {
+  requireHeadscaleHostControl()
   const configPath = requiredEnv('HEADSCALE_CONFIG_PATH')
   const ipv4Prefix = validateTailscaleIpv4Prefix(nextPrefix)
   const current = await readFile(/* turbopackIgnore: true */ configPath, 'utf8')
   const old = parsePrefixes(current).ipv4Prefix
-  if (old === ipv4Prefix) throw new Error('The new prefix is the same as the current prefix')
+  if (old === ipv4Prefix)
+    throw new Error('The new prefix is the same as the current prefix')
 
   const next = replaceIpv4Prefix(current, ipv4Prefix)
   const tempDir = await mkdtemp(join(tmpdir(), 'headscale-config-'))
@@ -147,13 +179,21 @@ export async function updateHeadscaleIpv4Prefix(
 
   try {
     await writeFile(tempPath, next, 'utf8')
-    await runCommand(requiredEnv('HEADSCALE_BIN'), ['configtest', '-c', tempPath])
+    await runCommand(requiredEnv('HEADSCALE_BIN'), [
+      'configtest',
+      '-c',
+      tempPath,
+    ])
 
     const stamp = new Date().toISOString().replace(/[:.]/g, '-')
     const backupPath = `${configPath}.bak-prefix-${stamp}`
     await copyFile(/* turbopackIgnore: true */ configPath, backupPath)
     await writeFile(/* turbopackIgnore: true */ configPath, next, 'utf8')
-    await runCommand(requiredEnv('HEADSCALE_BIN'), ['configtest', '-c', configPath])
+    await runCommand(requiredEnv('HEADSCALE_BIN'), [
+      'configtest',
+      '-c',
+      configPath,
+    ])
     await runCommand(requiredEnv('SYSTEMCTL_BIN'), ['restart', 'headscale'])
     return { backupPath }
   } finally {

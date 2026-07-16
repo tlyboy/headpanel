@@ -29,36 +29,35 @@ export async function syncAndListNodes(): Promise<MergedNode[]> {
   const metaById = new Map(metas.map((m) => [m.headscaleId, m]))
 
   // 清理孤立记录
-  const orphanIds = metas
-    .map((m) => m.headscaleId)
-    .filter((id) => !liveIds.has(id))
+  const orphanIds: string[] = []
+  for (const meta of metas) {
+    if (!liveIds.has(meta.headscaleId)) orphanIds.push(meta.headscaleId)
+  }
   if (orphanIds.length) {
     db.delete(nodeMeta).where(inArray(nodeMeta.headscaleId, orphanIds)).run()
   }
 
   const merged: MergedNode[] = []
   for (const n of nodes) {
-    let meta = metaById.get(n.id)
+    const meta = metaById.get(n.id)
     if (!meta) {
-      const initial: 'pending' | 'approved' = n.tags.some((t) =>
-        okTags.has(t),
-      )
+      const initial: 'pending' | 'approved' = n.tags.some((t) => okTags.has(t))
         ? 'approved'
         : 'pending'
-      db.insert(nodeMeta)
-        .values({ headscaleId: n.id, status: initial })
-        .run()
-      meta = db
-        .select()
-        .from(nodeMeta)
-        .where(eq(nodeMeta.headscaleId, n.id))
-        .get()
+      db.insert(nodeMeta).values({ headscaleId: n.id, status: initial }).run()
+      merged.push({
+        ...n,
+        status: initial,
+        approvedAt: null,
+        note: null,
+      })
+      continue
     }
     merged.push({
       ...n,
-      status: meta?.status ?? 'pending',
-      approvedAt: meta?.approvedAt ?? null,
-      note: meta?.note ?? null,
+      status: meta.status,
+      approvedAt: meta.approvedAt,
+      note: meta.note,
     })
   }
   return merged

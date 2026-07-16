@@ -16,32 +16,34 @@ import { NodeRowActions } from './row-actions'
 
 export const dynamic = 'force-dynamic'
 
-const APPROVAL_CLASS: Record<
-  'approved' | 'pending' | 'rejected',
-  string
-> = {
+const APPROVAL_CLASS: Record<'approved' | 'pending' | 'rejected', string> = {
   approved: 'bg-emerald-600 text-white',
   pending: 'bg-amber-600 text-white',
   rejected: 'bg-red-600 text-white',
 }
 
 export default async function NodesPage() {
-  const session = await requireSession()
-  const [t, common] = await Promise.all([
+  const [session, t, common] = await Promise.all([
+    requireSession(),
     getTranslations('nodes'),
     getTranslations('common'),
   ])
   const nodes = scopeNodes(session, await syncAndListNodes())
-  const pending = nodes.filter((n) => n.status === 'pending').length
+  let pending = 0
+  let online = 0
+  for (const node of nodes) {
+    if (node.status === 'pending') pending += 1
+    if (node.online) online += 1
+  }
 
   return (
     <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-sm text-muted-foreground">
           {t('summary', {
             total: nodes.length,
-            online: nodes.filter((n) => n.online).length,
+            online,
             pending,
           })}
         </p>
@@ -68,7 +70,7 @@ export default async function NodesPage() {
               <TableRow>
                 <TableCell
                   colSpan={10}
-                  className="text-muted-foreground py-8 text-center"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   {t('empty')}
                 </TableCell>
@@ -80,9 +82,7 @@ export default async function NodesPage() {
                     <TableCell className="text-muted-foreground">
                       {n.id}
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {n.givenName}
-                    </TableCell>
+                    <TableCell className="font-medium">{n.givenName}</TableCell>
                     <TableCell className="font-mono text-xs">
                       {n.ipAddresses.join(' / ')}
                     </TableCell>
@@ -121,7 +121,7 @@ export default async function NodesPage() {
                         <span className="text-muted-foreground">—</span>
                       )}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
+                    <TableCell className="text-xs text-muted-foreground">
                       {fmtTime(n.lastSeen)}
                     </TableCell>
                     <TableCell className="text-right">

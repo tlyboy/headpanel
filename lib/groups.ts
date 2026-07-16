@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { cache } from 'react'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { admins, groups, type Group } from '@/lib/db/schema'
@@ -9,13 +10,13 @@ import { hashPassword, type Session } from '@/lib/auth'
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,30}$/
 
-export function listGroups(): Group[] {
+export const listGroups = cache(function listGroups(): Group[] {
   return db.select().from(groups).all()
-}
+})
 
-export function getGroup(id: number): Group | undefined {
+export const getGroup = cache(function getGroup(id: number): Group | undefined {
   return db.select().from(groups).where(eq(groups.id, id)).get()
-}
+})
 
 // 当前会话可见的组：super 看全部，group 只看自己组
 export function visibleGroups(session: Session): Group[] {
@@ -47,7 +48,16 @@ export function scopeNodes<T extends NodeLike>(
 ): T[] {
   if (session.role === 'super') return nodes
   const groups = listGroups()
-  return nodes.filter((n) => groupOfNode(n, groups)?.id === session.gid)
+  const groupIdByTag = new Map(groups.map((group) => [group.okTag, group.id]))
+  const groupIdByUser = new Map(
+    groups.map((group) => [group.hsUserId, group.id]),
+  )
+  return nodes.filter((node) => {
+    for (const tag of node.tags ?? []) {
+      if (groupIdByTag.get(tag) === session.gid) return true
+    }
+    return groupIdByUser.get(node.user?.id ?? '') === session.gid
+  })
 }
 
 // 解析节点所属组并校验会话可操作（用于审批 / 改名 / 删除等）
@@ -110,7 +120,8 @@ export function createGroupAdmin(input: {
 }) {
   const username = input.username.trim()
   if (!username) throw new Error('Username is required')
-  if (input.password.length < 6) throw new Error('Password must be at least 6 characters')
+  if (input.password.length < 6)
+    throw new Error('Password must be at least 6 characters')
   const dup = db
     .select()
     .from(admins)

@@ -1,5 +1,10 @@
 import { getTranslations } from 'next-intl/server'
-import { listPreAuthKeys, type HsPreAuthKey } from '@/lib/headscale'
+import {
+  getDefaultHeadscaleConnection,
+  listPreAuthKeys,
+  type HsPreAuthKey,
+} from '@/lib/headscale'
+import { getPanelBasePath } from '@/lib/panel-base-path'
 import { requireSession } from '@/lib/auth'
 import { visibleGroups } from '@/lib/groups'
 import { db } from '@/lib/db'
@@ -21,26 +26,29 @@ export const dynamic = 'force-dynamic'
 
 // 持票（含组 ok_tag）= 直接放行；无 tag = 需审核（接入后进待审批）
 function modeOf(aclTags: string[]): { key: 'direct' | 'review'; cls: string } {
-  if (aclTags.length)
-    return { key: 'direct', cls: 'bg-emerald-600 text-white' }
+  if (aclTags.length) return { key: 'direct', cls: 'bg-emerald-600 text-white' }
   return { key: 'review', cls: 'bg-amber-600 text-white' }
 }
 
 export default async function PreAuthKeysPage() {
-  const session = await requireSession()
-  const [t, common] = await Promise.all([
+  const [session, t, common] = await Promise.all([
+    requireSession(),
     getTranslations('preAuthKeys'),
     getTranslations('common'),
   ])
   const groups = visibleGroups(session)
+  const headscaleUrl = getDefaultHeadscaleConnection().serverUrl
+  const panelBasePath = getPanelBasePath()
   const nameByHsUser = new Map(groups.map((g) => [g.hsUserId, g.name]))
 
   // headscale 的 ?user= 过滤失效（恒返回全部 key），故拉一次、按 key.user.id 归属过滤，
   // 既避免同一 key 被每个组重复显示，又实现按组隔离
-  const all = groups.length > 0 ? await listPreAuthKeys(groups[0].hsUserId) : []
-  const keys: { key: HsPreAuthKey; groupName: string }[] = all
-    .filter((k) => nameByHsUser.has(k.user?.id ?? ''))
-    .map((k) => ({ key: k, groupName: nameByHsUser.get(k.user!.id) ?? '—' }))
+  const all = groups.length > 0 ? await listPreAuthKeys() : []
+  const keys: { key: HsPreAuthKey; groupName: string }[] = []
+  for (const key of all) {
+    const groupName = nameByHsUser.get(key.user?.id ?? '')
+    if (groupName) keys.push({ key, groupName })
+  }
 
   // RSC + force-dynamic：每次请求服务端渲染，取当前时间判断 key 是否过期，符合预期
   // eslint-disable-next-line react-hooks/purity
@@ -60,7 +68,7 @@ export default async function PreAuthKeysPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold">{t('title')}</h1>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-sm text-muted-foreground">
             {t('description', { count: keys.length })}
           </p>
         </div>
@@ -87,7 +95,7 @@ export default async function PreAuthKeysPage() {
               <TableRow>
                 <TableCell
                   colSpan={9}
-                  className="text-muted-foreground py-8 text-center"
+                  className="py-8 text-center text-muted-foreground"
                 >
                   {t('empty')}
                 </TableCell>
@@ -108,8 +116,12 @@ export default async function PreAuthKeysPage() {
                     <TableCell>
                       <Badge className={m.cls}>{t(m.key)}</Badge>
                     </TableCell>
-                    <TableCell>{k.reusable ? common('yes') : common('no')}</TableCell>
-                    <TableCell>{k.used ? common('yes') : common('no')}</TableCell>
+                    <TableCell>
+                      {k.reusable ? common('yes') : common('no')}
+                    </TableCell>
+                    <TableCell>
+                      {k.used ? common('yes') : common('no')}
+                    </TableCell>
                     <TableCell>
                       {expired ? (
                         <Badge variant="secondary">{t('expired')}</Badge>
@@ -119,14 +131,18 @@ export default async function PreAuthKeysPage() {
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-xs">
-                      {isNever(k.expiration) ? t('permanent') : fmtTime(k.expiration)}
+                    <TableCell className="text-xs text-muted-foreground">
+                      {isNever(k.expiration)
+                        ? t('permanent')
+                        : fmtTime(k.expiration)}
                     </TableCell>
                     <TableCell className="text-right">
                       <KeyRowActions
                         id={k.id}
                         plaintext={plain.get(k.id)}
                         modeLabel={t(m.key)}
+                        headscaleUrl={headscaleUrl}
+                        panelBasePath={panelBasePath}
                       />
                     </TableCell>
                   </TableRow>

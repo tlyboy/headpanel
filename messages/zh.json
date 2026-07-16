@@ -67,7 +67,8 @@
     "hasPending": "有节点等待审批",
     "noPending": "无待审批",
     "allGroups": "全部组",
-    "total": "共 {count} 个"
+    "total": "共 {count} 个",
+    "apiConnected": "API 已连接"
   },
   "audit": {
     "title": "审计日志",

@@ -5,10 +5,13 @@ import { getTranslations } from 'next-intl/server'
 import { eq } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth'
 import { getGroup, visibleGroups } from '@/lib/groups'
-import { audit, db } from '@/lib/db'
+import { auditAfter, db } from '@/lib/db'
 import { preauthKeys } from '@/lib/db/schema'
-import { createPreAuthKey, HeadscaleError } from '@/lib/headscale'
-import { headscaleCli } from '@/lib/headscale-cli'
+import {
+  createPreAuthKey,
+  deletePreAuthKey,
+  HeadscaleError,
+} from '@/lib/headscale'
 
 // review：不带 tag，接入后无门票 → 被隔离、进待审批
 // direct：带组 ok_tag，接入即放行（组内互通）
@@ -32,8 +35,10 @@ export async function createKeyAction(input: {
   days: number
   mode: AccessMode
 }): Promise<KeyResult> {
-  const session = await requireSession()
-  const t = await getTranslations('actionErrors')
+  const [session, t] = await Promise.all([
+    requireSession(),
+    getTranslations('actionErrors'),
+  ])
   // 校验目标组在会话可见范围内（防越权给他组发 key）
   const group = getGroup(input.groupId)
   if (!group || !visibleGroups(session).some((g) => g.id === group.id)) {
@@ -67,7 +72,7 @@ export async function createKeyAction(input: {
     } catch {
       // 明文备份失败不影响 key 已创建
     }
-    await audit(
+    auditAfter(
       'preauthkey.create',
       k.id,
       `group=${group.slug} reusable=${input.reusable} ephemeral=${input.ephemeral} days=${days} mode=${input.mode}`,
@@ -80,12 +85,12 @@ export async function createKeyAction(input: {
   }
 }
 
-// 删除 key：headscale 支持 `preauthkeys delete`（物理删除，从列表移除）。
-// REST 无 id 维度删除，故用 CLI 按 id 删（后台与 headscale 同机时可用）。
-// --force 跳过交互确认（execFile 无 TTY 必需）。删除后该 key 从列表消失、不可恢复。
+// v0.28/v0.29 均支持 DELETE /api/v1/preauthkey?id=...，无需与 Headscale 同机。
 export async function deleteKeyAction(id: string): Promise<KeyResult> {
-  const session = await requireSession()
-  const t = await getTranslations('actionErrors')
+  const [session, t] = await Promise.all([
+    requireSession(),
+    getTranslations('actionErrors'),
+  ])
   // 用本地 group_id 做归属校验（无本地记录的旧 key 仅 super 可删）
   const local = db
     .select()
@@ -98,13 +103,13 @@ export async function deleteKeyAction(id: string): Promise<KeyResult> {
     }
   }
   try {
-    await headscaleCli(['preauthkeys', 'delete', '-i', String(id), '--force'])
+    await deletePreAuthKey(id)
     try {
       db.delete(preauthKeys).where(eq(preauthKeys.headscaleId, id)).run()
     } catch {
       /* 本地明文记录删除失败可忽略 */
     }
-    await audit('preauthkey.delete', id, undefined, {
+    auditAfter('preauthkey.delete', id, undefined, {
       groupId: local?.groupId ?? null,
       actor: session.sub,
     })

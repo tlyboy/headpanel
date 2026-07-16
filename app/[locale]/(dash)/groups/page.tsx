@@ -19,11 +19,11 @@ import { GroupRowActions } from './row-actions'
 export const dynamic = 'force-dynamic'
 
 export default async function GroupsPage() {
-  await requireSuper()
-  const t = await getTranslations('groups')
+  const [, t] = await Promise.all([requireSuper(), getTranslations('groups')])
+  const nodesPromise = listNodes()
   const groups = listGroups()
-  const nodes = await listNodes()
   const adminRows = db.select().from(admins).all()
+  const nodes = await nodesPromise
 
   // groupId -> 节点数（按门票 tag 归属，避免 tagged-devices 抹除问题）；
   // groupId -> 管理员账号名列表
@@ -45,9 +45,7 @@ export default async function GroupsPage() {
       <div className="flex items-start justify-between">
         <div>
           <h1 className="text-2xl font-semibold">{t('title')}</h1>
-          <p className="text-muted-foreground text-sm">
-            {t('description')}
-          </p>
+          <p className="text-sm text-muted-foreground">{t('description')}</p>
         </div>
         <CreateGroup />
       </div>
@@ -77,7 +75,7 @@ export default async function GroupsPage() {
                 <TableCell className="text-xs">
                   {(adminsByGroup.get(g.id) ?? []).join(', ') || '—'}
                 </TableCell>
-                <TableCell className="text-muted-foreground text-xs">
+                <TableCell className="text-xs text-muted-foreground">
                   {fmtTime(g.createdAt.replace(' ', 'T') + 'Z')}
                 </TableCell>
                 <TableCell className="text-right">
