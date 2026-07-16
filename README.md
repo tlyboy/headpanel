@@ -56,6 +56,36 @@ pnpm dev
 pnpm build
 ```
 
+### Production deployment
+
+The production script deploys with systemd while keeping runtime secrets out of
+Git. Install `.env.example` as `/etc/headpanel/headpanel.env` on the server,
+replace its values, and set its mode to `600`. Values must be compatible with
+systemd's `EnvironmentFile` format; quote values that contain spaces or special
+characters.
+
+After updating a checkout, run this from the project directory:
+
+```bash
+git pull --ff-only origin main
+sudo HEADPANEL_BIND_HOST=127.0.0.1 HEADPANEL_PORT=3000 \
+  bash scripts/deploy-production.sh
+```
+
+Customize the deployment with `HEADPANEL_APP_DIR`, `HEADPANEL_ENV_FILE`,
+`HEADPANEL_SERVICE_NAME`, `HEADPANEL_SERVICE_USER`, `HEADPANEL_BIND_HOST`, and
+`HEADPANEL_PORT`. The script verifies Node.js 24, installs from the lockfile,
+rebuilds for `HEADPANEL_BASE_PATH`, updates the systemd service, and performs a
+local health check after restart. Reverse proxy and TLS configuration remain the
+deployer's responsibility.
+
+Inspect service state and logs with:
+
+```bash
+systemctl status headpanel
+journalctl -u headpanel -f
+```
+
 ## License
 
-[MIT](https://opensource.org/licenses/MIT) © Headpanel contributors
+[MIT](https://opensource.org/licenses/MIT) © tlyboy
