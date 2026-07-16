@@ -38,13 +38,15 @@ if command -v corepack >/dev/null 2>&1; then
   corepack enable pnpm
 fi
 
-node_bin="$(command -v node || true)"
-pnpm_bin="$(command -v pnpm || true)"
-if [[ -z "${node_bin}" || -z "${pnpm_bin}" ]]; then
+node_command="$(command -v node || true)"
+pnpm_command="$(command -v pnpm || true)"
+if [[ -z "${node_command}" || -z "${pnpm_command}" ]]; then
   echo "Node.js and pnpm must be available to root." >&2
   exit 1
 fi
 
+node_bin="$(readlink -f "${node_command}")"
+pnpm_entry="$(readlink -f "${pnpm_command}")"
 node_major="$(${node_bin} --version | sed -E 's/^v([0-9]+).*/\1/')"
 if [[ "${node_major}" != "24" ]]; then
   echo "Node.js 24 is required; found $(${node_bin} --version)." >&2
@@ -58,8 +60,8 @@ base_path="${base_path%\'}"
 base_path="${base_path#\'}"
 
 cd "${HEADPANEL_APP_DIR}"
-CI=1 "${pnpm_bin}" install --frozen-lockfile
-HEADPANEL_BASE_PATH="${base_path}" "${pnpm_bin}" build
+CI=1 "${pnpm_command}" install --frozen-lockfile
+HEADPANEL_BASE_PATH="${base_path}" "${pnpm_command}" build
 
 runtime_path="$(dirname -- "${node_bin}"):/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 unit_file="/etc/systemd/system/${HEADPANEL_SERVICE_NAME}.service"
@@ -78,7 +80,7 @@ User=${HEADPANEL_SERVICE_USER}
 WorkingDirectory=${HEADPANEL_APP_DIR}
 EnvironmentFile=${HEADPANEL_ENV_FILE}
 Environment=PATH=${runtime_path}
-ExecStart=${pnpm_bin} exec next start -H ${HEADPANEL_BIND_HOST} -p ${HEADPANEL_PORT}
+ExecStart=${node_bin} ${pnpm_entry} exec next start -H ${HEADPANEL_BIND_HOST} -p ${HEADPANEL_PORT}
 Restart=always
 RestartSec=3
 TimeoutStopSec=30
