@@ -52,6 +52,32 @@ pnpm dev
 pnpm build
 ```
 
+### 生产部署
+
+生产部署脚本使用 systemd，运行时密钥不进入 Git。将 `.env.example` 安装到服务器上的
+`/etc/headpanel/headpanel.env`，填写真实配置并设置权限为 `600`。环境文件值需要兼容
+systemd `EnvironmentFile` 格式，包含空格或特殊字符时请使用双引号。
+
+代码更新后，在服务器的项目目录运行：
+
+```bash
+git pull --ff-only origin main
+sudo HEADPANEL_BIND_HOST=127.0.0.1 HEADPANEL_PORT=3000 \
+  bash scripts/deploy-production.sh
+```
+
+可通过 `HEADPANEL_APP_DIR`、`HEADPANEL_ENV_FILE`、`HEADPANEL_SERVICE_NAME`、
+`HEADPANEL_SERVICE_USER`、`HEADPANEL_BIND_HOST` 和 `HEADPANEL_PORT` 调整部署参数。
+脚本会检查 Node.js 24、使用锁文件安装依赖、按 `HEADPANEL_BASE_PATH` 重新构建、更新
+systemd 服务，并在重启后完成本机健康检查。反向代理及 TLS 由部署者自行配置。
+
+查看服务状态和日志：
+
+```bash
+systemctl status headpanel
+journalctl -u headpanel -f
+```
+
 ## 使用许可
 
-[MIT](https://opensource.org/licenses/MIT) © Headpanel contributors
+[MIT](https://opensource.org/licenses/MIT) © tlyboy
