@@ -37,6 +37,7 @@
   },
   "nav": {
     "menu": "Open menu",
+    "platform": "Platform",
     "dashboard": "Overview",
     "nodes": "Nodes",
     "pending": "Pending",
@@ -47,11 +48,18 @@
     "audit": "Audit log"
   },
   "theme": {
-    "toggle": "Toggle theme"
+    "toggle": "Toggle theme",
+    "label": "Appearance",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
   },
   "language": {
     "toggle": "Change language",
-    "current": "English"
+    "current": "English",
+    "label": "Language",
+    "zh": "中文",
+    "en": "English"
   },
   "dashboard": {
     "title": "Overview",
