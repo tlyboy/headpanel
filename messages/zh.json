@@ -37,6 +37,7 @@
   },
   "nav": {
     "menu": "打开菜单",
+    "platform": "平台",
     "dashboard": "概览",
     "nodes": "节点",
     "pending": "待审批",
@@ -47,11 +48,18 @@
     "audit": "审计日志"
   },
   "theme": {
-    "toggle": "切换主题"
+    "toggle": "切换主题",
+    "label": "外观",
+    "light": "浅色",
+    "dark": "深色",
+    "system": "跟随系统"
   },
   "language": {
     "toggle": "切换语言",
-    "current": "中文"
+    "current": "中文",
+    "label": "语言",
+    "zh": "中文",
+    "en": "English"
   },
   "dashboard": {
     "title": "概览",

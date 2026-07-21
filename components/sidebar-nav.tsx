@@ -13,7 +13,14 @@ import {
   Network,
 } from 'lucide-react'
 import { Link, usePathname } from '@/i18n/navigation'
-import { cn } from '@/lib/utils'
+import {
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar'
 
 // superOnly 的项仅超管可见
 type NavLabel =
@@ -70,31 +77,39 @@ export function SidebarNav({
 }) {
   const pathname = usePathname()
   const t = useTranslations('nav')
+
   return (
-    <nav className="flex flex-col gap-1 p-2">
-      {items
-        .filter(
-          (it) =>
-            (isSuper || !it.superOnly) && (hostControl || !it.hostControlOnly),
-        )
-        .map(({ href, label, icon: Icon }) => {
-          const active = pathname === href || pathname.startsWith(href + '/')
-          return (
-            <Link
-              key={href}
-              href={href}
-              className={cn(
-                'flex items-center gap-2 rounded-md px-3 py-2 text-sm transition-colors',
-                active
-                  ? 'bg-primary text-primary-foreground'
-                  : 'hover:bg-accent hover:text-accent-foreground',
-              )}
-            >
-              <Icon className="size-4" />
-              {t(label)}
-            </Link>
-          )
-        })}
-    </nav>
+    <SidebarGroup>
+      <SidebarGroupLabel>{t('platform')}</SidebarGroupLabel>
+      <SidebarGroupContent>
+        <SidebarMenu>
+          {items
+            .filter(
+              (item) =>
+                (isSuper || !item.superOnly) &&
+                (hostControl || !item.hostControlOnly),
+            )
+            .map(({ href, label, icon: Icon }) => {
+              const active =
+                pathname === href || pathname.startsWith(`${href}/`)
+
+              return (
+                <SidebarMenuItem key={href}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={active}
+                    tooltip={t(label)}
+                  >
+                    <Link href={href}>
+                      <Icon />
+                      <span>{t(label)}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              )
+            })}
+        </SidebarMenu>
+      </SidebarGroupContent>
+    </SidebarGroup>
   )
 }
