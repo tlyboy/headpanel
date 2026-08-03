@@ -16,7 +16,7 @@ import {
   listNodes,
   listPreAuthKeys,
 } from '@/lib/headscale'
-import { rebuildPolicy } from '@/lib/policy'
+import { applyPolicy } from '@/lib/policy'
 import { hashPassword, type Session } from '@/lib/auth'
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,30}$/
@@ -95,7 +95,8 @@ export function groupForNode(session: Session, node: NodeLike): Group {
   return g
 }
 
-// Create a group: create the headscale user → write to the database (ok_tag=tag:ok-<slug>) → recompute policy
+// Create a group: create a user in headscale → apply ACLs including the new group → save to the database (ok_tag=tag:ok-<slug>).
+// Apply ACLs before saving: if the update fails, remove the newly created headscale user, leaving no orphan or partial result.
 export async function createGroup(input: {
   slug: string
   name: string
@@ -111,17 +112,24 @@ export async function createGroup(input: {
   const dup = db.select().from(groups).where(eq(groups.slug, slug)).get()
   if (dup) throw new Error(`Slug "${slug}" already exists`)
 
+  const okTag = `tag:ok-${slug}`
   const hsUser = await createHsUser(slug)
+  try {
+    await applyPolicy([...listGroups(), { hsUserName: hsUser.name, okTag }])
+  } catch (e) {
+    // Remove the newly created user, or headscale will be left with an orphan the panel doesn't recognize
+    await deleteHsUser(hsUser.id).catch(() => {})
+    throw e
+  }
   db.insert(groups)
     .values({
       slug,
       name,
       hsUserId: hsUser.id,
       hsUserName: hsUser.name,
-      okTag: `tag:ok-${slug}`,
+      okTag,
     })
     .run()
-  await rebuildPolicy()
   const row = db.select().from(groups).where(eq(groups.slug, slug)).get()
   if (!row) throw new Error('Failed to read the group after creation')
   return row
@@ -153,8 +161,9 @@ export async function countGroupResidue(
   }
 }
 
-// Delete a group: first reconcile and reject non-empty groups → delete the headscale user → clear local data → recompute policy.
-// Remote first, then local: if deleting from headscale fails, local state stays unchanged, with no half-finished result.
+// Delete a group: reconcile and reject non-empty groups → apply the ACL "after deletion" → delete the headscale user → clear local data.
+// Push the ACL before any changes: this is the step most likely to fail (e.g. policy.mode=file); if it fails,
+// nothing has changed yet. There are no nodes left in the group, so removing its tagOwner first won't accidentally break anything.
 export async function deleteGroup(id: number): Promise<Group> {
   const g = getGroup(id)
   if (!g) throw new Error('Group does not exist')
@@ -164,6 +173,7 @@ export async function deleteGroup(id: number): Promise<Group> {
     throw new GroupNotEmptyError(nodeCount, keyCount)
   }
 
+  await applyPolicy(listGroups().filter((x) => x.id !== id))
   await deleteHsUser(g.hsUserId)
   db.delete(admins).where(eq(admins.groupId, id)).run()
   // Plaintext key backups must not be retained (security); keep audit records, setting only the dangling group_id to null
@@ -173,7 +183,6 @@ export async function deleteGroup(id: number): Promise<Group> {
     .where(eq(auditLog.groupId, id))
     .run()
   db.delete(groups).where(eq(groups.id, id)).run()
-  await rebuildPolicy()
   return g
 }
 

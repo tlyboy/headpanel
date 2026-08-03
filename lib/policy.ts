@@ -1,8 +1,17 @@
 import 'server-only'
 
-import { db } from '@/lib/db'
-import { groups } from '@/lib/db/schema'
-import { setPolicy } from '@/lib/headscale'
+import { HeadscaleError, setPolicy } from '@/lib/headscale'
+
+// headscale only accepts PUT /policy when policy.mode=database; file mode always returns 500.
+// The panel's group isolation relies entirely on the deployed ACL. If the mode is wrong, group operations must abort completely rather than continue in a broken state.
+export class PolicyReadOnlyError extends Error {
+  constructor() {
+    super(
+      "headscale rejects policy updates because policy.mode is not 'database'",
+    )
+    this.name = 'PolicyReadOnlyError'
+  }
+}
 
 // Generate a headscale v2 policy from the groups table:
 //  - One ok_tag per group, with the owner set to that group's headscale user name (must include @)
@@ -20,11 +29,21 @@ export function buildPolicy(
   return JSON.stringify({ tagOwners, acls }, null, 2)
 }
 
-// Recompute and apply the entire policy. When groups is empty, apply an empty policy (= deny-all): deleteGroup has already
-// ensured that the group contains no nodes or keys before allowing deletion, so deleting the last group cannot accidentally disconnect existing nodes.
-export async function rebuildPolicy(): Promise<void> {
-  const rows = db.select().from(groups).all()
-  await setPolicy(
-    buildPolicy(rows.map((g) => ({ hsUserName: g.hsUserName, okTag: g.okTag }))),
-  )
+// Apply the policy for the group set that should exist after the operation. The caller must invoke this before changing any data:
+// if it cannot be pushed, the entire operation fails, avoiding a partial result where "headscale was changed but the panel reported an error".
+// When rows is empty, apply an empty policy (= deny-all); deleteGroup has already ensured that the group contains no nodes.
+export async function applyPolicy(
+  rows: { hsUserName: string; okTag: string }[],
+): Promise<void> {
+  try {
+    await setPolicy(buildPolicy(rows))
+  } catch (e) {
+    if (
+      e instanceof HeadscaleError &&
+      /modes other than|policy\.mode/i.test(e.message)
+    ) {
+      throw new PolicyReadOnlyError()
+    }
+    throw e
+  }
 }
