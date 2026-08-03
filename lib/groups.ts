@@ -16,7 +16,7 @@ import {
   listNodes,
   listPreAuthKeys,
 } from '@/lib/headscale'
-import { rebuildPolicy } from '@/lib/policy'
+import { applyPolicy } from '@/lib/policy'
 import { hashPassword, type Session } from '@/lib/auth'
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,30}$/
@@ -95,7 +95,8 @@ export function groupForNode(session: Session, node: NodeLike): Group {
   return g
 }
 
-// 建组：headscale 建 user → 落库（ok_tag=tag:ok-<slug>）→ 重算策略
+// 建组：headscale 建 user → 下发含新组的 ACL → 落库（ok_tag=tag:ok-<slug>）。
+// ACL 先于落库：推不上去就把刚建的 headscale user 收回，不留孤儿也不留半成品。
 export async function createGroup(input: {
   slug: string
   name: string
@@ -111,17 +112,24 @@ export async function createGroup(input: {
   const dup = db.select().from(groups).where(eq(groups.slug, slug)).get()
   if (dup) throw new Error(`Slug "${slug}" already exists`)
 
+  const okTag = `tag:ok-${slug}`
   const hsUser = await createHsUser(slug)
+  try {
+    await applyPolicy([...listGroups(), { hsUserName: hsUser.name, okTag }])
+  } catch (e) {
+    // 回收刚建的 user，否则 headscale 侧会留下一个面板不认识的孤儿
+    await deleteHsUser(hsUser.id).catch(() => {})
+    throw e
+  }
   db.insert(groups)
     .values({
       slug,
       name,
       hsUserId: hsUser.id,
       hsUserName: hsUser.name,
-      okTag: `tag:ok-${slug}`,
+      okTag,
     })
     .run()
-  await rebuildPolicy()
   const row = db.select().from(groups).where(eq(groups.slug, slug)).get()
   if (!row) throw new Error('Failed to read the group after creation')
   return row
@@ -153,8 +161,9 @@ export async function countGroupResidue(
   }
 }
 
-// 删组：先对账拒绝非空组 → 删 headscale user → 清本地数据 → 重算策略。
-// 先远程后本地：headscale 删失败时本地保持原样，不留半成品。
+// 删组：对账拒绝非空组 → 下发「删除后」的 ACL → 删 headscale user → 清本地数据。
+// ACL 推送排在所有改动之前：它是最容易失败的一步（如 policy.mode=file），失败时
+// 什么都还没动。此时组内已无节点，先撤掉它的 tagOwner 不会误断任何东西。
 export async function deleteGroup(id: number): Promise<Group> {
   const g = getGroup(id)
   if (!g) throw new Error('Group does not exist')
@@ -164,6 +173,7 @@ export async function deleteGroup(id: number): Promise<Group> {
     throw new GroupNotEmptyError(nodeCount, keyCount)
   }
 
+  await applyPolicy(listGroups().filter((x) => x.id !== id))
   await deleteHsUser(g.hsUserId)
   db.delete(admins).where(eq(admins.groupId, id)).run()
   // 明文 key 备份不能留（安全）；审计记录保留，只把悬挂的 group_id 置空
@@ -173,7 +183,6 @@ export async function deleteGroup(id: number): Promise<Group> {
     .where(eq(auditLog.groupId, id))
     .run()
   db.delete(groups).where(eq(groups.id, id)).run()
-  await rebuildPolicy()
   return g
 }
 

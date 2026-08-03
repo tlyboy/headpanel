@@ -13,15 +13,23 @@ import {
   GroupNotEmptyError,
 } from '@/lib/groups'
 import { HeadscaleError } from '@/lib/headscale'
+import { PolicyReadOnlyError } from '@/lib/policy'
 
 export interface GroupResult {
   ok: boolean
   error?: string
 }
 
-function errMsg(e: unknown, unknownMessage: string): string {
+type ActionErrorT = Awaited<ReturnType<typeof getTranslations<'actionErrors'>>>
+
+function errMsg(e: unknown, t: ActionErrorT): string {
+  // policy.mode=file 时 headscale 拒绝下发 ACL，原始 500 文案对使用者没有意义
+  if (e instanceof PolicyReadOnlyError) return t('policyReadOnly')
+  if (e instanceof GroupNotEmptyError) {
+    return t('groupNotEmpty', { nodeCount: e.nodeCount, keyCount: e.keyCount })
+  }
   if (e instanceof HeadscaleError) return e.message
-  return e instanceof Error ? e.message : unknownMessage
+  return e instanceof Error ? e.message : t('unknown')
 }
 
 // 建组：headscale 建 user → 落库 → 重算 ACL → 发组管理员账号。
@@ -61,7 +69,7 @@ export async function createGroupAction(input: {
     revalidatePath('/groups')
     return { ok: true }
   } catch (e) {
-    return { ok: false, error: errMsg(e, t('unknown')) }
+    return { ok: false, error: errMsg(e, t) }
   }
 }
 
@@ -83,15 +91,6 @@ export async function deleteGroupAction(id: number): Promise<GroupResult> {
     revalidatePath('/preauthkeys')
     return { ok: true }
   } catch (e) {
-    if (e instanceof GroupNotEmptyError) {
-      return {
-        ok: false,
-        error: t('groupNotEmpty', {
-          nodeCount: e.nodeCount,
-          keyCount: e.keyCount,
-        }),
-      }
-    }
-    return { ok: false, error: errMsg(e, t('unknown')) }
+    return { ok: false, error: errMsg(e, t) }
   }
 }

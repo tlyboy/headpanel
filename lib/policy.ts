@@ -1,8 +1,17 @@
 import 'server-only'
 
-import { db } from '@/lib/db'
-import { groups } from '@/lib/db/schema'
-import { setPolicy } from '@/lib/headscale'
+import { HeadscaleError, setPolicy } from '@/lib/headscale'
+
+// headscale 只在 policy.mode=database 时接受 PUT /policy，file 模式恒 500。
+// 面板的组隔离完全依赖下发 ACL，模式不对时组操作必须整体放弃而不是带病继续。
+export class PolicyReadOnlyError extends Error {
+  constructor() {
+    super(
+      "headscale rejects policy updates because policy.mode is not 'database'",
+    )
+    this.name = 'PolicyReadOnlyError'
+  }
+}
 
 // 由 groups 表生成 headscale v2 policy：
 //  - 每组一个 ok_tag，owner 为该组 headscale user name（必须带 @）
@@ -20,11 +29,21 @@ export function buildPolicy(
   return JSON.stringify({ tagOwners, acls }, null, 2)
 }
 
-// 全量重算并下发。groups 为空时下发空 policy（= deny-all）：deleteGroup 已经
-// 保证组内无节点无 key 才允许删，删到最后一个组时现网不存在会被误断的节点。
-export async function rebuildPolicy(): Promise<void> {
-  const rows = db.select().from(groups).all()
-  await setPolicy(
-    buildPolicy(rows.map((g) => ({ hsUserName: g.hsUserName, okTag: g.okTag }))),
-  )
+// 下发【操作完成后应有的】组集合对应的 policy。调用方要在改动任何数据之前调它：
+// 推不上去就整体失败，不会留下「headscale 已改、面板报错」的半成品。
+// rows 为空时下发空 policy（= deny-all），此时 deleteGroup 已保证组内无节点。
+export async function applyPolicy(
+  rows: { hsUserName: string; okTag: string }[],
+): Promise<void> {
+  try {
+    await setPolicy(buildPolicy(rows))
+  } catch (e) {
+    if (
+      e instanceof HeadscaleError &&
+      /modes other than|policy\.mode/i.test(e.message)
+    ) {
+      throw new PolicyReadOnlyError()
+    }
+    throw e
+  }
 }

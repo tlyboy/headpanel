@@ -290,6 +290,7 @@
     "forbiddenGroup": "You do not have permission to operate on this group",
     "forbiddenDeleteKey": "You do not have permission to delete this key",
     "groupNotEmpty": "This group still has {nodeCount} node(s) and {keyCount} pre-auth key(s). Remove them before deleting the group.",
+    "policyReadOnly": "headscale refused the ACL update because policy.mode in config.yaml is not 'database'. Set it to database and restart headscale before managing groups.",
     "nodeNameRequired": "Name is required",
     "nodeNamePattern": "Name can only contain letters, digits, and hyphens",
     "noteTooLong": "Note must be at most 200 characters",
