@@ -7,6 +7,7 @@ import {
 import { getPanelBasePath } from '@/lib/panel-base-path'
 import { requireSession } from '@/lib/auth'
 import { visibleGroups } from '@/lib/groups'
+import { pruneOrphanKeys } from '@/lib/keys-sync'
 import { db } from '@/lib/db'
 import { preauthKeys as preauthKeysTable } from '@/lib/db/schema'
 import { fmtTime, isNever } from '@/lib/format'
@@ -44,6 +45,8 @@ export default async function PreAuthKeysPage() {
   // headscale 的 ?user= 过滤失效（恒返回全部 key），故拉一次、按 key.user.id 归属过滤，
   // 既避免同一 key 被每个组重复显示，又实现按组隔离
   const all = groups.length > 0 ? await listPreAuthKeys() : []
+  // headscale 侧已消失的 key，其本地明文备份一并清掉（删组会连带销毁 key）
+  pruneOrphanKeys(all)
   const keys: { key: HsPreAuthKey; groupName: string }[] = []
   for (const key of all) {
     const groupName = nameByHsUser.get(key.user?.id ?? '')

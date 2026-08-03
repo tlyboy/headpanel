@@ -20,12 +20,10 @@ export function buildPolicy(
   return JSON.stringify({ tagOwners, acls }, null, 2)
 }
 
-// 全量重算并下发。groups 为空时拒绝下发（空 policy = deny-all 会误断现网，坑 12）。
+// 全量重算并下发。groups 为空时下发空 policy（= deny-all）：deleteGroup 已经
+// 保证组内无节点无 key 才允许删，删到最后一个组时现网不存在会被误断的节点。
 export async function rebuildPolicy(): Promise<void> {
   const rows = db.select().from(groups).all()
-  if (rows.length === 0) {
-    throw new Error('rebuildPolicy: refusing to apply an empty policy because no groups exist')
-  }
   await setPolicy(
     buildPolicy(rows.map((g) => ({ hsUserName: g.hsUserName, okTag: g.okTag }))),
   )

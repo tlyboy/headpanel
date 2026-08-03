@@ -18,12 +18,25 @@ import {
 } from '@/components/ui/alert-dialog'
 import { deleteGroupAction } from './actions'
 
-export function GroupRowActions({ id, name }: { id: number; name: string }) {
+export function GroupRowActions({
+  id,
+  name,
+  nodeCount,
+  keyCount,
+}: {
+  id: number
+  name: string
+  nodeCount: number
+  keyCount: number
+}) {
   const t = useTranslations('groupActions')
   const common = useTranslations('common')
   const router = useRouter()
   const [pending, start] = useTransition()
   const [open, setOpen] = useState(false)
+  // 组内还有节点或授权 key 时不允许删：删 headscale user 会把它们一并销毁。
+  // 这里只是提前拦一道，真正的守卫在服务端 deleteGroup 里。
+  const blocked = nodeCount > 0 || keyCount > 0
 
   function del() {
     start(async () => {
@@ -49,13 +62,15 @@ export function GroupRowActions({ id, name }: { id: number; name: string }) {
         <AlertDialogHeader>
           <AlertDialogTitle>{t('deleteTitle', { name })}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t('deleteDescription')}
+            {blocked
+              ? t('deleteBlocked', { nodeCount, keyCount })
+              : t('deleteDescription')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
           <AlertDialogAction
-            disabled={pending}
+            disabled={pending || blocked}
             onClick={(e) => {
               e.preventDefault()
               del()

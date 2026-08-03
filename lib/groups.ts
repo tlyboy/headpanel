@@ -3,12 +3,37 @@ import 'server-only'
 import { cache } from 'react'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { admins, groups, type Group } from '@/lib/db/schema'
-import { createHsUser, deleteHsUser } from '@/lib/headscale'
+import {
+  admins,
+  auditLog,
+  groups,
+  preauthKeys,
+  type Group,
+} from '@/lib/db/schema'
+import {
+  createHsUser,
+  deleteHsUser,
+  listNodes,
+  listPreAuthKeys,
+} from '@/lib/headscale'
 import { rebuildPolicy } from '@/lib/policy'
 import { hashPassword, type Session } from '@/lib/auth'
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,30}$/
+
+// 组内仍有节点 / 授权 key 时拒绝删组。删 headscale user 会连带销毁它名下的
+// 全部 pre-auth key，并按 fk_nodes_user ON DELETE CASCADE 级联删掉全部节点。
+export class GroupNotEmptyError extends Error {
+  constructor(
+    readonly nodeCount: number,
+    readonly keyCount: number,
+  ) {
+    super(
+      `Group still has ${nodeCount} node(s) and ${keyCount} pre-auth key(s); remove them first`,
+    )
+    this.name = 'GroupNotEmptyError'
+  }
+}
 
 export const listGroups = cache(function listGroups(): Group[] {
   return db.select().from(groups).all()
@@ -102,14 +127,54 @@ export async function createGroup(input: {
   return row
 }
 
-// 删组：删本地账号 + groups 行 → 删 headscale user → 重算策略
-export async function deleteGroup(id: number): Promise<void> {
+// 节点是否会随该组的 headscale user 一起被销毁。取两个口径的并集：
+// user_id 命中是 headscale 真正级联的依据；tag 命中是因为 headscale 把带
+// forced tag 的节点 user 抹成 tagged-devices（见 groupOfNode 注释），只看 user 会漏判。
+export function nodeBelongsToGroup(node: NodeLike, g: Group): boolean {
+  if (node.user?.id === g.hsUserId) return true
+  return (node.tags ?? []).includes(g.okTag)
+}
+
+export function keyBelongsToGroup(
+  key: { user?: { id: string } | null },
+  g: Group,
+): boolean {
+  return key.user?.id === g.hsUserId
+}
+
+// 组内残留统计。删组前对账用，也供 groups 页面提前禁用删除按钮。
+export async function countGroupResidue(
+  g: Group,
+): Promise<{ nodeCount: number; keyCount: number }> {
+  const [nodes, keys] = await Promise.all([listNodes(), listPreAuthKeys()])
+  return {
+    nodeCount: nodes.filter((n) => nodeBelongsToGroup(n, g)).length,
+    keyCount: keys.filter((k) => keyBelongsToGroup(k, g)).length,
+  }
+}
+
+// 删组：先对账拒绝非空组 → 删 headscale user → 清本地数据 → 重算策略。
+// 先远程后本地：headscale 删失败时本地保持原样，不留半成品。
+export async function deleteGroup(id: number): Promise<Group> {
   const g = getGroup(id)
   if (!g) throw new Error('Group does not exist')
-  db.delete(admins).where(eq(admins.groupId, id)).run()
-  db.delete(groups).where(eq(groups.id, id)).run()
+
+  const { nodeCount, keyCount } = await countGroupResidue(g)
+  if (nodeCount > 0 || keyCount > 0) {
+    throw new GroupNotEmptyError(nodeCount, keyCount)
+  }
+
   await deleteHsUser(g.hsUserId)
+  db.delete(admins).where(eq(admins.groupId, id)).run()
+  // 明文 key 备份不能留（安全）；审计记录保留，只把悬挂的 group_id 置空
+  db.delete(preauthKeys).where(eq(preauthKeys.groupId, id)).run()
+  db.update(auditLog)
+    .set({ groupId: null })
+    .where(eq(auditLog.groupId, id))
+    .run()
+  db.delete(groups).where(eq(groups.id, id)).run()
   await rebuildPolicy()
+  return g
 }
 
 // 给组发一个登录账号（role=group）

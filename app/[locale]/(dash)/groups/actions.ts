@@ -6,7 +6,12 @@ import { eq } from 'drizzle-orm'
 import { requireSuper } from '@/lib/auth'
 import { auditAfter, db } from '@/lib/db'
 import { admins } from '@/lib/db/schema'
-import { createGroup, createGroupAdmin, deleteGroup } from '@/lib/groups'
+import {
+  createGroup,
+  createGroupAdmin,
+  deleteGroup,
+  GroupNotEmptyError,
+} from '@/lib/groups'
 import { HeadscaleError } from '@/lib/headscale'
 
 export interface GroupResult {
@@ -66,11 +71,27 @@ export async function deleteGroupAction(id: number): Promise<GroupResult> {
     getTranslations('actionErrors'),
   ])
   try {
-    await deleteGroup(id)
-    auditAfter('group.delete', String(id), undefined, { actor: session.sub })
+    const group = await deleteGroup(id)
+    // 组已删，group_id 会变成悬挂引用，故标识写进 target/detail（与 group.create 一致）
+    auditAfter(
+      'group.delete',
+      group.slug,
+      `name=${group.name} hsUser=${group.hsUserName}`,
+      { groupId: null, actor: session.sub },
+    )
     revalidatePath('/groups')
+    revalidatePath('/preauthkeys')
     return { ok: true }
   } catch (e) {
+    if (e instanceof GroupNotEmptyError) {
+      return {
+        ok: false,
+        error: t('groupNotEmpty', {
+          nodeCount: e.nodeCount,
+          keyCount: e.keyCount,
+        }),
+      }
+    }
     return { ok: false, error: errMsg(e, t('unknown')) }
   }
 }
