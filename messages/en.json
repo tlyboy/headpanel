@@ -141,7 +141,8 @@
   "groupActions": {
     "deleted": "Group deleted",
     "deleteTitle": "Delete group \"{name}\"?",
-    "deleteDescription": "This will delete the group's headscale user, all nodes under it, the group admin account, and then recalculate ACLs. This cannot be undone.",
+    "deleteDescription": "This will delete the group's headscale user and the group admin account, then recalculate ACLs. This cannot be undone.",
+    "deleteBlocked": "This group still has {nodeCount} node(s) and {keyCount} pre-auth key(s). Deleting the group would make headscale destroy them too — remove them first.",
     "deleting": "Deleting...",
     "confirmDelete": "Delete"
   },
@@ -288,6 +289,7 @@
     "accountExists": "Account \"{username}\" already exists",
     "forbiddenGroup": "You do not have permission to operate on this group",
     "forbiddenDeleteKey": "You do not have permission to delete this key",
+    "groupNotEmpty": "This group still has {nodeCount} node(s) and {keyCount} pre-auth key(s). Remove them before deleting the group.",
     "nodeNameRequired": "Name is required",
     "nodeNamePattern": "Name can only contain letters, digits, and hyphens",
     "noteTooLong": "Note must be at most 200 characters",

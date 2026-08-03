@@ -3,12 +3,37 @@ import 'server-only'
 import { cache } from 'react'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { admins, groups, type Group } from '@/lib/db/schema'
-import { createHsUser, deleteHsUser } from '@/lib/headscale'
+import {
+  admins,
+  auditLog,
+  groups,
+  preauthKeys,
+  type Group,
+} from '@/lib/db/schema'
+import {
+  createHsUser,
+  deleteHsUser,
+  listNodes,
+  listPreAuthKeys,
+} from '@/lib/headscale'
 import { rebuildPolicy } from '@/lib/policy'
 import { hashPassword, type Session } from '@/lib/auth'
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,30}$/
+
+// Refuse to delete a group if it still has nodes / authorized keys. Deleting the headscale user also destroys all pre-auth keys under it
+// and cascades deletion of all nodes via fk_nodes_user ON DELETE CASCADE.
+export class GroupNotEmptyError extends Error {
+  constructor(
+    readonly nodeCount: number,
+    readonly keyCount: number,
+  ) {
+    super(
+      `Group still has ${nodeCount} node(s) and ${keyCount} pre-auth key(s); remove them first`,
+    )
+    this.name = 'GroupNotEmptyError'
+  }
+}
 
 export const listGroups = cache(function listGroups(): Group[] {
   return db.select().from(groups).all()
@@ -102,14 +127,54 @@ export async function createGroup(input: {
   return row
 }
 
-// Delete a group: delete the local account + groups row → delete the headscale user → recompute policy
-export async function deleteGroup(id: number): Promise<void> {
+// Whether nodes will also be destroyed along with the group's headscale user. Take the union of both criteria:
+// a user_id match is the basis for headscale's actual cascade; a tag match is needed because headscale clears the user field on nodes with
+// forced tags, setting it to tagged-devices (see the groupOfNode comment), so checking only user would miss them.
+export function nodeBelongsToGroup(node: NodeLike, g: Group): boolean {
+  if (node.user?.id === g.hsUserId) return true
+  return (node.tags ?? []).includes(g.okTag)
+}
+
+export function keyBelongsToGroup(
+  key: { user?: { id: string } | null },
+  g: Group,
+): boolean {
+  return key.user?.id === g.hsUserId
+}
+
+// Count remaining group data. Used to reconcile before deletion and to disable the delete button in advance on the groups page.
+export async function countGroupResidue(
+  g: Group,
+): Promise<{ nodeCount: number; keyCount: number }> {
+  const [nodes, keys] = await Promise.all([listNodes(), listPreAuthKeys()])
+  return {
+    nodeCount: nodes.filter((n) => nodeBelongsToGroup(n, g)).length,
+    keyCount: keys.filter((k) => keyBelongsToGroup(k, g)).length,
+  }
+}
+
+// Delete a group: first reconcile and reject non-empty groups → delete the headscale user → clear local data → recompute policy.
+// Remote first, then local: if deleting from headscale fails, local state stays unchanged, with no half-finished result.
+export async function deleteGroup(id: number): Promise<Group> {
   const g = getGroup(id)
   if (!g) throw new Error('Group does not exist')
-  db.delete(admins).where(eq(admins.groupId, id)).run()
-  db.delete(groups).where(eq(groups.id, id)).run()
+
+  const { nodeCount, keyCount } = await countGroupResidue(g)
+  if (nodeCount > 0 || keyCount > 0) {
+    throw new GroupNotEmptyError(nodeCount, keyCount)
+  }
+
   await deleteHsUser(g.hsUserId)
+  db.delete(admins).where(eq(admins.groupId, id)).run()
+  // Plaintext key backups must not be retained (security); keep audit records, setting only the dangling group_id to null
+  db.delete(preauthKeys).where(eq(preauthKeys.groupId, id)).run()
+  db.update(auditLog)
+    .set({ groupId: null })
+    .where(eq(auditLog.groupId, id))
+    .run()
+  db.delete(groups).where(eq(groups.id, id)).run()
   await rebuildPolicy()
+  return g
 }
 
 // Issue a login account (role=group) for the group

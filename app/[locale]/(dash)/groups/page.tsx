@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { requireSuper } from '@/lib/auth'
-import { listGroups, groupOfNode } from '@/lib/groups'
-import { listNodes } from '@/lib/headscale'
+import { listGroups, groupOfNode, keyBelongsToGroup } from '@/lib/groups'
+import { listNodes, listPreAuthKeys } from '@/lib/headscale'
 import { db } from '@/lib/db'
 import { admins } from '@/lib/db/schema'
 import { fmtTime } from '@/lib/format'
@@ -20,17 +20,23 @@ export const dynamic = 'force-dynamic'
 
 export default async function GroupsPage() {
   const [, t] = await Promise.all([requireSuper(), getTranslations('groups')])
-  const nodesPromise = listNodes()
+  const livePromise = Promise.all([listNodes(), listPreAuthKeys()])
   const groups = listGroups()
   const adminRows = db.select().from(admins).all()
-  const nodes = await nodesPromise
+  const [nodes, hsKeys] = await livePromise
 
-  // groupId -> node count (assigned by ticket tag to avoid the tagged-devices erasure issue);
+  // groupId -> node count (grouped by ticket tag to avoid the tagged-devices erasure issue);
+  // groupId -> authorized key count (grouped by headscale user);
+  // Both are used to block deleting non-empty groups in advance in the confirmation dialog (the server-side deleteGroup has the same guard)
   // groupId -> list of administrator account names
   const nodeCount = new Map<number, number>()
   for (const n of nodes) {
     const g = groupOfNode(n, groups)
     if (g) nodeCount.set(g.id, (nodeCount.get(g.id) ?? 0) + 1)
+  }
+  const keyCount = new Map<number, number>()
+  for (const g of groups) {
+    keyCount.set(g.id, hsKeys.filter((k) => keyBelongsToGroup(k, g)).length)
   }
   const adminsByGroup = new Map<number, string[]>()
   for (const a of adminRows) {
@@ -79,7 +85,12 @@ export default async function GroupsPage() {
                   {fmtTime(g.createdAt.replace(' ', 'T') + 'Z')}
                 </TableCell>
                 <TableCell className="text-right">
-                  <GroupRowActions id={g.id} name={g.name} />
+                  <GroupRowActions
+                    id={g.id}
+                    name={g.name}
+                    nodeCount={nodeCount.get(g.id) ?? 0}
+                    keyCount={keyCount.get(g.id) ?? 0}
+                  />
                 </TableCell>
               </TableRow>
             ))}

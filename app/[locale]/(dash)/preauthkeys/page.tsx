@@ -7,6 +7,7 @@ import {
 import { getPanelBasePath } from '@/lib/panel-base-path'
 import { requireSession } from '@/lib/auth'
 import { visibleGroups } from '@/lib/groups'
+import { pruneOrphanKeys } from '@/lib/keys-sync'
 import { db } from '@/lib/db'
 import { preauthKeys as preauthKeysTable } from '@/lib/db/schema'
 import { fmtTime, isNever } from '@/lib/format'
@@ -44,6 +45,8 @@ export default async function PreAuthKeysPage() {
   // headscale's ?user= filter is broken (always returns all keys), so fetch once and filter by ownership via key.user.id,
   // which both prevents the same key from appearing in every group and enforces group isolation
   const all = groups.length > 0 ? await listPreAuthKeys() : []
+  // Also delete local plaintext backups for keys that no longer exist on the headscale side (deleting a group also destroys its keys)
+  pruneOrphanKeys(all)
   const keys: { key: HsPreAuthKey; groupName: string }[] = []
   for (const key of all) {
     const groupName = nameByHsUser.get(key.user?.id ?? '')

@@ -18,12 +18,25 @@ import {
 } from '@/components/ui/alert-dialog'
 import { deleteGroupAction } from './actions'
 
-export function GroupRowActions({ id, name }: { id: number; name: string }) {
+export function GroupRowActions({
+  id,
+  name,
+  nodeCount,
+  keyCount,
+}: {
+  id: number
+  name: string
+  nodeCount: number
+  keyCount: number
+}) {
   const t = useTranslations('groupActions')
   const common = useTranslations('common')
   const router = useRouter()
   const [pending, start] = useTransition()
   const [open, setOpen] = useState(false)
+  // Deletion is not allowed while the group still has nodes or authorized keys: deleting the headscale user would destroy them too.
+  // This is just an early check; the actual guard is in the server-side deleteGroup.
+  const blocked = nodeCount > 0 || keyCount > 0
 
   function del() {
     start(async () => {
@@ -49,13 +62,15 @@ export function GroupRowActions({ id, name }: { id: number; name: string }) {
         <AlertDialogHeader>
           <AlertDialogTitle>{t('deleteTitle', { name })}</AlertDialogTitle>
           <AlertDialogDescription>
-            {t('deleteDescription')}
+            {blocked
+              ? t('deleteBlocked', { nodeCount, keyCount })
+              : t('deleteDescription')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
           <AlertDialogAction
-            disabled={pending}
+            disabled={pending || blocked}
             onClick={(e) => {
               e.preventDefault()
               del()

@@ -20,12 +20,10 @@ export function buildPolicy(
   return JSON.stringify({ tagOwners, acls }, null, 2)
 }
 
-// Recompute and apply the entire policy. When groups is empty, refuse to apply it (an empty policy = deny-all would accidentally disconnect existing nodes; pitfall 12).
+// Recompute and apply the entire policy. When groups is empty, apply an empty policy (= deny-all): deleteGroup has already
+// ensured that the group contains no nodes or keys before allowing deletion, so deleting the last group cannot accidentally disconnect existing nodes.
 export async function rebuildPolicy(): Promise<void> {
   const rows = db.select().from(groups).all()
-  if (rows.length === 0) {
-    throw new Error('rebuildPolicy: refusing to apply an empty policy because no groups exist')
-  }
   await setPolicy(
     buildPolicy(rows.map((g) => ({ hsUserName: g.hsUserName, okTag: g.okTag }))),
   )
