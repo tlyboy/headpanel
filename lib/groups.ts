@@ -85,27 +85,14 @@ export function groupOfNode(
   return groups.find((g) => g.hsUserId === uid)
 }
 
-// 会话可见的组，再按 super 选中的「当前组」收敛一次。
-// activeGroup 只是视图取景框，收窄范围但绝不放宽：非 super 传什么都无效。
-export function scopedGroups(
-  session: Session,
-  activeGroup?: Group | null,
-): Group[] {
-  const all = visibleGroups(session)
-  if (session.role !== 'super' || !activeGroup) return all
-  return all.filter((g) => g.id === activeGroup.id)
-}
-
-// 按会话可见范围过滤节点。super 看全部（除非选了当前组）；group 只看归属本组的。
+// 按会话可见范围过滤节点。super 看全部；group 只看归属本组的。
+// super 切到某个组时会话本身就已降级为该组的 group 角色（见 lib/auth.ts），
+// 所以这里不需要再认识「当前组」这个概念。
 export function scopeNodes<T extends NodeLike>(
   session: Session,
   nodes: T[],
-  activeGroup?: Group | null,
 ): T[] {
-  if (session.role === 'super') {
-    if (!activeGroup) return nodes
-    return nodes.filter((n) => nodeBelongsToGroup(n, activeGroup))
-  }
+  if (session.role === 'super') return nodes
   const groups = listGroups()
   const groupIdByTag = new Map(groups.map((group) => [group.okTag, group.id]))
   const groupIdByUser = new Map(

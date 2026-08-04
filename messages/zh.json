@@ -347,9 +347,10 @@
     }
   },
   "groupSwitcher": {
-    "label": "切换视图",
-    "allGroups": "全部组",
-    "hint": "仅影响列表页显示范围，不改变权限",
-    "addGroup": "新建组"
+    "label": "切换身份",
+    "allGroups": "超级管理员",
+    "hint": "切换后将以该组管理员的身份操作",
+    "addGroup": "新建组",
+    "actingAs": "以该组管理员身份"
   }
 }

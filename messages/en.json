@@ -347,9 +347,10 @@
     }
   },
   "groupSwitcher": {
-    "label": "Switch view",
-    "allGroups": "All groups",
-    "hint": "Filters what the lists show; permissions are unchanged",
-    "addGroup": "Add group"
+    "label": "Switch identity",
+    "allGroups": "Super admin",
+    "hint": "You will act as that group’s admin",
+    "addGroup": "Add group",
+    "actingAs": "acting as group admin"
   }
 }

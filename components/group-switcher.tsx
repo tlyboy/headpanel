@@ -73,7 +73,7 @@ export function GroupSwitcher({
                   {active ? active.name : productName}
                 </span>
                 <span className="text-muted-foreground truncate text-xs">
-                  {active ? active.slug : t('allGroups')}
+                  {active ? t('actingAs') : t('allGroups')}
                 </span>
               </span>
               <ChevronsUpDown className="ml-auto" />

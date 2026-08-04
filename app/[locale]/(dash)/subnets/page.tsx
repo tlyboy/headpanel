@@ -1,8 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { TriangleAlert } from 'lucide-react'
 import { requireSuper } from '@/lib/auth'
-import { readActiveGroup } from '@/lib/active-group'
-import { scopeNodes } from '@/lib/groups'
 import { listNodes, type HsNode } from '@/lib/headscale'
 import { CmdBlock } from '@/components/cmd-block'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -60,17 +58,13 @@ interface RouteEntry {
 }
 
 export default async function SubnetsPage() {
-  const [session, t, common] = await Promise.all([
+  // requireSuper：切进某个组后这页会被挡在外面，和组管理员看到的一致
+  const [, t, common] = await Promise.all([
     requireSuper(),
     getTranslations('subnets'),
     getTranslations('common'),
   ])
-  // 选了当前组时只看该组节点宣告的路由
-  const nodes = scopeNodes(
-    session,
-    await listNodes(),
-    await readActiveGroup(session),
-  )
+  const nodes = await listNodes()
 
   // 按网段聚合：同一网段可能有多个节点宣告，其中只有一个在承载
   const byRoute = new Map<string, RouteEntry[]>()

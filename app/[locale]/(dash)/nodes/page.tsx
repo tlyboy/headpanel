@@ -2,7 +2,6 @@ import { getTranslations } from 'next-intl/server'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { requireSession } from '@/lib/auth'
 import { scopeNodes } from '@/lib/groups'
-import { readActiveGroup } from '@/lib/active-group'
 import { readNodeNetInfo } from '@/lib/headscale-db'
 import { fmtTime } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
@@ -34,11 +33,7 @@ export default async function NodesPage() {
     getTranslations('nodes'),
     getTranslations('common'),
   ])
-  const nodes = scopeNodes(
-    session,
-    await syncAndListNodes(),
-    await readActiveGroup(session),
-  )
+  const nodes = scopeNodes(session, await syncAndListNodes())
   // 局域网地址只能从 headscale 的库里读；非同机部署时返回空表，该列显示 —
   const netInfo = readNodeNetInfo()
   let pending = 0
