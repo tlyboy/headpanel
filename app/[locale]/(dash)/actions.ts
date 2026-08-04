@@ -3,9 +3,13 @@
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
-import { destroySession, requireSession, requireSuper } from '@/lib/auth'
+import {
+  destroySession,
+  requireRealSession,
+  requireSession,
+  IMPERSONATE_COOKIE,
+} from '@/lib/auth'
 import { auditAfter } from '@/lib/db'
-import { ACTIVE_GROUP_COOKIE } from '@/lib/active-group'
 import { visibleGroups } from '@/lib/groups'
 import { redirect } from '@/i18n/navigation'
 
@@ -17,19 +21,20 @@ export async function logout() {
   redirect({ href: '/login', locale })
 }
 
-// Switch the super user's "current group" view. Pass null to view all groups.
-// Only write the cookie; validation is performed on the server each time it's read (see lib/active-group.ts) —
-// so even if the cookie is changed to another group ID, it will only fall back to "all" and won't grant unauthorized access.
+// Switch the group that super is impersonating. Pass null to return to super's own identity.
+// Use the real identity for all checks: the downgraded session's role is already group, so using requireSuper would also block the
+// way to "switch back".
 export async function setActiveGroupAction(groupId: number | null) {
-  await requireSuper()
+  const real = await requireRealSession()
+  if (real.role !== 'super') throw new Error('Only super can switch groups')
   const jar = await cookies()
   if (groupId == null) {
-    jar.delete(ACTIVE_GROUP_COOKIE)
+    jar.delete(IMPERSONATE_COOKIE)
   } else {
-    if (!visibleGroups(await requireSession()).some((g) => g.id === groupId)) {
+    if (!visibleGroups(real).some((g) => g.id === groupId)) {
       throw new Error('Group is not visible to this session')
     }
-    jar.set(ACTIVE_GROUP_COOKIE, String(groupId), {
+    jar.set(IMPERSONATE_COOKIE, String(groupId), {
       httpOnly: true,
       sameSite: 'lax',
       path: '/',

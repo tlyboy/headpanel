@@ -1,8 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { getHeadscaleVersion, listPreAuthKeys } from '@/lib/headscale'
 import { requireSession } from '@/lib/auth'
-import { scopedGroups, scopeNodes } from '@/lib/groups'
-import { readActiveGroup } from '@/lib/active-group'
+import { visibleGroups, scopeNodes } from '@/lib/groups'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { isNever } from '@/lib/format'
 import {
@@ -21,15 +20,14 @@ export default async function DashboardPage() {
     getTranslations('dashboard'),
     getTranslations('common'),
   ])
-  const activeGroup = await readActiveGroup(session)
-  const groups = scopedGroups(session, activeGroup)
+  const groups = visibleGroups(session)
   const hsUserIds = new Set(groups.map((g) => g.hsUserId))
   const [allNodes, allKeys, version] = await Promise.all([
     syncAndListNodes(),
     groups.length > 0 ? listPreAuthKeys() : [],
     getHeadscaleVersion(),
   ])
-  const nodes = scopeNodes(session, allNodes, activeGroup)
+  const nodes = scopeNodes(session, allNodes)
   // ?user= filtering is broken; fetch them all, then filter by key.user.id (to avoid double-counting across groups)
   let online = 0
   let pending = 0

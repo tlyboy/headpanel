@@ -22,6 +22,7 @@ export function AppSidebar({
   isSuper,
   hostControl,
   productName,
+  showSwitcher,
   groups,
   activeGroupId,
 }: {
@@ -30,13 +31,14 @@ export function AppSidebar({
   isSuper: boolean
   hostControl: boolean
   productName: string
+  showSwitcher: boolean
   groups: SwitchableGroup[]
   activeGroupId: number | null
 }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
-        {isSuper ? (
+        {showSwitcher ? (
           <GroupSwitcher
             groups={groups}
             activeId={activeGroupId}

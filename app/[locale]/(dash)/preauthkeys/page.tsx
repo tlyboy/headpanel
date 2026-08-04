@@ -6,8 +6,7 @@ import {
 } from '@/lib/headscale'
 import { getPanelBasePath } from '@/lib/panel-base-path'
 import { requireSession } from '@/lib/auth'
-import { scopedGroups } from '@/lib/groups'
-import { readActiveGroup } from '@/lib/active-group'
+import { visibleGroups } from '@/lib/groups'
 import { pruneOrphanKeys } from '@/lib/keys-sync'
 import { db } from '@/lib/db'
 import { preauthKeys as preauthKeysTable } from '@/lib/db/schema'
@@ -41,18 +40,17 @@ export default async function PreAuthKeysPage() {
     getTranslations('preAuthKeys'),
     getTranslations('common'),
   ])
-  const activeGroup = await readActiveGroup(session)
-  const groups = scopedGroups(session, activeGroup)
+  const groups = visibleGroups(session)
   const headscaleUrl = getDefaultHeadscaleConnection().serverUrl
   const panelBasePath = getPanelBasePath()
   const nameByHsUser = new Map(groups.map((g) => [g.hsUserId, g.name]))
 
-  // headscale's ?user= filter is broken (always returns all keys), so fetch once and filter by ownership via key.user.id,
-  // which both prevents the same key from appearing in every group and enforces group isolation.
-  // super should see all keys (including headscale users like admin that don't belong to any panel group),
-  // so fetch even when it has no groups — otherwise, after deleting all groups, the whole page is blank and looks like the keys were deleted.
-  // When narrowed to a group, keys outside that group should no longer be visible
-  const showUngrouped = session.role === 'super' && !activeGroup
+  // headscale's ?user= filter is broken (it always returns all keys), so fetch once and filter by key.user.id to determine ownership,
+  // which prevents the same key from appearing in every group and enforces group isolation.
+  // super must see all keys (including headscale users like admin who don't belong to any panel group),
+  // so fetch keys even if it has no groups — otherwise, deleting all groups leaves the whole page blank, making it look as if the keys were deleted.
+  // After demotion to a group role, the role is no longer super, so keys outside the group are naturally hidden
+  const showUngrouped = session.role === 'super'
   const all = showUngrouped || groups.length > 0 ? await listPreAuthKeys() : []
   // Also delete local plaintext backups for keys that no longer exist on the headscale side (deleting a group also destroys its keys)
   pruneOrphanKeys(all)

@@ -2,7 +2,6 @@ import { getTranslations } from 'next-intl/server'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { requireSession } from '@/lib/auth'
 import { scopeNodes } from '@/lib/groups'
-import { readActiveGroup } from '@/lib/active-group'
 import { readNodeNetInfo } from '@/lib/headscale-db'
 import { fmtTime } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
@@ -34,11 +33,7 @@ export default async function NodesPage() {
     getTranslations('nodes'),
     getTranslations('common'),
   ])
-  const nodes = scopeNodes(
-    session,
-    await syncAndListNodes(),
-    await readActiveGroup(session),
-  )
+  const nodes = scopeNodes(session, await syncAndListNodes())
   // LAN addresses can only be read from the headscale database; for deployments on separate hosts, return an empty table, and display — in this column
   const netInfo = readNodeNetInfo()
   let pending = 0

@@ -1,8 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { TriangleAlert } from 'lucide-react'
 import { requireSuper } from '@/lib/auth'
-import { readActiveGroup } from '@/lib/active-group'
-import { scopeNodes } from '@/lib/groups'
 import { listNodes, type HsNode } from '@/lib/headscale'
 import { CmdBlock } from '@/components/cmd-block'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
@@ -60,17 +58,13 @@ interface RouteEntry {
 }
 
 export default async function SubnetsPage() {
-  const [session, t, common] = await Promise.all([
+  // requireSuper: after switching to a group, this page will be blocked, just as it is for group admins
+  const [, t, common] = await Promise.all([
     requireSuper(),
     getTranslations('subnets'),
     getTranslations('common'),
   ])
-  // When a group is selected, show only routes advertised by nodes in that group
-  const nodes = scopeNodes(
-    session,
-    await listNodes(),
-    await readActiveGroup(session),
-  )
+  const nodes = await listNodes()
 
   // Group by subnet: multiple nodes may advertise the same subnet, but only one of them carries traffic
   const byRoute = new Map<string, RouteEntry[]>()

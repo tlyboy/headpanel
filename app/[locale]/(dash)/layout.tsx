@@ -1,7 +1,6 @@
 import { getTranslations } from 'next-intl/server'
-import { requireSession } from '@/lib/auth'
+import { requireRealSession, requireSession } from '@/lib/auth'
 import { visibleGroups } from '@/lib/groups'
-import { readActiveGroup } from '@/lib/active-group'
 import { isHeadscaleHostControlEnabled } from '@/lib/headscale-config'
 import { AppSidebar } from '@/components/app-sidebar'
 import { DashboardHeader } from '@/components/dashboard-header'
@@ -12,13 +11,16 @@ export default async function DashLayout({
 }: {
   children: React.ReactNode
 }) {
-  const [session, t] = await Promise.all([
+  const [session, real, t] = await Promise.all([
     requireSession(),
+    requireRealSession(),
     getTranslations('common'),
   ])
+  // The sidebar determines menu visibility based on the "downgraded" identity, keeping it consistent with page permissions;
+  // but the switcher itself must be attached to the "real" identity, or it disappears after switching into a group.
   const isSuper = session.role === 'super'
-  const activeGroup = await readActiveGroup(session)
-  const groups = visibleGroups(session)
+  const realIsSuper = real.role === 'super'
+  const groups = visibleGroups(real)
   const hostControl = isHeadscaleHostControlEnabled()
   const scopeLabel = isSuper
     ? t('superAdmin')
@@ -32,8 +34,9 @@ export default async function DashLayout({
         isSuper={isSuper}
         hostControl={hostControl}
         productName={t('productName')}
+        showSwitcher={realIsSuper}
         groups={groups.map((g) => ({ id: g.id, name: g.name, slug: g.slug }))}
-        activeGroupId={activeGroup?.id ?? null}
+        activeGroupId={session.impersonating ? session.gid : null}
       />
       <SidebarInset className="h-svh overflow-hidden">
         <DashboardHeader />

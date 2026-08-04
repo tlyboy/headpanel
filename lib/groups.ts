@@ -85,27 +85,14 @@ export function groupOfNode(
   return groups.find((g) => g.hsUserId === uid)
 }
 
-// Groups visible to the session, narrowed further by the "current group" selected by super.
-// activeGroup is only a viewfinder: it can narrow the scope but never widen it; for non-super sessions, any value is ignored.
-export function scopedGroups(
-  session: Session,
-  activeGroup?: Group | null,
-): Group[] {
-  const all = visibleGroups(session)
-  if (session.role !== 'super' || !activeGroup) return all
-  return all.filter((g) => g.id === activeGroup.id)
-}
-
-// Filter nodes by the session's visible scope. super sees all (unless a current group is selected); group sees only nodes belonging to its group.
+// Filter nodes to the scope visible to the session. super sees all; group sees only nodes belonging to its group.
+// When super switches to a group, the session itself is already downgraded to that group's group role (see lib/auth.ts),
+// so there is no need to handle the concept of a "current group" here.
 export function scopeNodes<T extends NodeLike>(
   session: Session,
   nodes: T[],
-  activeGroup?: Group | null,
 ): T[] {
-  if (session.role === 'super') {
-    if (!activeGroup) return nodes
-    return nodes.filter((n) => nodeBelongsToGroup(n, activeGroup))
-  }
+  if (session.role === 'super') return nodes
   const groups = listGroups()
   const groupIdByTag = new Map(groups.map((group) => [group.okTag, group.id]))
   const groupIdByUser = new Map(
