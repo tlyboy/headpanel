@@ -345,5 +345,10 @@
       "cmdForwardLinux": "Linux — enable kernel forwarding",
       "cmdForwardWindows": "Windows — a reboot is required"
     }
+  },
+  "groupSwitcher": {
+    "label": "Switch view",
+    "allGroups": "All groups",
+    "hint": "Filters what the lists show; permissions are unchanged"
   }
 }

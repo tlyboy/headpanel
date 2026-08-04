@@ -2,6 +2,7 @@
 
 import { CableIcon } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
+import { GroupSwitcher, type SwitchableGroup } from '@/components/group-switcher'
 import { SidebarNav } from '@/components/sidebar-nav'
 import { SidebarUserMenu } from '@/components/sidebar-user-menu'
 import {
@@ -21,16 +22,27 @@ export function AppSidebar({
   isSuper,
   hostControl,
   productName,
+  groups,
+  activeGroupId,
 }: {
   username: string
   scopeLabel: string
   isSuper: boolean
   hostControl: boolean
   productName: string
+  groups: SwitchableGroup[]
+  activeGroupId: number | null
 }) {
   return (
     <Sidebar collapsible="icon">
       <SidebarHeader>
+        {isSuper ? (
+          <GroupSwitcher
+            groups={groups}
+            activeId={activeGroupId}
+            productName={productName}
+          />
+        ) : (
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton asChild size="lg">
@@ -48,6 +60,7 @@ export function AppSidebar({
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
+        )}
       </SidebarHeader>
       <SidebarContent>
         <SidebarNav isSuper={isSuper} hostControl={hostControl} />

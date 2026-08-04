@@ -6,7 +6,8 @@ import {
 } from '@/lib/headscale'
 import { getPanelBasePath } from '@/lib/panel-base-path'
 import { requireSession } from '@/lib/auth'
-import { visibleGroups } from '@/lib/groups'
+import { scopedGroups } from '@/lib/groups'
+import { readActiveGroup } from '@/lib/active-group'
 import { pruneOrphanKeys } from '@/lib/keys-sync'
 import { db } from '@/lib/db'
 import { preauthKeys as preauthKeysTable } from '@/lib/db/schema'
@@ -40,7 +41,8 @@ export default async function PreAuthKeysPage() {
     getTranslations('preAuthKeys'),
     getTranslations('common'),
   ])
-  const groups = visibleGroups(session)
+  const activeGroup = await readActiveGroup(session)
+  const groups = scopedGroups(session, activeGroup)
   const headscaleUrl = getDefaultHeadscaleConnection().serverUrl
   const panelBasePath = getPanelBasePath()
   const nameByHsUser = new Map(groups.map((g) => [g.hsUserId, g.name]))
@@ -49,8 +51,9 @@ export default async function PreAuthKeysPage() {
   // which both prevents the same key from appearing in every group and enforces group isolation.
   // super should see all keys (including headscale users like admin that don't belong to any panel group),
   // so fetch even when it has no groups — otherwise, after deleting all groups, the whole page is blank and looks like the keys were deleted.
-  const isSuper = session.role === 'super'
-  const all = isSuper || groups.length > 0 ? await listPreAuthKeys() : []
+  // When narrowed to a group, keys outside that group should no longer be visible
+  const showUngrouped = session.role === 'super' && !activeGroup
+  const all = showUngrouped || groups.length > 0 ? await listPreAuthKeys() : []
   // Also delete local plaintext backups for keys that no longer exist on the headscale side (deleting a group also destroys its keys)
   pruneOrphanKeys(all)
   const keys: { key: HsPreAuthKey; groupName: string }[] = []
@@ -58,7 +61,7 @@ export default async function PreAuthKeysPage() {
     const groupName = nameByHsUser.get(key.user?.id ?? '')
     if (groupName) {
       keys.push({ key, groupName })
-    } else if (isSuper) {
+    } else if (showUngrouped) {
       // For keys that don't belong to any panel group, fall back to showing their user name on the headscale side
       keys.push({ key, groupName: key.user?.name ?? '—' })
     }
