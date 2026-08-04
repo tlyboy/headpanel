@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { requireSession } from '@/lib/auth'
 import { scopeNodes } from '@/lib/groups'
+import { readNodeNetInfo } from '@/lib/headscale-db'
 import { fmtTime } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -29,6 +30,8 @@ export default async function NodesPage() {
     getTranslations('common'),
   ])
   const nodes = scopeNodes(session, await syncAndListNodes())
+  // 局域网地址只能从 headscale 的库里读；非同机部署时返回空表，该列显示 —
+  const netInfo = readNodeNetInfo()
   let pending = 0
   let online = 0
   for (const node of nodes) {
@@ -56,6 +59,7 @@ export default async function NodesPage() {
               <TableHead className="w-12">ID</TableHead>
               <TableHead>{t('alias')}</TableHead>
               <TableHead>IP</TableHead>
+              <TableHead>{t('lanIp')}</TableHead>
               <TableHead>{t('user')}</TableHead>
               <TableHead>{common('online')}</TableHead>
               <TableHead>{t('approval')}</TableHead>
@@ -69,7 +73,7 @@ export default async function NodesPage() {
             {nodes.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={10}
+                  colSpan={11}
                   className="py-8 text-center text-muted-foreground"
                 >
                   {t('empty')}
@@ -77,6 +81,8 @@ export default async function NodesPage() {
               </TableRow>
             ) : (
               nodes.map((n) => {
+                // 首个是打分最高的（落在自己宣告网段内、非 .1 网关、非 docker 段）
+                const lanIps = netInfo.get(n.id)?.lanIps ?? []
                 return (
                   <TableRow key={n.id}>
                     <TableCell className="text-muted-foreground">
@@ -85,6 +91,20 @@ export default async function NodesPage() {
                     <TableCell className="font-medium">{n.givenName}</TableCell>
                     <TableCell className="font-mono text-xs">
                       {n.ipAddresses.join(' / ')}
+                    </TableCell>
+                    <TableCell className="font-mono text-xs">
+                      {lanIps.length === 0 ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : (
+                        <span title={lanIps.join('\n')}>
+                          {lanIps[0]}
+                          {lanIps.length > 1 && (
+                            <span className="text-muted-foreground ml-1">
+                              +{lanIps.length - 1}
+                            </span>
+                          )}
+                        </span>
+                      )}
                     </TableCell>
                     <TableCell>{n.user?.name ?? '—'}</TableCell>
                     <TableCell>

@@ -45,7 +45,8 @@
     "groups": "Groups",
     "network": "Network",
     "scripts": "Scripts",
-    "audit": "Audit log"
+    "audit": "Audit log",
+    "subnets": "Subnet routes"
   },
   "theme": {
     "toggle": "Toggle theme",
@@ -101,7 +102,8 @@
     "empty": "No nodes",
     "approved": "Approved",
     "pending": "Pending",
-    "rejected": "Rejected"
+    "rejected": "Rejected",
+    "lanIp": "LAN IP"
   },
   "pending": {
     "title": "Pending approvals",
@@ -297,5 +299,43 @@
     "noteTooLong": "Note must be at most 200 characters",
     "noteCleared": "(cleared)",
     "groupProtected": "\"{slug}\" was not created by the panel — it maps directly to an existing headscale user. Deleting it would destroy every node and pre-auth key owned by that user, so the panel refuses. Do it manually on the server if you really need to."
+  },
+  "subnets": {
+    "title": "Subnet routes",
+    "summary": "{total} subnet(s) · {serving} serving · {pending} awaiting approval",
+    "route": "Subnet",
+    "node": "Node",
+    "status": "Status",
+    "advertising": "Still advertised",
+    "actions": "Actions",
+    "empty": "No subnet routes yet. Advertise one on a client first — see below.",
+    "serving": "Serving",
+    "standby": "Approved · standby",
+    "pending": "Awaiting approval",
+    "staleHint": "The client stopped advertising this route, but the approval is still on record. Revoke to clean it up.",
+    "approve": "Approve",
+    "revoke": "Revoke",
+    "approved": "Subnet approved",
+    "revoked": "Subnet revoked",
+    "working": "Working...",
+    "approveTitle": "Let {node} serve {route}?",
+    "revokeTitle": "Revoke {route} from {node}?",
+    "approveDescription": "Once approved, tailnet nodes can reach this subnet through this machine — provided it has IP forwarding enabled and your ACL allows the subnet.",
+    "revokeDescription": "This node is a standby; revoking it does not affect the one currently serving.",
+    "revokePrimaryDescription": "This node is currently serving the subnet. After revoking, headscale fails over to another approved node if one exists — otherwise the subnet becomes unreachable immediately.",
+    "howto": {
+      "title": "Enabling and disabling subnet routes",
+      "intro": "Two steps: the client advertises (run on that machine), then you approve here. Both are required — advertising alone does nothing, and approving a route the client no longer advertises shows up here as \"no longer advertised\".",
+      "step1Title": "Step 1 — advertise the subnet on the client",
+      "step1Desc": "Run this on the machine that will act as the gateway. It then appears here as awaiting approval.",
+      "step2Title": "Step 2 — enable IP forwarding",
+      "step2Desc": "Without it, traffic reaches the machine but cannot be forwarded — and the machine slows down under the packets it keeps failing to route.",
+      "step3Title": "Step 3 — approve it here.",
+      "step3Desc": "Use the Approve button above. Several nodes may be approved for the same subnet; headscale lets exactly one serve it and keeps the rest on standby, failing over automatically if the serving node drops.",
+      "accessTitle": "Consumers need accept-routes.",
+      "accessDesc": "Subnet routes only apply to nodes that opted in: tailscale set --accept-routes=true. Do not enable it on machines that already belong to that subnet, or their local traffic will detour through the gateway node.",
+      "warnTitle": "Note:",
+      "warnDesc": "Your ACL must also allow the destination subnet, or approved routes still will not work — a dst of node tags alone is not enough; it must include the CIDR explicitly (e.g. 192.168.1.0/24:*)."
+    }
   }
 }
