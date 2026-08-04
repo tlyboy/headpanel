@@ -18,10 +18,13 @@ import { NodeRowActions } from './row-actions'
 
 export const dynamic = 'force-dynamic'
 
-const APPROVAL_CLASS: Record<'approved' | 'pending' | 'rejected', string> = {
-  approved: 'bg-emerald-600 text-white',
-  pending: 'bg-amber-600 text-white',
-  rejected: 'bg-red-600 text-white',
+const APPROVAL_VARIANT: Record<
+  'approved' | 'pending' | 'rejected',
+  'success' | 'warning' | 'destructive'
+> = {
+  approved: 'success',
+  pending: 'warning',
+  rejected: 'destructive',
 }
 
 export default async function NodesPage() {
@@ -99,7 +102,7 @@ export default async function NodesPage() {
                     <TableCell>{n.user?.name ?? '—'}</TableCell>
                     <TableCell>
                       {n.online ? (
-                        <Badge className="bg-emerald-600 text-white">
+                        <Badge variant="success">
                           {common('online')}
                         </Badge>
                       ) : (
@@ -107,7 +110,7 @@ export default async function NodesPage() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <Badge className={APPROVAL_CLASS[n.status]}>
+                      <Badge variant={APPROVAL_VARIANT[n.status]}>
                         {t(n.status)}
                       </Badge>
                     </TableCell>

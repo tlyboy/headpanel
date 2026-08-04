@@ -144,13 +144,13 @@ export default async function SubnetsPage() {
                     </TableCell>
                     <TableCell>
                       {e.serving ? (
-                        <Badge className="bg-emerald-600 text-white">
+                        <Badge variant="success">
                           {t('serving')}
                         </Badge>
                       ) : e.approved ? (
                         <Badge variant="secondary">{t('standby')}</Badge>
                       ) : (
-                        <Badge className="bg-amber-600 text-white">
+                        <Badge variant="warning">
                           {t('pending')}
                         </Badge>
                       )}
