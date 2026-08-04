@@ -2,6 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { requireSession } from '@/lib/auth'
 import { scopeNodes } from '@/lib/groups'
+import { readActiveGroup } from '@/lib/active-group'
 import { fmtTime } from '@/lib/format'
 import {
   Table,
@@ -20,7 +21,11 @@ export default async function PendingPage() {
     requireSession(),
     getTranslations('pending'),
   ])
-  const all = scopeNodes(session, await syncAndListNodes())
+  const all = scopeNodes(
+    session,
+    await syncAndListNodes(),
+    await readActiveGroup(session),
+  )
   const pending = all.filter((n) => n.status === 'pending')
 
   return (

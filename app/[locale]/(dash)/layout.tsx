@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { requireSession } from '@/lib/auth'
 import { visibleGroups } from '@/lib/groups'
+import { readActiveGroup } from '@/lib/active-group'
 import { isHeadscaleHostControlEnabled } from '@/lib/headscale-config'
 import { AppSidebar } from '@/components/app-sidebar'
 import { DashboardHeader } from '@/components/dashboard-header'
@@ -16,10 +17,12 @@ export default async function DashLayout({
     getTranslations('common'),
   ])
   const isSuper = session.role === 'super'
+  const activeGroup = await readActiveGroup(session)
+  const groups = visibleGroups(session)
   const hostControl = isHeadscaleHostControlEnabled()
   const scopeLabel = isSuper
     ? t('superAdmin')
-    : (visibleGroups(session)[0]?.name ?? t('unknown'))
+    : (groups[0]?.name ?? t('unknown'))
 
   return (
     <SidebarProvider>
@@ -29,6 +32,8 @@ export default async function DashLayout({
         isSuper={isSuper}
         hostControl={hostControl}
         productName={t('productName')}
+        groups={groups.map((g) => ({ id: g.id, name: g.name, slug: g.slug }))}
+        activeGroupId={activeGroup?.id ?? null}
       />
       <SidebarInset className="h-svh overflow-hidden">
         <DashboardHeader />

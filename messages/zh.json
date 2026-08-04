@@ -345,5 +345,10 @@
       "cmdForwardLinux": "Linux：开启内核转发",
       "cmdForwardWindows": "Windows：改完必须重启才生效"
     }
+  },
+  "groupSwitcher": {
+    "label": "切换视图",
+    "allGroups": "全部组",
+    "hint": "仅影响列表页显示范围，不改变权限"
   }
 }

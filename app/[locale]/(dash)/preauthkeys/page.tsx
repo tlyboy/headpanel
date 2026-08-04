@@ -6,7 +6,8 @@ import {
 } from '@/lib/headscale'
 import { getPanelBasePath } from '@/lib/panel-base-path'
 import { requireSession } from '@/lib/auth'
-import { visibleGroups } from '@/lib/groups'
+import { scopedGroups } from '@/lib/groups'
+import { readActiveGroup } from '@/lib/active-group'
 import { pruneOrphanKeys } from '@/lib/keys-sync'
 import { db } from '@/lib/db'
 import { preauthKeys as preauthKeysTable } from '@/lib/db/schema'
@@ -40,7 +41,8 @@ export default async function PreAuthKeysPage() {
     getTranslations('preAuthKeys'),
     getTranslations('common'),
   ])
-  const groups = visibleGroups(session)
+  const activeGroup = await readActiveGroup(session)
+  const groups = scopedGroups(session, activeGroup)
   const headscaleUrl = getDefaultHeadscaleConnection().serverUrl
   const panelBasePath = getPanelBasePath()
   const nameByHsUser = new Map(groups.map((g) => [g.hsUserId, g.name]))
@@ -49,8 +51,9 @@ export default async function PreAuthKeysPage() {
   // 既避免同一 key 被每个组重复显示，又实现按组隔离。
   // super 要看到全部 key（含 admin 等不属于任何面板组的 headscale user），
   // 所以它即便一个组都没有也要拉——否则删光组后整页空白，看着像 key 被删了。
-  const isSuper = session.role === 'super'
-  const all = isSuper || groups.length > 0 ? await listPreAuthKeys() : []
+  // 收敛到某个组时，组外的 key 不该再露出来
+  const showUngrouped = session.role === 'super' && !activeGroup
+  const all = showUngrouped || groups.length > 0 ? await listPreAuthKeys() : []
   // headscale 侧已消失的 key，其本地明文备份一并清掉（删组会连带销毁 key）
   pruneOrphanKeys(all)
   const keys: { key: HsPreAuthKey; groupName: string }[] = []
@@ -58,7 +61,7 @@ export default async function PreAuthKeysPage() {
     const groupName = nameByHsUser.get(key.user?.id ?? '')
     if (groupName) {
       keys.push({ key, groupName })
-    } else if (isSuper) {
+    } else if (showUngrouped) {
       // 不归任何面板组的 key，退而标出它在 headscale 侧的 user 名
       keys.push({ key, groupName: key.user?.name ?? '—' })
     }

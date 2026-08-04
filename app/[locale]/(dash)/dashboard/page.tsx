@@ -1,7 +1,8 @@
 import { getTranslations } from 'next-intl/server'
 import { getHeadscaleVersion, listPreAuthKeys } from '@/lib/headscale'
 import { requireSession } from '@/lib/auth'
-import { visibleGroups, scopeNodes } from '@/lib/groups'
+import { scopedGroups, scopeNodes } from '@/lib/groups'
+import { readActiveGroup } from '@/lib/active-group'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { isNever } from '@/lib/format'
 import {
@@ -20,14 +21,15 @@ export default async function DashboardPage() {
     getTranslations('dashboard'),
     getTranslations('common'),
   ])
-  const groups = visibleGroups(session)
+  const activeGroup = await readActiveGroup(session)
+  const groups = scopedGroups(session, activeGroup)
   const hsUserIds = new Set(groups.map((g) => g.hsUserId))
   const [allNodes, allKeys, version] = await Promise.all([
     syncAndListNodes(),
     groups.length > 0 ? listPreAuthKeys() : [],
     getHeadscaleVersion(),
   ])
-  const nodes = scopeNodes(session, allNodes)
+  const nodes = scopeNodes(session, allNodes, activeGroup)
   // ?user= 过滤失效，拉全部后按 key.user.id 归属过滤（避免多组重复计数）
   let online = 0
   let pending = 0
