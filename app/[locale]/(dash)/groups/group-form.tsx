@@ -18,11 +18,26 @@ import {
 } from '@/components/ui/dialog'
 import { createGroupAction } from './actions'
 
-export function CreateGroup() {
+// 默认自管开关并自带触发按钮（groups 页面的用法）；传入 open/onOpenChange 则转为
+// 受控，配合 hideTrigger 可由别处唤起（如侧边栏的组切换器）。
+export function CreateGroup({
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
+}: {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  hideTrigger?: boolean
+} = {}) {
   const t = useTranslations('groupForm')
   const common = useTranslations('common')
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [openState, setOpenState] = useState(false)
+  const open = openProp ?? openState
+  const setOpen = (next: boolean) => {
+    if (openProp === undefined) setOpenState(next)
+    onOpenChange?.(next)
+  }
   const [pending, start] = useTransition()
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
@@ -63,9 +78,11 @@ export function CreateGroup() {
         if (!o) reset()
       }}
     >
-      <DialogTrigger asChild>
-        <Button>{t('trigger')}</Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button>{t('trigger')}</Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('title')}</DialogTitle>

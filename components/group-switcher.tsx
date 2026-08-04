@@ -1,9 +1,9 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { useRouter } from 'next/navigation'
-import { Boxes, Check, ChevronsUpDown, Layers } from 'lucide-react'
+import { Boxes, Check, ChevronsUpDown, Layers, Plus } from 'lucide-react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -20,6 +20,7 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 import { setActiveGroupAction } from '@/app/[locale]/(dash)/actions'
+import { CreateGroup } from '@/app/[locale]/(dash)/groups/group-form'
 
 export interface SwitchableGroup {
   id: number
@@ -42,6 +43,7 @@ export function GroupSwitcher({
   const { isMobile } = useSidebar()
   const router = useRouter()
   const [pending, start] = useTransition()
+  const [createOpen, setCreateOpen] = useState(false)
 
   const active = groups.find((g) => g.id === activeId) ?? null
 
@@ -105,11 +107,25 @@ export function GroupSwitcher({
               ))}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => setCreateOpen(true)}
+              className="gap-2"
+            >
+              <Plus />
+              <span className="text-muted-foreground">{t('addGroup')}</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
             <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
               {t('hint')}
             </DropdownMenuLabel>
           </DropdownMenuContent>
         </DropdownMenu>
+        {/* 必须渲染在 DropdownMenu 之外：菜单项一点就关，弹窗跟着卸载就打不开了 */}
+        <CreateGroup
+          open={createOpen}
+          onOpenChange={setCreateOpen}
+          hideTrigger
+        />
       </SidebarMenuItem>
     </SidebarMenu>
   )
