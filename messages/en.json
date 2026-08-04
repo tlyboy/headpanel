@@ -103,7 +103,10 @@
     "approved": "Approved",
     "pending": "Pending",
     "rejected": "Rejected",
-    "lanIp": "LAN IP"
+    "lanIp": "LAN IP",
+    "lanIpHint": "LAN addresses reported by this node; the first is most likely its real NIC",
+    "lanIpPrimary": "primary",
+    "copyLanIp": "Copy"
   },
   "pending": {
     "title": "Pending approvals",

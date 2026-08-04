@@ -13,6 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { LanIpCell } from './lan-ip-cell'
 import { NodeRowActions } from './row-actions'
 
 export const dynamic = 'force-dynamic'
@@ -92,19 +93,8 @@ export default async function NodesPage() {
                     <TableCell className="font-mono text-xs">
                       {n.ipAddresses.join(' / ')}
                     </TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {lanIps.length === 0 ? (
-                        <span className="text-muted-foreground">—</span>
-                      ) : (
-                        <span title={lanIps.join('\n')}>
-                          {lanIps[0]}
-                          {lanIps.length > 1 && (
-                            <span className="text-muted-foreground ml-1">
-                              +{lanIps.length - 1}
-                            </span>
-                          )}
-                        </span>
-                      )}
+                    <TableCell className="text-xs">
+                      <LanIpCell ips={lanIps} />
                     </TableCell>
                     <TableCell>{n.user?.name ?? '—'}</TableCell>
                     <TableCell>
