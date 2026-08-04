@@ -349,6 +349,7 @@
   "groupSwitcher": {
     "label": "Switch view",
     "allGroups": "All groups",
-    "hint": "Filters what the lists show; permissions are unchanged"
+    "hint": "Filters what the lists show; permissions are unchanged",
+    "addGroup": "Add group"
   }
 }

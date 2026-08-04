@@ -18,11 +18,26 @@ import {
 } from '@/components/ui/dialog'
 import { createGroupAction } from './actions'
 
-export function CreateGroup() {
+// Defaults to self-managed open state with a built-in trigger button (used on the groups page); passing open/onOpenChange makes it
+// controlled, and hideTrigger lets it be opened elsewhere (such as the group switcher in the sidebar).
+export function CreateGroup({
+  open: openProp,
+  onOpenChange,
+  hideTrigger,
+}: {
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  hideTrigger?: boolean
+} = {}) {
   const t = useTranslations('groupForm')
   const common = useTranslations('common')
   const router = useRouter()
-  const [open, setOpen] = useState(false)
+  const [openState, setOpenState] = useState(false)
+  const open = openProp ?? openState
+  const setOpen = (next: boolean) => {
+    if (openProp === undefined) setOpenState(next)
+    onOpenChange?.(next)
+  }
   const [pending, start] = useTransition()
   const [name, setName] = useState('')
   const [slug, setSlug] = useState('')
@@ -63,9 +78,11 @@ export function CreateGroup() {
         if (!o) reset()
       }}
     >
-      <DialogTrigger asChild>
-        <Button>{t('trigger')}</Button>
-      </DialogTrigger>
+      {!hideTrigger && (
+        <DialogTrigger asChild>
+          <Button>{t('trigger')}</Button>
+        </DialogTrigger>
+      )}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('title')}</DialogTitle>
