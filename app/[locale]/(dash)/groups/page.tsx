@@ -1,6 +1,11 @@
 import { getTranslations } from 'next-intl/server'
 import { requireSuper } from '@/lib/auth'
-import { listGroups, groupOfNode, keyBelongsToGroup } from '@/lib/groups'
+import {
+  listGroups,
+  groupOfNode,
+  keyBelongsToGroup,
+  isPanelManagedGroup,
+} from '@/lib/groups'
 import { listNodes, listPreAuthKeys } from '@/lib/headscale'
 import { db } from '@/lib/db'
 import { admins } from '@/lib/db/schema'
@@ -90,6 +95,7 @@ export default async function GroupsPage() {
                     name={g.name}
                     nodeCount={nodeCount.get(g.id) ?? 0}
                     keyCount={keyCount.get(g.id) ?? 0}
+                    isProtected={!isPanelManagedGroup(g)}
                   />
                 </TableCell>
               </TableRow>

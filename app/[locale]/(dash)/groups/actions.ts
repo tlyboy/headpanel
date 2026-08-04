@@ -11,6 +11,7 @@ import {
   createGroupAdmin,
   deleteGroup,
   GroupNotEmptyError,
+  ProtectedGroupError,
 } from '@/lib/groups'
 import { HeadscaleError } from '@/lib/headscale'
 import { PolicyReadOnlyError } from '@/lib/policy'
@@ -25,6 +26,9 @@ type ActionErrorT = Awaited<ReturnType<typeof getTranslations<'actionErrors'>>>
 function errMsg(e: unknown, t: ActionErrorT): string {
   // When policy.mode=file, headscale refuses to apply the ACL, and the raw 500 message is meaningless to users.
   if (e instanceof PolicyReadOnlyError) return t('policyReadOnly')
+  if (e instanceof ProtectedGroupError) {
+    return t('groupProtected', { slug: e.slug })
+  }
   if (e instanceof GroupNotEmptyError) {
     return t('groupNotEmpty', { nodeCount: e.nodeCount, keyCount: e.keyCount })
   }

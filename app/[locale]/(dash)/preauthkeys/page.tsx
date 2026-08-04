@@ -43,14 +43,22 @@ export default async function PreAuthKeysPage() {
   const nameByHsUser = new Map(groups.map((g) => [g.hsUserId, g.name]))
 
   // headscale's ?user= filter is broken (always returns all keys), so fetch once and filter by ownership via key.user.id,
-  // which both prevents the same key from appearing in every group and enforces group isolation
-  const all = groups.length > 0 ? await listPreAuthKeys() : []
+  // which both prevents the same key from appearing in every group and enforces group isolation.
+  // super should see all keys (including headscale users like admin that don't belong to any panel group),
+  // so fetch even when it has no groups — otherwise, after deleting all groups, the whole page is blank and looks like the keys were deleted.
+  const isSuper = session.role === 'super'
+  const all = isSuper || groups.length > 0 ? await listPreAuthKeys() : []
   // Also delete local plaintext backups for keys that no longer exist on the headscale side (deleting a group also destroys its keys)
   pruneOrphanKeys(all)
   const keys: { key: HsPreAuthKey; groupName: string }[] = []
   for (const key of all) {
     const groupName = nameByHsUser.get(key.user?.id ?? '')
-    if (groupName) keys.push({ key, groupName })
+    if (groupName) {
+      keys.push({ key, groupName })
+    } else if (isSuper) {
+      // For keys that don't belong to any panel group, fall back to showing their user name on the headscale side
+      keys.push({ key, groupName: key.user?.name ?? '—' })
+    }
   }
 
   // RSC + force-dynamic: render on the server for every request and use the current time to check whether keys have expired, as expected

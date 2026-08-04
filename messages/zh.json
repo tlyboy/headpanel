@@ -144,7 +144,8 @@
     "deleteDescription": "将删除该组的 headscale user、组管理员账号，并重算 ACL。此操作不可恢复。",
     "deleteBlocked": "该组下还有 {nodeCount} 个节点、{keyCount} 把授权 key。删除组会让 headscale 把它们一并销毁，请先清空后再删除。",
     "deleting": "删除中...",
-    "confirmDelete": "确认删除"
+    "confirmDelete": "确认删除",
+    "deleteProtected": "该组不是面板创建的，它直接映射到 headscale 既有 user（其门票 tag 也可能是全网通用的）。删除会连带销毁该 user 名下的全部节点与授权 key，因此已禁用删除。"
   },
   "preAuthKeys": {
     "title": "PreAuthKey",
@@ -294,6 +295,7 @@
     "nodeNameRequired": "名称不能为空",
     "nodeNamePattern": "名称只能包含字母、数字、连字符 -",
     "noteTooLong": "备注最多 200 字",
-    "noteCleared": "(清空)"
+    "noteCleared": "(清空)",
+    "groupProtected": "「{slug}」不是面板创建的组，它直接映射到 headscale 既有 user。删除会连带销毁该 user 名下的全部节点与授权 key，因此面板不允许删除。确需删除请在服务器上手工处理。"
   }
 }

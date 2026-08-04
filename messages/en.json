@@ -144,7 +144,8 @@
     "deleteDescription": "This will delete the group's headscale user and the group admin account, then recalculate ACLs. This cannot be undone.",
     "deleteBlocked": "This group still has {nodeCount} node(s) and {keyCount} pre-auth key(s). Deleting the group would make headscale destroy them too — remove them first.",
     "deleting": "Deleting...",
-    "confirmDelete": "Delete"
+    "confirmDelete": "Delete",
+    "deleteProtected": "This group was not created by the panel; it maps directly to an existing headscale user (and its tag may be the tailnet-wide one). Deleting it would destroy every node and pre-auth key owned by that user, so deletion is disabled."
   },
   "preAuthKeys": {
     "title": "PreAuthKeys",
@@ -294,6 +295,7 @@
     "nodeNameRequired": "Name is required",
     "nodeNamePattern": "Name can only contain letters, digits, and hyphens",
     "noteTooLong": "Note must be at most 200 characters",
-    "noteCleared": "(cleared)"
+    "noteCleared": "(cleared)",
+    "groupProtected": "\"{slug}\" was not created by the panel — it maps directly to an existing headscale user. Deleting it would destroy every node and pre-auth key owned by that user, so the panel refuses. Do it manually on the server if you really need to."
   }
 }

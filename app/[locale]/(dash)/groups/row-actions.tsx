@@ -23,20 +23,23 @@ export function GroupRowActions({
   name,
   nodeCount,
   keyCount,
+  isProtected,
 }: {
   id: number
   name: string
   nodeCount: number
   keyCount: number
+  isProtected: boolean
 }) {
   const t = useTranslations('groupActions')
   const common = useTranslations('common')
   const router = useRouter()
   const [pending, start] = useTransition()
   const [open, setOpen] = useState(false)
-  // Deletion is not allowed while the group still has nodes or authorized keys: deleting the headscale user would destroy them too.
+  // Groups not created in the dashboard (mapped to an existing headscale user) can never be deleted; groups with nodes or auth keys
+  // also can't be deleted: deleting the headscale user would destroy them too.
   // This is just an early check; the actual guard is in the server-side deleteGroup.
-  const blocked = nodeCount > 0 || keyCount > 0
+  const blocked = isProtected || nodeCount > 0 || keyCount > 0
 
   function del() {
     start(async () => {
@@ -62,9 +65,11 @@ export function GroupRowActions({
         <AlertDialogHeader>
           <AlertDialogTitle>{t('deleteTitle', { name })}</AlertDialogTitle>
           <AlertDialogDescription>
-            {blocked
-              ? t('deleteBlocked', { nodeCount, keyCount })
-              : t('deleteDescription')}
+            {isProtected
+              ? t('deleteProtected')
+              : blocked
+                ? t('deleteBlocked', { nodeCount, keyCount })
+                : t('deleteDescription')}
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>

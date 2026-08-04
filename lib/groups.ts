@@ -21,8 +21,27 @@ import { hashPassword, type Session } from '@/lib/auth'
 
 const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,30}$/
 
-// Refuse to delete a group if it still has nodes / authorized keys. Deleting the headscale user also destroys all pre-auth keys under it
-// and cascades deletion of all nodes via fk_nodes_user ON DELETE CASCADE.
+// Refuse to delete a group if it still contains nodes or authorization keys. Deleting a headscale user also destroys all pre-auth keys belonging to it and
+// cascades to delete all its nodes via fk_nodes_user ON DELETE CASCADE.
+// The panel only deletes groups it created. Groups manually mapped to an existing headscale user (for example, mapping admin to the
+// "default group") must not be deleted: deleteHsUser would also destroy all pre-auth keys and nodes belonging to that user
+// (fk_nodes_user ON DELETE CASCADE); the group's ok_tag is often a global
+// ticket (such as tag:approved), and removing tagOwner would zero out the ACL for the entire network.
+export class ProtectedGroupError extends Error {
+  constructor(readonly slug: string) {
+    super(
+      `Group "${slug}" was not created by the panel and must not be deleted here`,
+    )
+    this.name = 'ProtectedGroupError'
+  }
+}
+
+// The criterion comes from createGroup's generation rule (ok_tag = tag:ok-<slug>), regardless of the amount of data in the group:
+// groups manually added to the groups table won't satisfy it.
+export function isPanelManagedGroup(g: Group): boolean {
+  return g.okTag === `tag:ok-${g.slug}`
+}
+
 export class GroupNotEmptyError extends Error {
   constructor(
     readonly nodeCount: number,
@@ -161,12 +180,16 @@ export async function countGroupResidue(
   }
 }
 
-// Delete a group: reconcile and reject non-empty groups → apply the ACL "after deletion" → delete the headscale user → clear local data.
-// Push the ACL before any changes: this is the step most likely to fail (e.g. policy.mode=file); if it fails,
-// nothing has changed yet. There are no nodes left in the group, so removing its tagOwner first won't accidentally break anything.
+// Delete a group: refuse groups not created by the panel → reconcile and refuse non-empty groups → apply ACLs "after deletion" →
+// delete the headscale user → clear local data.
+// Apply ACLs before any changes: this is the step most likely to fail (e.g. policy.mode=file); if it fails,
+// nothing has changed yet. At this point the group has no nodes, so removing its tagOwner won't accidentally break anything.
 export async function deleteGroup(id: number): Promise<Group> {
   const g = getGroup(id)
   if (!g) throw new Error('Group does not exist')
+  // A hard safeguard independent of the amount of data in the group; it must run before countGroupResidue: if the latter allows deletion because
+  // the nodes happened to be cleared (or headscale returned an empty list), this is the final gate.
+  if (!isPanelManagedGroup(g)) throw new ProtectedGroupError(g.slug)
 
   const { nodeCount, keyCount } = await countGroupResidue(g)
   if (nodeCount > 0 || keyCount > 0) {
