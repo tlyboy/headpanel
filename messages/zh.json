@@ -45,7 +45,8 @@
     "groups": "组管理",
     "network": "网段设置",
     "scripts": "脚本下载",
-    "audit": "审计日志"
+    "audit": "审计日志",
+    "subnets": "子网路由"
   },
   "theme": {
     "toggle": "切换主题",
@@ -101,7 +102,8 @@
     "empty": "暂无节点",
     "approved": "已审批",
     "pending": "待审批",
-    "rejected": "已拒绝"
+    "rejected": "已拒绝",
+    "lanIp": "局域网 IP"
   },
   "pending": {
     "title": "待审批",
@@ -297,5 +299,43 @@
     "noteTooLong": "备注最多 200 字",
     "noteCleared": "(清空)",
     "groupProtected": "「{slug}」不是面板创建的组，它直接映射到 headscale 既有 user。删除会连带销毁该 user 名下的全部节点与授权 key，因此面板不允许删除。确需删除请在服务器上手工处理。"
+  },
+  "subnets": {
+    "title": "子网路由",
+    "summary": "共 {total} 个网段 · {serving} 个正在承载 · {pending} 条待批准",
+    "route": "网段",
+    "node": "节点",
+    "status": "状态",
+    "advertising": "客户端仍在宣告",
+    "actions": "操作",
+    "empty": "暂无子网路由。需要先在客户端上宣告，见下方说明。",
+    "serving": "承载中",
+    "standby": "已批准 · 待命",
+    "pending": "待批准",
+    "staleHint": "客户端已取消宣告，但批准记录还留着。撤销即可清理。",
+    "approve": "批准",
+    "revoke": "撤销",
+    "approved": "已批准该网段",
+    "revoked": "已撤销该网段",
+    "working": "处理中...",
+    "approveTitle": "批准 {node} 承载 {route}？",
+    "revokeTitle": "撤销 {node} 的 {route}？",
+    "approveDescription": "批准后，tailnet 里的节点即可经这台机器访问该网段。前提是它已开启 IP 转发，且 ACL 放通了该网段。",
+    "revokeDescription": "该节点当前是备份，撤销不影响正在承载的那台。",
+    "revokePrimaryDescription": "这台正在承载该网段。撤销后，如果同网段还有其它已批准的节点，headscale 会切换过去；否则该网段将立即不可达。",
+    "howto": {
+      "title": "如何开启和关闭子网路由",
+      "intro": "分两步：客户端宣告（在那台机器上执行）、服务端批准（在本页操作）。两步缺一不可——只宣告不批准，网段不会生效；只批准而客户端没宣告，这里会显示为「客户端已取消宣告」。",
+      "step1Title": "第一步：在客户端宣告网段",
+      "step1Desc": "在要充当出口的那台机器上执行。宣告后本页会出现「待批准」记录。",
+      "step2Title": "第二步：开启 IP 转发",
+      "step2Desc": "不开启的话，流量到得了这台机器却转不出去，而且它会因为持续收到无法转发的包而变卡。",
+      "step3Title": "第三步：在本页批准。",
+      "step3Desc": "点上表的「批准」按钮。同一网段可以批准多台，headscale 只让其中一台承载（承载中），其余作为备份待命，承载的那台掉线时自动切换。",
+      "accessTitle": "访问方要开 accept-routes。",
+      "accessDesc": "子网路由只对开启了 accept-routes 的节点生效：tailscale set --accept-routes=true。注意本身就是该网段成员的机器不要开，否则本地流量会绕经出口节点。",
+      "warnTitle": "注意：",
+      "warnDesc": "ACL 里也要放通目标网段，否则批准了仍然不通——dst 只写节点标签是不够的，必须显式包含网段（如 192.168.1.0/24:*）。"
+    }
   }
 }

@@ -11,6 +11,7 @@ import {
   type LucideIcon,
   ScrollText,
   Network,
+  Route,
 } from 'lucide-react'
 import { Link, usePathname } from '@/i18n/navigation'
 import {
@@ -29,6 +30,7 @@ type NavLabel =
   | 'pending'
   | 'preauthKeys'
   | 'groups'
+  | 'subnets'
   | 'network'
   | 'scripts'
   | 'audit'
@@ -39,6 +41,7 @@ type NavHref =
   | '/pending'
   | '/preauthkeys'
   | '/groups'
+  | '/subnets'
   | '/network'
   | '/scripts'
   | '/audit'
@@ -57,6 +60,7 @@ const items: NavItem[] = [
   { href: '/pending', label: 'pending', icon: ClockAlert },
   { href: '/preauthkeys', label: 'preauthKeys', icon: KeyRound },
   { href: '/groups', label: 'groups', icon: Boxes, superOnly: true },
+  { href: '/subnets', label: 'subnets', icon: Route, superOnly: true },
   {
     href: '/network',
     label: 'network',

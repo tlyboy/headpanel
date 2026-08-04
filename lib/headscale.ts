@@ -201,6 +201,14 @@ export class HeadscaleClient {
     await this.request(`/node/${id}`, { method: 'DELETE' })
   }
 
+  // Pass the complete set that should be present after approval, not a delta: an empty array revokes all subnet routes for that node.
+  async approveRoutes(id: string, routes: string[]): Promise<void> {
+    await this.request(`/node/${id}/approve_routes`, {
+      method: 'POST',
+      body: JSON.stringify({ routes }),
+    })
+  }
+
   async setNodeTags(id: string, tags: string[]): Promise<void> {
     await this.request(`/node/${id}/tags`, {
       method: 'POST',
@@ -299,6 +307,8 @@ export const expireNode = (id: string) => defaultClient().expireNode(id)
 export const deleteNode = (id: string) => defaultClient().deleteNode(id)
 export const setNodeTags = (id: string, tags: string[]) =>
   defaultClient().setNodeTags(id, tags)
+export const approveRoutes = (id: string, routes: string[]) =>
+  defaultClient().approveRoutes(id, routes)
 export const listPreAuthKeys = () => defaultClient().listPreAuthKeys()
 export const createPreAuthKey = (
   opts: Parameters<HeadscaleClient['createPreAuthKey']>[0],
