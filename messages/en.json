@@ -337,8 +337,13 @@
       "step3Desc": "Use the Approve button above. Several nodes may be approved for the same subnet; headscale lets exactly one serve it and keeps the rest on standby, failing over automatically if the serving node drops.",
       "accessTitle": "Consumers need accept-routes.",
       "accessDesc": "Subnet routes only apply to nodes that opted in: tailscale set --accept-routes=true. Do not enable it on machines that already belong to that subnet, or their local traffic will detour through the gateway node.",
-      "warnTitle": "Note:",
-      "warnDesc": "Your ACL must also allow the destination subnet, or approved routes still will not work — a dst of node tags alone is not enough; it must include the CIDR explicitly (e.g. 192.168.1.0/24:*)."
+      "warnTitle": "Your ACL must allow the subnet too",
+      "warnDesc": "Your ACL must also allow the destination subnet, or approved routes still will not work — a dst of node tags alone is not enough; it must include the CIDR explicitly (e.g. 192.168.1.0/24:*).",
+      "cmdAdvertiseLinux": "Linux / macOS (replace with your CIDR)",
+      "cmdAdvertiseWindows": "Windows (PowerShell as admin)",
+      "cmdAdvertiseStop": "Stop advertising (all platforms)",
+      "cmdForwardLinux": "Linux — enable kernel forwarding",
+      "cmdForwardWindows": "Windows — a reboot is required"
     }
   }
 }
