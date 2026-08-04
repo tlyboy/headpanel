@@ -1,7 +1,17 @@
 import { getTranslations } from 'next-intl/server'
+import { TriangleAlert } from 'lucide-react'
 import { requireSuper } from '@/lib/auth'
 import { listNodes, type HsNode } from '@/lib/headscale'
+import { CmdBlock } from '@/components/cmd-block'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -13,6 +23,30 @@ import {
 import { RouteRowActions } from './row-actions'
 
 export const dynamic = 'force-dynamic'
+
+// 说明里的命令逐条给出而不是堆成一个代码块——每条都要能单独复制粘贴
+const ADVERTISE_CMDS = [
+  {
+    key: 'howto.cmdAdvertiseLinux',
+    cmd: 'sudo tailscale up --advertise-routes=192.168.1.0/24',
+  },
+  {
+    key: 'howto.cmdAdvertiseWindows',
+    cmd: 'tailscale set --advertise-routes=192.168.1.0/24',
+  },
+  { key: 'howto.cmdAdvertiseStop', cmd: 'tailscale set --advertise-routes=' },
+] as const
+
+const FORWARD_CMDS = [
+  {
+    key: 'howto.cmdForwardLinux',
+    cmd: "echo 'net.ipv4.ip_forward=1' | sudo tee /etc/sysctl.d/99-tailscale.conf\nsudo sysctl -p /etc/sysctl.d/99-tailscale.conf",
+  },
+  {
+    key: 'howto.cmdForwardWindows',
+    cmd: "Set-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters' -Name 'IPEnableRouter' -Value 1 -Type DWord\nRestart-Computer",
+  },
+] as const
 
 interface RouteEntry {
   node: HsNode
@@ -150,67 +184,60 @@ export default async function SubnetsPage() {
         </Table>
       </div>
 
-      <section className="rounded-md border p-4">
-        <h2 className="font-medium">{t('howto.title')}</h2>
-        <p className="text-muted-foreground mt-1 text-sm">
-          {t('howto.intro')}
-        </p>
+      <Card>
+        <CardHeader>
+          <CardTitle>{t('howto.title')}</CardTitle>
+          <CardDescription>{t('howto.intro')}</CardDescription>
+        </CardHeader>
+        <CardContent className="flex flex-col gap-6">
+          <div className="grid gap-6 lg:grid-cols-2">
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-sm font-medium">{t('howto.step1Title')}</h3>
+                <p className="text-muted-foreground text-sm">
+                  {t('howto.step1Desc')}
+                </p>
+              </div>
+              {ADVERTISE_CMDS.map((c) => (
+                <CmdBlock key={c.key} label={t(c.key)} cmd={c.cmd} />
+              ))}
+            </div>
 
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div>
-            <h3 className="text-sm font-medium">{t('howto.step1Title')}</h3>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {t('howto.step1Desc')}
-            </p>
-            <pre className="bg-muted mt-2 overflow-x-auto rounded p-3 text-xs">
-              <code>{`# Linux / macOS
-tailscale up --advertise-routes=192.168.1.0/24 --accept-dns=false
-
-# Windows（PowerShell，管理员）
-tailscale set --advertise-routes=192.168.1.0/24
-
-# 取消宣告（三个平台通用）
-tailscale set --advertise-routes=`}</code>
-            </pre>
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col gap-1">
+                <h3 className="text-sm font-medium">{t('howto.step2Title')}</h3>
+                <p className="text-muted-foreground text-sm">
+                  {t('howto.step2Desc')}
+                </p>
+              </div>
+              {FORWARD_CMDS.map((c) => (
+                <CmdBlock key={c.key} label={t(c.key)} cmd={c.cmd} />
+              ))}
+            </div>
           </div>
 
-          <div>
-            <h3 className="text-sm font-medium">{t('howto.step2Title')}</h3>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {t('howto.step2Desc')}
+          <div className="flex flex-col gap-2 text-sm">
+            <p>
+              <span className="font-medium">{t('howto.step3Title')}</span>{' '}
+              <span className="text-muted-foreground">
+                {t('howto.step3Desc')}
+              </span>
             </p>
-            <pre className="bg-muted mt-2 overflow-x-auto rounded p-3 text-xs">
-              <code>{`# Linux：开启内核转发
-echo 'net.ipv4.ip_forward=1' | sudo tee /etc/sysctl.d/99-tailscale.conf
-sudo sysctl -p /etc/sysctl.d/99-tailscale.conf
-
-# Windows：开启后必须重启才生效
-Set-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Services\\Tcpip\\Parameters' \`
-                 -Name 'IPEnableRouter' -Value 1 -Type DWord
-Restart-Computer`}</code>
-            </pre>
+            <p>
+              <span className="font-medium">{t('howto.accessTitle')}</span>{' '}
+              <span className="text-muted-foreground">
+                {t('howto.accessDesc')}
+              </span>
+            </p>
           </div>
-        </div>
 
-        <div className="mt-4 space-y-2 text-sm">
-          <p>
-            <span className="font-medium">{t('howto.step3Title')}</span>{' '}
-            <span className="text-muted-foreground">{t('howto.step3Desc')}</span>
-          </p>
-          <p>
-            <span className="font-medium">{t('howto.accessTitle')}</span>{' '}
-            <span className="text-muted-foreground">
-              {t('howto.accessDesc')}
-            </span>
-          </p>
-          <p className="text-muted-foreground">
-            <span className="font-medium text-amber-600">
-              {t('howto.warnTitle')}
-            </span>{' '}
-            {t('howto.warnDesc')}
-          </p>
-        </div>
-      </section>
+          <Alert>
+            <TriangleAlert />
+            <AlertTitle>{t('howto.warnTitle')}</AlertTitle>
+            <AlertDescription>{t('howto.warnDesc')}</AlertDescription>
+          </Alert>
+        </CardContent>
+      </Card>
     </div>
   )
 }

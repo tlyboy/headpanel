@@ -337,8 +337,13 @@
       "step3Desc": "点上表的「批准」按钮。同一网段可以批准多台，headscale 只让其中一台承载（承载中），其余作为备份待命，承载的那台掉线时自动切换。",
       "accessTitle": "访问方要开 accept-routes。",
       "accessDesc": "子网路由只对开启了 accept-routes 的节点生效：tailscale set --accept-routes=true。注意本身就是该网段成员的机器不要开，否则本地流量会绕经出口节点。",
-      "warnTitle": "注意：",
-      "warnDesc": "ACL 里也要放通目标网段，否则批准了仍然不通——dst 只写节点标签是不够的，必须显式包含网段（如 192.168.1.0/24:*）。"
+      "warnTitle": "ACL 也要放通该网段",
+      "warnDesc": "ACL 里也要放通目标网段，否则批准了仍然不通——dst 只写节点标签是不够的，必须显式包含网段（如 192.168.1.0/24:*）。",
+      "cmdAdvertiseLinux": "Linux / macOS（把网段换成实际值）",
+      "cmdAdvertiseWindows": "Windows（管理员 PowerShell）",
+      "cmdAdvertiseStop": "取消宣告（三平台通用）",
+      "cmdForwardLinux": "Linux：开启内核转发",
+      "cmdForwardWindows": "Windows：改完必须重启才生效"
     }
   }
 }
