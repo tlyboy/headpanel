@@ -23,6 +23,25 @@ const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,30}$/
 
 // 组内仍有节点 / 授权 key 时拒绝删组。删 headscale user 会连带销毁它名下的
 // 全部 pre-auth key，并按 fk_nodes_user ON DELETE CASCADE 级联删掉全部节点。
+// 面板只删自己建的组。手工映射到 headscale 既有 user 的组（例如把 admin 挂成
+// 「默认组」）删不得：deleteHsUser 会连该 user 名下的全部 pre-auth key 和节点
+// （fk_nodes_user ON DELETE CASCADE）一起销毁；这类组的 ok_tag 往往还是全局
+// 门票（如 tag:approved），撤掉 tagOwner 会让全网 ACL 归零。
+export class ProtectedGroupError extends Error {
+  constructor(readonly slug: string) {
+    super(
+      `Group "${slug}" was not created by the panel and must not be deleted here`,
+    )
+    this.name = 'ProtectedGroupError'
+  }
+}
+
+// 判据取 createGroup 的生成规则（ok_tag = tag:ok-<slug>），与组内数据量无关：
+// 手工写进 groups 表的映射组不会满足它。
+export function isPanelManagedGroup(g: Group): boolean {
+  return g.okTag === `tag:ok-${g.slug}`
+}
+
 export class GroupNotEmptyError extends Error {
   constructor(
     readonly nodeCount: number,
@@ -161,12 +180,16 @@ export async function countGroupResidue(
   }
 }
 
-// 删组：对账拒绝非空组 → 下发「删除后」的 ACL → 删 headscale user → 清本地数据。
+// 删组：拒绝非面板建的组 → 对账拒绝非空组 → 下发「删除后」的 ACL →
+// 删 headscale user → 清本地数据。
 // ACL 推送排在所有改动之前：它是最容易失败的一步（如 policy.mode=file），失败时
 // 什么都还没动。此时组内已无节点，先撤掉它的 tagOwner 不会误断任何东西。
 export async function deleteGroup(id: number): Promise<Group> {
   const g = getGroup(id)
   if (!g) throw new Error('Group does not exist')
+  // 与组内数据量无关的硬保护，必须排在 countGroupResidue 之前：后者一旦因
+  // 节点恰好清空（或 headscale 返回空列表）而放行，这里就是最后一道闸。
+  if (!isPanelManagedGroup(g)) throw new ProtectedGroupError(g.slug)
 
   const { nodeCount, keyCount } = await countGroupResidue(g)
   if (nodeCount > 0 || keyCount > 0) {

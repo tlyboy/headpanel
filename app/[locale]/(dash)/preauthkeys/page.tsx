@@ -43,14 +43,22 @@ export default async function PreAuthKeysPage() {
   const nameByHsUser = new Map(groups.map((g) => [g.hsUserId, g.name]))
 
   // headscale 的 ?user= 过滤失效（恒返回全部 key），故拉一次、按 key.user.id 归属过滤，
-  // 既避免同一 key 被每个组重复显示，又实现按组隔离
-  const all = groups.length > 0 ? await listPreAuthKeys() : []
+  // 既避免同一 key 被每个组重复显示，又实现按组隔离。
+  // super 要看到全部 key（含 admin 等不属于任何面板组的 headscale user），
+  // 所以它即便一个组都没有也要拉——否则删光组后整页空白，看着像 key 被删了。
+  const isSuper = session.role === 'super'
+  const all = isSuper || groups.length > 0 ? await listPreAuthKeys() : []
   // headscale 侧已消失的 key，其本地明文备份一并清掉（删组会连带销毁 key）
   pruneOrphanKeys(all)
   const keys: { key: HsPreAuthKey; groupName: string }[] = []
   for (const key of all) {
     const groupName = nameByHsUser.get(key.user?.id ?? '')
-    if (groupName) keys.push({ key, groupName })
+    if (groupName) {
+      keys.push({ key, groupName })
+    } else if (isSuper) {
+      // 不归任何面板组的 key，退而标出它在 headscale 侧的 user 名
+      keys.push({ key, groupName: key.user?.name ?? '—' })
+    }
   }
 
   // RSC + force-dynamic：每次请求服务端渲染，取当前时间判断 key 是否过期，符合预期
