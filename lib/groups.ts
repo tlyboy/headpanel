@@ -211,6 +211,41 @@ export async function deleteGroup(id: number): Promise<Group> {
   return g
 }
 
+// 改组显示名。只动本地 name 字段——slug / ok_tag 决定节点归属和 ACL 规则，
+// 改它等于要重打所有节点的 tag 并重下 policy，那是迁移不是改名，这里不碰。
+export function renameGroup(id: number, name: string): Group {
+  const next = name.trim()
+  if (!next) throw new Error('Group name is required')
+  const g = getGroup(id)
+  if (!g) throw new Error('Group does not exist')
+  db.update(groups).set({ name: next }).where(eq(groups.id, id)).run()
+  return { ...g, name: next }
+}
+
+// 重置某个组管理员的密码。super 专用，不校验旧密码——它本来就是「忘了密码」的出口。
+// 只允许改 role=group 且确实属于该组的账号，避免顺手改掉别的组或 super 自己。
+export function resetGroupAdminPassword(input: {
+  groupId: number
+  adminId: number
+  password: string
+}) {
+  if (input.password.length < 6)
+    throw new Error('Password must be at least 6 characters')
+  const row = db
+    .select()
+    .from(admins)
+    .where(eq(admins.id, input.adminId))
+    .get()
+  if (!row || row.groupId !== input.groupId || row.role !== 'group') {
+    throw new Error('Account does not belong to this group')
+  }
+  db.update(admins)
+    .set({ passwordHash: hashPassword(input.password) })
+    .where(eq(admins.id, input.adminId))
+    .run()
+  return row.username
+}
+
 // 给组发一个登录账号（role=group）
 export function createGroupAdmin(input: {
   groupId: number

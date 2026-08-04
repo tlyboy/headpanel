@@ -43,11 +43,12 @@ export default async function GroupsPage() {
   for (const g of groups) {
     keyCount.set(g.id, hsKeys.filter((k) => keyBelongsToGroup(k, g)).length)
   }
-  const adminsByGroup = new Map<number, string[]>()
+  // 既要显示名字，也要把 id 传给行操作（重置密码按 id 定位账号）
+  const adminsByGroup = new Map<number, { id: number; username: string }[]>()
   for (const a of adminRows) {
     if (a.groupId == null) continue
     const list = adminsByGroup.get(a.groupId) ?? []
-    list.push(a.username)
+    list.push({ id: a.id, username: a.username })
     adminsByGroup.set(a.groupId, list)
   }
 
@@ -84,7 +85,9 @@ export default async function GroupsPage() {
                 <TableCell className="font-mono text-xs">{g.okTag}</TableCell>
                 <TableCell>{nodeCount.get(g.id) ?? 0}</TableCell>
                 <TableCell className="text-xs">
-                  {(adminsByGroup.get(g.id) ?? []).join(', ') || '—'}
+                  {(adminsByGroup.get(g.id) ?? [])
+                    .map((a) => a.username)
+                    .join(', ') || '—'}
                 </TableCell>
                 <TableCell className="text-xs text-muted-foreground">
                   {fmtTime(g.createdAt.replace(' ', 'T') + 'Z')}
@@ -96,6 +99,7 @@ export default async function GroupsPage() {
                     nodeCount={nodeCount.get(g.id) ?? 0}
                     keyCount={keyCount.get(g.id) ?? 0}
                     isProtected={!isPanelManagedGroup(g)}
+                    admins={adminsByGroup.get(g.id) ?? []}
                   />
                 </TableCell>
               </TableRow>
