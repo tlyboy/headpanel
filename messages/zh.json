@@ -150,7 +150,20 @@
     "deleteBlocked": "该组下还有 {nodeCount} 个节点、{keyCount} 把授权 key。删除组会让 headscale 把它们一并销毁，请先清空后再删除。",
     "deleting": "删除中...",
     "confirmDelete": "确认删除",
-    "deleteProtected": "该组不是面板创建的，它直接映射到 headscale 既有 user（其门票 tag 也可能是全网通用的）。删除会连带销毁该 user 名下的全部节点与授权 key，因此已禁用删除。"
+    "deleteProtected": "该组不是面板创建的，它直接映射到 headscale 既有 user（其门票 tag 也可能是全网通用的）。删除会连带销毁该 user 名下的全部节点与授权 key，因此已禁用删除。",
+    "menu": "更多操作",
+    "rename": "重命名",
+    "renameTitle": "重命名「{name}」",
+    "renameDescription": "只改显示名。slug 与门票 tag 决定节点归属和 ACL 规则，不随之变动。",
+    "newName": "新名称",
+    "renamed": "已重命名",
+    "resetPassword": "重置管理员密码",
+    "resetPasswordTitle": "重置「{name}」的管理员密码",
+    "resetPasswordDescription": "直接设置新密码，不需要旧密码。设置后请及时告知对方。",
+    "account": "账号",
+    "newPassword": "新密码（至少 6 位）",
+    "newPasswordFor": "{username} 的新密码（至少 6 位）",
+    "passwordReset": "密码已重置"
   },
   "preAuthKeys": {
     "title": "PreAuthKey",

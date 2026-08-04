@@ -10,6 +10,8 @@ import {
   createGroup,
   createGroupAdmin,
   deleteGroup,
+  renameGroup,
+  resetGroupAdminPassword,
   GroupNotEmptyError,
   ProtectedGroupError,
 } from '@/lib/groups'
@@ -93,6 +95,50 @@ export async function deleteGroupAction(id: number): Promise<GroupResult> {
     )
     revalidatePath('/groups')
     revalidatePath('/preauthkeys')
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: errMsg(e, t) }
+  }
+}
+
+export async function renameGroupAction(
+  id: number,
+  name: string,
+): Promise<GroupResult> {
+  const [session, t] = await Promise.all([
+    requireSuper(),
+    getTranslations('actionErrors'),
+  ])
+  try {
+    const g = renameGroup(id, name)
+    auditAfter('group.rename', g.slug, `name=${g.name}`, {
+      groupId: g.id,
+      actor: session.sub,
+    })
+    revalidatePath('/groups')
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: errMsg(e, t) }
+  }
+}
+
+// Reset the group admin password. The audit log records only the account name, not the password itself.
+export async function resetGroupAdminPasswordAction(input: {
+  groupId: number
+  adminId: number
+  password: string
+}): Promise<GroupResult> {
+  const [session, t] = await Promise.all([
+    requireSuper(),
+    getTranslations('actionErrors'),
+  ])
+  try {
+    const username = resetGroupAdminPassword(input)
+    auditAfter('group.resetPassword', username, undefined, {
+      groupId: input.groupId,
+      actor: session.sub,
+    })
+    revalidatePath('/groups')
     return { ok: true }
   } catch (e) {
     return { ok: false, error: errMsg(e, t) }

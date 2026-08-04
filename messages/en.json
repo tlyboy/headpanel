@@ -150,7 +150,20 @@
     "deleteBlocked": "This group still has {nodeCount} node(s) and {keyCount} pre-auth key(s). Deleting the group would make headscale destroy them too — remove them first.",
     "deleting": "Deleting...",
     "confirmDelete": "Delete",
-    "deleteProtected": "This group was not created by the panel; it maps directly to an existing headscale user (and its tag may be the tailnet-wide one). Deleting it would destroy every node and pre-auth key owned by that user, so deletion is disabled."
+    "deleteProtected": "This group was not created by the panel; it maps directly to an existing headscale user (and its tag may be the tailnet-wide one). Deleting it would destroy every node and pre-auth key owned by that user, so deletion is disabled.",
+    "menu": "More actions",
+    "rename": "Rename",
+    "renameTitle": "Rename \"{name}\"",
+    "renameDescription": "Changes the display name only. The slug and access tag decide node membership and ACL rules, and stay as they are.",
+    "newName": "New name",
+    "renamed": "Group renamed",
+    "resetPassword": "Reset admin password",
+    "resetPasswordTitle": "Reset the admin password for \"{name}\"",
+    "resetPasswordDescription": "Sets a new password directly; the old one is not required. Pass it on to the account holder.",
+    "account": "Account",
+    "newPassword": "New password (at least 6 characters)",
+    "newPasswordFor": "New password for {username} (at least 6 characters)",
+    "passwordReset": "Password reset"
   },
   "preAuthKeys": {
     "title": "PreAuthKeys",

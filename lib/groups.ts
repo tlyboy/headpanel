@@ -211,6 +211,41 @@ export async function deleteGroup(id: number): Promise<Group> {
   return g
 }
 
+// Change the group's display name. Only update the local name field — slug / ok_tag determine node membership and ACL rules;
+// changing them would mean retagging all nodes and reapplying policy. That's a migration, not a rename, so leave them alone here.
+export function renameGroup(id: number, name: string): Group {
+  const next = name.trim()
+  if (!next) throw new Error('Group name is required')
+  const g = getGroup(id)
+  if (!g) throw new Error('Group does not exist')
+  db.update(groups).set({ name: next }).where(eq(groups.id, id)).run()
+  return { ...g, name: next }
+}
+
+// Reset a group admin's password. For super only; no old-password check — this is the escape hatch for when they've "forgotten their password."
+// Only allow changes to accounts with role=group that actually belong to that group, to avoid changing another group's account or super's own account by mistake.
+export function resetGroupAdminPassword(input: {
+  groupId: number
+  adminId: number
+  password: string
+}) {
+  if (input.password.length < 6)
+    throw new Error('Password must be at least 6 characters')
+  const row = db
+    .select()
+    .from(admins)
+    .where(eq(admins.id, input.adminId))
+    .get()
+  if (!row || row.groupId !== input.groupId || row.role !== 'group') {
+    throw new Error('Account does not belong to this group')
+  }
+  db.update(admins)
+    .set({ passwordHash: hashPassword(input.password) })
+    .where(eq(admins.id, input.adminId))
+    .run()
+  return row.username
+}
+
 // Issue a login account (role=group) for the group
 export function createGroupAdmin(input: {
   groupId: number
