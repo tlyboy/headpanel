@@ -23,7 +23,7 @@ const nextConfig: NextConfig = {
     // Rust port of the React Compiler — runs natively in Turbopack instead of
     // going through Babel, so babel-plugin-react-compiler is no longer needed.
     turbopackRustReactCompiler: true,
-    optimizePackageImports: ['lucide-react', 'radix-ui'],
+    optimizePackageImports: ['radix-ui', 'simple-icons'],
   },
 }
 
