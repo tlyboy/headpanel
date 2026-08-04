@@ -103,7 +103,10 @@
     "approved": "已审批",
     "pending": "待审批",
     "rejected": "已拒绝",
-    "lanIp": "局域网 IP"
+    "lanIp": "局域网 IP",
+    "lanIpHint": "该节点报上来的局域网地址,首个最可能是它的真实网卡",
+    "lanIpPrimary": "主",
+    "copyLanIp": "复制"
   },
   "pending": {
     "title": "待审批",
