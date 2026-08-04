@@ -100,7 +100,7 @@ export default async function NetworkPage() {
                 </TableCell>
                 <TableCell>
                   {n.online ? (
-                    <Badge className="bg-emerald-600 text-white">
+                    <Badge variant="success">
                       {common('online')}
                     </Badge>
                   ) : (

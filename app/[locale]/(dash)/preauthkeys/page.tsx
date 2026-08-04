@@ -26,9 +26,12 @@ import { KeyRowActions } from './key-row-actions'
 export const dynamic = 'force-dynamic'
 
 // 持票（含组 ok_tag）= 直接放行；无 tag = 需审核（接入后进待审批）
-function modeOf(aclTags: string[]): { key: 'direct' | 'review'; cls: string } {
-  if (aclTags.length) return { key: 'direct', cls: 'bg-emerald-600 text-white' }
-  return { key: 'review', cls: 'bg-amber-600 text-white' }
+function modeOf(aclTags: string[]): {
+  key: 'direct' | 'review'
+  variant: 'success' | 'warning'
+} {
+  if (aclTags.length) return { key: 'direct', variant: 'success' } as const
+  return { key: 'review', variant: 'warning' } as const
 }
 
 export default async function PreAuthKeysPage() {
@@ -125,7 +128,7 @@ export default async function PreAuthKeysPage() {
                     <TableCell className="text-sm">{groupName}</TableCell>
                     <TableCell className="font-mono text-xs">{k.key}</TableCell>
                     <TableCell>
-                      <Badge className={m.cls}>{t(m.key)}</Badge>
+                      <Badge variant={m.variant}>{t(m.key)}</Badge>
                     </TableCell>
                     <TableCell>
                       {k.reusable ? common('yes') : common('no')}
@@ -137,7 +140,7 @@ export default async function PreAuthKeysPage() {
                       {expired ? (
                         <Badge variant="secondary">{t('expired')}</Badge>
                       ) : (
-                        <Badge className="bg-emerald-600 text-white">
+                        <Badge variant="success">
                           {t('valid')}
                         </Badge>
                       )}
