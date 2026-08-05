@@ -72,7 +72,7 @@ function isPrivateLan(ip: number): boolean {
 }
 
 // endpoints 里混着三类地址：公网出口、真实局域网 IP、以及 docker/WSL/VMware
-// 之类虚拟网卡的地址；此外 STUN 有时会把网关地址也报进来（如 192.168.120.1）。
+// 之类虚拟网卡的地址；此外 STUN 有时会把网关地址也报进来（如 192.168.1.1）。
 // headscale 不区分它们，只能按特征打分，把最可能是「这台机器局域网地址」的排前面。
 function scoreLanIp(ip: string, routable: string[]): number {
   const n = parseIpv4(ip)

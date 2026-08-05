@@ -38,7 +38,7 @@ type PolicyBaseline = Record<string, unknown> & {
 }
 
 // 不归 groups 表管、但必须长期存在的那部分 policy：tag:approved 的 owner、
-// 子网路由（如 192.168.120.0/24）的 dst 等。放文件而非硬编码，以后加子网
+// 子网路由（如 192.168.1.0/24）的 dst 等。放文件而非硬编码，以后加子网
 // 只改文件、不必改代码重新构建。文件不存在 = 无基线（兼容旧部署）；
 // 存在但读不了/解析不了则抛错，宁可组操作失败也不下发丢了基线的 policy。
 export function baselinePath(): string {
@@ -116,7 +116,7 @@ export async function applyPolicy(
 }
 
 // 批准一条子网路由并不足以让它通：ACL 的 dst 必须显式含该网段，否则包在
-// tailscale 数据面就被丢了（今天 192.168.120.0/24 不通就是卡在这一步）。
+// tailscale 数据面就被丢了——表现为路由已批准、网段里却什么都连不通。
 // 基线是人工维护的文件，所以这里只做最小改动——往既有的 accept 规则里加/减
 // 一个 "<cidr>:*"，不新建规则、不碰其它字段。
 export class BaselineNotWritableError extends Error {
