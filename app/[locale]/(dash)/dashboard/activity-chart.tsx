@@ -8,11 +8,11 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 
-/** Keep the categories consistent with page.tsx */
-export const ACTIVITY_KEYS = ['node', 'route', 'group', 'key', 'auth'] as const
-type Key = (typeof ACTIVITY_KEYS)[number]
-
-export type ActivityPoint = { date: string; total: number } & Record<Key, number>
+import {
+  ACTIVITY_KEYS,
+  type ActivityKey as Key,
+  type ActivityPoint,
+} from './activity'
 
 // Bars show only "how much happened that day"; put the breakdown in the hover card:
 // a bar representing both trend and breakdown would turn 30 days × 5 categories into a blur, and "what happened that day"
