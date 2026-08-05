@@ -1,4 +1,4 @@
-import { and, count, desc, eq, like, or, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gte, like, or, sql, type SQL } from 'drizzle-orm'
 import { getMessages, getTranslations } from 'next-intl/server'
 import { requireSession } from '@/lib/auth'
 import { db } from '@/lib/db'
@@ -44,6 +44,10 @@ export default async function AuditPage({
   const q = one('q')
   const action = one('action')
   const page = Math.max(1, Number(one('page')) || 1)
+  // range 要么是 today/7d/30d，要么直接是一天——概览页的柱子就跳到后者。
+  // 用同一个参数装两种，筛选行才只需要一个下拉，「清除」也照常管用。
+  const range = one('range')
+  const isDay = /^\d{4}-\d{2}-\d{2}$/.test(range)
 
   // 组管理员只看本组审计；super 看全部。筛选条件都拼进 SQL，
   // 之前是取 200 条再截断——审计已经 200+ 条，最老的记录直接看不到了。
@@ -52,6 +56,19 @@ export default async function AuditPage({
     conds.push(eq(auditLog.groupId, session.gid as number))
   }
   if (action) conds.push(eq(auditLog.action, action))
+  if (isDay) {
+    conds.push(eq(sql`date(${auditLog.ts})`, range))
+  } else if (range) {
+    // 与概览图表同一口径（都按 date(ts) 分桶），否则点进来条数对不上
+    const days = range === 'today' ? 1 : range === '7d' ? 7 : 30
+    // RSC + force-dynamic：每次请求都在服务端取当前时间，符合预期
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now()
+    const since = new Date(now - (days - 1) * 86400_000)
+      .toISOString()
+      .slice(0, 10)
+    conds.push(gte(sql`date(${auditLog.ts})`, since))
+  }
   if (q) {
     const kw = `%${q}%`
     const m = or(
@@ -104,6 +121,18 @@ export default async function AuditPage({
         placeholder={t('searchPlaceholder')}
         clearLabel={t('clearFilters')}
         selects={[
+          {
+            name: 'range',
+            placeholder: t('allTime'),
+            // 从图表点进来的具体某天，作为一个已选中的选项出现，
+            // 换成别的区间它自然消失——不需要额外的「取消这天」控件
+            options: [
+              ...(isDay ? [{ value: range, label: range }] : []),
+              { value: 'today', label: t('today') },
+              { value: '7d', label: t('last7d') },
+              { value: '30d', label: t('last30d') },
+            ],
+          },
           {
             name: 'action',
             placeholder: t('allActions'),

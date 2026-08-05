@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Bar, BarChart, CartesianGrid, Legend, XAxis, YAxis } from 'recharts'
+import { useRouter } from '@/i18n/navigation'
 import {
   ChartContainer,
   ChartLegendContent,
@@ -16,6 +17,7 @@ import { type ActivityPoint } from './activity'
 // 分不出十几种动作，而「那天都做了什么」本来就是停在某天才想知道的。
 export function ActivityChart({ data }: { data: ActivityPoint[] }) {
   const t = useTranslations('dashboard')
+  const router = useRouter()
 
   const label: Record<AuditKind, string> = {
     success: t('kindSuccess'),
@@ -29,7 +31,18 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
 
   return (
     <ChartContainer config={config} className="h-full w-full">
-      <BarChart data={data} margin={{ left: -20, right: 4, top: 4 }}>
+      <BarChart
+        data={data}
+        margin={{ left: -20, right: 4, top: 4 }}
+        // 「那天动了 7 次」之后必然要问「哪 7 次」，所以柱子直接是通往
+        // 审计日志的入口——审计页的 range 参数认得一个具体日期。
+        onClick={(s) => {
+          const p = (s as { activePayload?: { payload: ActivityPoint }[] })
+            .activePayload?.[0]?.payload
+          if (p?.total) router.push(`/audit?range=${p.date}`)
+        }}
+        className="[&_.recharts-rectangle]:cursor-pointer"
+      >
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="date"
@@ -81,6 +94,10 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
                       </span>
                     </div>
                   ))}
+                </div>
+                {/* 可点这件事没有静态的暗示，放悬停里说一次，不占版面 */}
+                <div className="text-muted-foreground border-border/50 border-t pt-1">
+                  {t('activityHint')}
                 </div>
               </div>
             )

@@ -89,7 +89,8 @@
     "kindUpdate": "修改",
     "kindApprove": "审批",
     "kindDanger": "删除/失败",
-    "activityOther": "其他"
+    "activityOther": "其他",
+    "activityHint": "点击查看当天记录"
   },
   "audit": {
     "title": "审计日志",
@@ -102,6 +103,10 @@
     "empty": "暂无记录",
     "searchPlaceholder": "搜索操作者 / 对象 / 详情",
     "allActions": "全部动作",
+    "allTime": "全部时间",
+    "today": "今天",
+    "last7d": "近 7 天",
+    "last30d": "近 30 天",
     "clearFilters": "清除",
     "pageInfo": "第 {page}/{pageCount} 页 · 共 {total} 条"
   },
