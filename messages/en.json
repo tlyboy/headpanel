@@ -19,7 +19,9 @@
     "no": "No",
     "online": "Online",
     "offline": "Offline",
-    "empty": "No data"
+    "empty": "No data",
+    "prevPage": "Previous",
+    "nextPage": "Next"
   },
   "metadata": {
     "title": "Headpanel Console",

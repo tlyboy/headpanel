@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { useSearchParams } from 'next/navigation'
 import { usePathname, useRouter } from '@/i18n/navigation'
 import {
@@ -21,6 +22,7 @@ export function ListPager({
   pageCount: number
   label: string
 }) {
+  const t = useTranslations('common')
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
@@ -43,6 +45,8 @@ export function ListPager({
           <PaginationItem>
             <PaginationPrevious
               href="#"
+              text={t('prevPage')}
+              aria-label={t('prevPage')}
               aria-disabled={page <= 1}
               className={page <= 1 ? 'pointer-events-none opacity-50' : ''}
               onClick={(e) => {
@@ -54,6 +58,8 @@ export function ListPager({
           <PaginationItem>
             <PaginationNext
               href="#"
+              text={t('nextPage')}
+              aria-label={t('nextPage')}
               aria-disabled={page >= pageCount}
               className={
                 page >= pageCount ? 'pointer-events-none opacity-50' : ''
