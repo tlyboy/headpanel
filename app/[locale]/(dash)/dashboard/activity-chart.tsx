@@ -95,10 +95,6 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
                     </div>
                   ))}
                 </div>
-                {/* There's no static indication that the bars are clickable, so mention it on hover without taking up space */}
-                <div className="text-muted-foreground border-border/50 border-t pt-1">
-                  {t('activityHint')}
-                </div>
               </div>
             )
           }}

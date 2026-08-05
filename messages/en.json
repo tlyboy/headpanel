@@ -89,8 +89,7 @@
     "kindUpdate": "Changes",
     "kindApprove": "Approvals",
     "kindDanger": "Deletes & failures",
-    "activityOther": "Other",
-    "activityHint": "Click to see that day in the audit log"
+    "activityOther": "Other"
   },
   "audit": {
     "title": "Audit log",
