@@ -83,7 +83,13 @@
     "noValidKey": "没有可用 key，新设备无法接入",
     "activityTitle": "操作频率",
     "activityDesc": "最近 {days} 天的后台操作",
-    "activityCount": "操作"
+    "activityCount": "操作",
+    "catNode": "节点",
+    "catRoute": "路由与 ACL",
+    "catGroup": "组",
+    "catKey": "密钥",
+    "catAuth": "登录",
+    "activityTotal": "共 {count} 次"
   },
   "audit": {
     "title": "审计日志",

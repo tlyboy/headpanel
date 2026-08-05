@@ -7,7 +7,11 @@ import { isNever } from '@/lib/format'
 import { and, eq, gte, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { auditLog } from '@/lib/db/schema'
-import { ActivityChart } from './activity-chart'
+import {
+  ACTIVITY_KEYS,
+  ActivityChart,
+  type ActivityPoint,
+} from './activity-chart'
 import {
   Card,
   CardContent,
@@ -59,7 +63,11 @@ export default async function DashboardPage() {
   const since = new Date(now - (DAYS - 1) * 86400_000)
   const sinceStr = since.toISOString().slice(0, 10)
   const dayRows = db
-    .select({ d: sql<string>`date(${auditLog.ts})`, n: sql<number>`count(*)` })
+    .select({
+      d: sql<string>`date(${auditLog.ts})`,
+      a: auditLog.action,
+      n: sql<number>`count(*)`,
+    })
     .from(auditLog)
     .where(
       session.role === 'super'
@@ -69,14 +77,34 @@ export default async function DashboardPage() {
             eq(auditLog.groupId, session.gid as number),
           ),
     )
-    .groupBy(sql`date(${auditLog.ts})`)
+    .groupBy(sql`date(${auditLog.ts})`, auditLog.action)
     .all()
-  const byDay = new Map(dayRows.map((r) => [r.d, Number(r.n)]))
+
+  // 16 种具体动作按前缀收成 5 个大类：悬停卡片里列 5 行读得完，列 16 行读不完
+  const catOf = (a: string): (typeof ACTIVITY_KEYS)[number] => {
+    if (a.startsWith('node.')) return 'node'
+    if (a.startsWith('route.') || a.startsWith('policy.')) return 'route'
+    if (a.startsWith('group.')) return 'group'
+    if (a.startsWith('preauthkey.') || a.startsWith('accesskey.')) return 'key'
+    return 'auth'
+  }
+  const byDay = new Map<string, Record<string, number>>()
+  for (const r of dayRows) {
+    const bucket = byDay.get(r.d) ?? {}
+    bucket[catOf(r.a)] = (bucket[catOf(r.a)] ?? 0) + Number(r.n)
+    byDay.set(r.d, bucket)
+  }
   const activity = Array.from({ length: DAYS }, (_, i) => {
     const d = new Date(since.getTime() + i * 86400_000)
       .toISOString()
       .slice(0, 10)
-    return { date: d, count: byDay.get(d) ?? 0 }
+    const b = byDay.get(d) ?? {}
+    const point = { date: d, total: 0 } as ActivityPoint
+    for (const k of ACTIVITY_KEYS) {
+      point[k] = b[k] ?? 0
+      point.total += point[k]
+    }
+    return point
   })
 
   const approvedRoutes = new Set<string>()
@@ -93,11 +121,6 @@ export default async function DashboardPage() {
     desc: string
     warn?: boolean
   }[] = [
-    {
-      title: 'Headscale',
-      value: version.version,
-      desc: t('apiConnected'),
-    },
     {
       title: t('nodesOnline'),
       value: `${online}/${nodes.length}`,
@@ -132,10 +155,16 @@ export default async function DashboardPage() {
       desc: validKeys === 0 ? t('noValidKey') : t('total', { count: keyCount }),
       warn: validKeys === 0,
     },
+    // 版本号放最后：属于背景信息，不需要谁为它做什么
+    {
+      title: 'Headscale',
+      value: version.version,
+      desc: t('apiConnected'),
+    },
   ]
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex h-full min-h-0 flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">{t('description')}</p>
@@ -161,12 +190,12 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <Card>
+      <Card className="flex min-h-64 flex-1 flex-col">
         <CardHeader>
           <CardTitle className="text-base">{t('activityTitle')}</CardTitle>
           <CardDescription>{t('activityDesc', { days: 30 })}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-h-0 flex-1">
           <ActivityChart data={activity} />
         </CardContent>
       </Card>

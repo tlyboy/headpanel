@@ -83,7 +83,13 @@
     "noValidKey": "No usable key — new devices cannot join",
     "activityTitle": "Activity",
     "activityDesc": "Admin operations over the last {days} days",
-    "activityCount": "Operations"
+    "activityCount": "Operations",
+    "catNode": "Nodes",
+    "catRoute": "Routes & ACL",
+    "catGroup": "Groups",
+    "catKey": "Keys",
+    "catAuth": "Auth",
+    "activityTotal": "{count} total"
   },
   "audit": {
     "title": "Audit log",
