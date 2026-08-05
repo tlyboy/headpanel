@@ -316,7 +316,9 @@
     "noteCleared": "(cleared)",
     "groupProtected": "\"{slug}\" was not created by the panel — it maps directly to an existing headscale user. Deleting it would destroy every node and pre-auth key owned by that user, so the panel refuses. Do it manually on the server if you really need to.",
     "routeNotApproved": "That node has not approved this route",
-    "primaryNotSwitched": "headscale did not switch the serving node as expected; refresh and check the current state"
+    "primaryNotSwitched": "headscale did not switch the serving node as expected; refresh and check the current state",
+    "routeApprovedAclFailed": "The route was approved but the ACL update failed: {reason}. The subnet may still be unreachable — check the policy baseline.",
+    "routeRevokedAclFailed": "The route was revoked but the ACL cleanup failed: {reason}. Check the policy baseline."
   },
   "subnets": {
     "title": "Subnet routes",
@@ -352,8 +354,8 @@
       "step3Desc": "Use the Approve button above. Several nodes may be approved for the same subnet; headscale lets exactly one serve it and keeps the rest on standby, failing over automatically if the serving node drops.",
       "accessTitle": "Consumers need accept-routes.",
       "accessDesc": "Subnet routes only apply to nodes that opted in: tailscale set --accept-routes=true. Do not enable it on machines that already belong to that subnet, or their local traffic will detour through the gateway node.",
-      "warnTitle": "Your ACL must allow the subnet too",
-      "warnDesc": "Your ACL must also allow the destination subnet, or approved routes still will not work — a dst of node tags alone is not enough; it must include the CIDR explicitly (e.g. 192.168.1.0/24:*).",
+      "warnTitle": "The ACL is updated for you",
+      "warnDesc": "Approving a route here also writes the subnet into the ACL dst, and removes it once the last node is revoked — no need to edit the policy on the server. If the baseline has no accept rule to attach it to, approving reports that explicitly.",
       "cmdAdvertiseLinux": "Linux / macOS (replace with your CIDR)",
       "cmdAdvertiseWindows": "Windows (PowerShell as admin)",
       "cmdAdvertiseStop": "Stop advertising (all platforms)",

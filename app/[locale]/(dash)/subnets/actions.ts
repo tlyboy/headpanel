@@ -4,6 +4,12 @@ import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { requireSuper } from '@/lib/auth'
 import { auditAfter } from '@/lib/db'
+import { listGroups } from '@/lib/groups'
+import {
+  addSubnetDst,
+  removeSubnetDst,
+  updateBaselineAndApply,
+} from '@/lib/policy'
 import {
   approveRoutes,
   getNode,
@@ -52,6 +58,16 @@ export async function approveRouteAction(
     auditAfter('route.approve', `${nodeId}:${route}`, `approved=${after.join(',')}`, {
       actor: session.sub,
     })
+    // 批准只是让 headscale 认这条路由；ACL 的 dst 不含该网段的话包照样被丢，
+    // 所以顺手把它放通——否则用户还得 SSH 上服务器改基线文件。
+    try {
+      if (await updateBaselineAndApply(addSubnetDst(route), listGroups())) {
+        auditAfter('policy.allowSubnet', route, undefined, { actor: session.sub })
+      }
+    } catch (e) {
+      // 路由已经批准成功了，不因为 ACL 没跟上就把它回滚——如实告知即可
+      return { ok: false, error: t('routeApprovedAclFailed', { reason: errMsg(e, t('unknown')) }) }
+    }
     revalidatePath('/subnets')
     revalidatePath('/nodes')
     return { ok: true }
@@ -73,6 +89,22 @@ export async function revokeRouteAction(
     auditAfter('route.revoke', `${nodeId}:${route}`, `approved=${after.join(',')}`, {
       actor: session.sub,
     })
+    // 只有当这条网段再没有任何节点批准时才收回 ACL——还有备份节点的话
+    // 收回等于把仍在服务的网段掐了
+    try {
+      const nodes = await listNodes()
+      const stillApproved = nodes.some((n) =>
+        (n.approvedRoutes ?? []).includes(route),
+      )
+      if (
+        !stillApproved &&
+        (await updateBaselineAndApply(removeSubnetDst(route), listGroups()))
+      ) {
+        auditAfter('policy.revokeSubnet', route, undefined, { actor: session.sub })
+      }
+    } catch (e) {
+      return { ok: false, error: t('routeRevokedAclFailed', { reason: errMsg(e, t('unknown')) }) }
+    }
     revalidatePath('/subnets')
     revalidatePath('/nodes')
     return { ok: true }

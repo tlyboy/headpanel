@@ -1,6 +1,6 @@
 import 'server-only'
 
-import { readFileSync } from 'node:fs'
+import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
 import { HeadscaleError, setPolicy } from '@/lib/headscale'
 
 const DEFAULT_BASELINE_PATH = '/etc/headpanel/policy-baseline.json'
@@ -41,8 +41,12 @@ type PolicyBaseline = Record<string, unknown> & {
 // 子网路由（如 192.168.120.0/24）的 dst 等。放文件而非硬编码，以后加子网
 // 只改文件、不必改代码重新构建。文件不存在 = 无基线（兼容旧部署）；
 // 存在但读不了/解析不了则抛错，宁可组操作失败也不下发丢了基线的 policy。
+export function baselinePath(): string {
+  return process.env.HEADPANEL_POLICY_BASELINE || DEFAULT_BASELINE_PATH
+}
+
 export function loadBaseline(): PolicyBaseline {
-  const path = process.env.HEADPANEL_POLICY_BASELINE || DEFAULT_BASELINE_PATH
+  const path = baselinePath()
   let raw: string
   try {
     raw = readFileSync(path, 'utf8')
@@ -106,6 +110,83 @@ export async function applyPolicy(
       /modes other than|policy\.mode/i.test(e.message)
     ) {
       throw new PolicyReadOnlyError()
+    }
+    throw e
+  }
+}
+
+// 批准一条子网路由并不足以让它通：ACL 的 dst 必须显式含该网段，否则包在
+// tailscale 数据面就被丢了（今天 192.168.120.0/24 不通就是卡在这一步）。
+// 基线是人工维护的文件，所以这里只做最小改动——往既有的 accept 规则里加/减
+// 一个 "<cidr>:*"，不新建规则、不碰其它字段。
+export class BaselineNotWritableError extends Error {
+  constructor(reason: string) {
+    super(`Cannot update the policy baseline: ${reason}`)
+    this.name = 'BaselineNotWritableError'
+  }
+}
+
+type Mutator = (b: PolicyBaseline) => boolean
+
+// 找第一条 accept 规则来挂载子网 dst。基线里一条都没有时不擅自新建：
+// src 该写什么只有人知道，猜错等于给全网开一条规则。
+function firstAcceptRule(b: PolicyBaseline): PolicyAcl {
+  const rule = (b.acls ?? []).find((a) => a.action === 'accept')
+  if (!rule) {
+    throw new BaselineNotWritableError(
+      'the baseline has no accept rule to attach the subnet to',
+    )
+  }
+  return rule
+}
+
+export function addSubnetDst(cidr: string): Mutator {
+  return (b) => {
+    const want = `${cidr}:*`
+    const rule = firstAcceptRule(b)
+    if (rule.dst.includes(want)) return false
+    rule.dst.push(want)
+    return true
+  }
+}
+
+export function removeSubnetDst(cidr: string): Mutator {
+  return (b) => {
+    const want = `${cidr}:*`
+    const rule = firstAcceptRule(b)
+    const next = rule.dst.filter((d) => d !== want)
+    if (next.length === rule.dst.length) return false
+    rule.dst = next
+    return true
+  }
+}
+
+// 改基线 → 下发 → 失败则把文件回滚。基线写成功但 headscale 拒绝新 policy 时，
+// 留着改过的文件会让后续每次组操作都带着这条坏规则重下，所以必须还原。
+export async function updateBaselineAndApply(
+  mutate: Mutator,
+  rows: { hsUserName: string; okTag: string }[],
+): Promise<boolean> {
+  const path = baselinePath()
+  const original = existsSync(/* turbopackIgnore: true */ path)
+    ? readFileSync(/* turbopackIgnore: true */ path, 'utf8')
+    : null
+  const baseline = loadBaseline()
+  if (!mutate(baseline)) return false
+
+  writeFileSync(
+    /* turbopackIgnore: true */ path,
+    `${JSON.stringify(baseline, null, 2)}\n`,
+    { mode: 0o600 },
+  )
+  try {
+    await applyPolicy(rows)
+    return true
+  } catch (e) {
+    if (original == null) {
+      unlinkSync(/* turbopackIgnore: true */ path)
+    } else {
+      writeFileSync(/* turbopackIgnore: true */ path, original, { mode: 0o600 })
     }
     throw e
   }
