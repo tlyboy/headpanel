@@ -19,7 +19,9 @@
     "no": "否",
     "online": "在线",
     "offline": "离线",
-    "empty": "暂无数据"
+    "empty": "暂无数据",
+    "prevPage": "上一页",
+    "nextPage": "下一页"
   },
   "metadata": {
     "title": "Headpanel 管理控制台",
