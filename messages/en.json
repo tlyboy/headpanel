@@ -314,7 +314,9 @@
     "nodeNamePattern": "Name can only contain letters, digits, and hyphens",
     "noteTooLong": "Note must be at most 200 characters",
     "noteCleared": "(cleared)",
-    "groupProtected": "\"{slug}\" was not created by the panel — it maps directly to an existing headscale user. Deleting it would destroy every node and pre-auth key owned by that user, so the panel refuses. Do it manually on the server if you really need to."
+    "groupProtected": "\"{slug}\" was not created by the panel — it maps directly to an existing headscale user. Deleting it would destroy every node and pre-auth key owned by that user, so the panel refuses. Do it manually on the server if you really need to.",
+    "routeNotApproved": "That node has not approved this route",
+    "primaryNotSwitched": "headscale did not switch the serving node as expected; refresh and check the current state"
   },
   "subnets": {
     "title": "Subnet routes",
@@ -357,7 +359,13 @@
       "cmdAdvertiseStop": "Stop advertising (all platforms)",
       "cmdForwardLinux": "Linux — enable kernel forwarding",
       "cmdForwardWindows": "Windows — a reboot is required"
-    }
+    },
+    "menu": "More actions",
+    "lanIp": "LAN IP",
+    "makePrimary": "Make it serve",
+    "makePrimaryTitle": "Let {node} serve {route}?",
+    "makePrimaryDescription": "headscale offers no way to pin the serving node, so the others are revoked to force the switch and then restored as standbys. The subnet may drop briefly during the switch; if anything fails midway, the revoked standbys are restored automatically.",
+    "madePrimary": "Serving node switched"
   },
   "groupSwitcher": {
     "label": "Switch identity",

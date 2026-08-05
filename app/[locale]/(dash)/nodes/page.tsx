@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { LanIpCell } from './lan-ip-cell'
+import { LanIpCell } from '@/components/lan-ip-cell'
 import { NodeRowActions } from './row-actions'
 
 export const dynamic = 'force-dynamic'

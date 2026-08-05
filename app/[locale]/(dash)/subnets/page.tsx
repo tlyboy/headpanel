@@ -1,7 +1,9 @@
 import { getTranslations } from 'next-intl/server'
 import { TriangleAlert } from 'lucide-react'
 import { requireSuper } from '@/lib/auth'
+import { readNodeNetInfo } from '@/lib/headscale-db'
 import { listNodes, type HsNode } from '@/lib/headscale'
+import { LanIpCell } from '@/components/lan-ip-cell'
 import { CmdBlock } from '@/components/cmd-block'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -65,6 +67,8 @@ export default async function SubnetsPage() {
     getTranslations('common'),
   ])
   const nodes = await listNodes()
+  // 光看节点名和 tailnet IP 不好判断这条路由是哪台机器出去的，补上局域网地址
+  const netInfo = readNodeNetInfo()
 
   // 按网段聚合：同一网段可能有多个节点宣告，其中只有一个在承载
   const byRoute = new Map<string, RouteEntry[]>()
@@ -114,6 +118,7 @@ export default async function SubnetsPage() {
             <TableRow>
               <TableHead>{t('route')}</TableHead>
               <TableHead>{t('node')}</TableHead>
+              <TableHead>{t('lanIp')}</TableHead>
               <TableHead>{t('status')}</TableHead>
               <TableHead>{t('advertising')}</TableHead>
               <TableHead className="w-24 text-right">{t('actions')}</TableHead>
@@ -123,7 +128,7 @@ export default async function SubnetsPage() {
             {routes.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="text-muted-foreground py-8 text-center"
                 >
                   {t('empty')}
@@ -142,6 +147,9 @@ export default async function SubnetsPage() {
                       <span className="text-muted-foreground ml-2 font-mono text-xs">
                         {e.node.ipAddresses[0]}
                       </span>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <LanIpCell ips={netInfo.get(e.node.id)?.lanIps ?? []} />
                     </TableCell>
                     <TableCell>
                       {e.serving ? (

@@ -314,7 +314,9 @@
     "nodeNamePattern": "名称只能包含字母、数字、连字符 -",
     "noteTooLong": "备注最多 200 字",
     "noteCleared": "(清空)",
-    "groupProtected": "「{slug}」不是面板创建的组，它直接映射到 headscale 既有 user。删除会连带销毁该 user 名下的全部节点与授权 key，因此面板不允许删除。确需删除请在服务器上手工处理。"
+    "groupProtected": "「{slug}」不是面板创建的组，它直接映射到 headscale 既有 user。删除会连带销毁该 user 名下的全部节点与授权 key，因此面板不允许删除。确需删除请在服务器上手工处理。",
+    "routeNotApproved": "该节点尚未批准这条路由",
+    "primaryNotSwitched": "headscale 未按预期切换承载方，请刷新后确认当前状态"
   },
   "subnets": {
     "title": "子网路由",
@@ -357,7 +359,13 @@
       "cmdAdvertiseStop": "取消宣告（三平台通用）",
       "cmdForwardLinux": "Linux：开启内核转发",
       "cmdForwardWindows": "Windows：改完必须重启才生效"
-    }
+    },
+    "menu": "更多操作",
+    "lanIp": "局域网 IP",
+    "makePrimary": "设为承载",
+    "makePrimaryTitle": "让 {node} 承载 {route}？",
+    "makePrimaryDescription": "headscale 不支持直接指定承载方，只能先撤销其它已批准节点、逼它切过来，再把它们恢复成备份。切换瞬间该网段可能短暂中断；若中途出错，已撤销的备份会自动还原。",
+    "madePrimary": "已切换承载节点"
   },
   "groupSwitcher": {
     "label": "切换身份",
