@@ -5,30 +5,35 @@ import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
 import {
   ChartContainer,
   ChartTooltip,
-  ChartTooltipContent,
   type ChartConfig,
 } from '@/components/ui/chart'
 
-export interface ActivityPoint {
-  /** YYYY-MM-DD */
-  date: string
-  count: number
-}
+/** Keep the categories consistent with page.tsx */
+export const ACTIVITY_KEYS = ['node', 'route', 'group', 'key', 'auth'] as const
+type Key = (typeof ACTIVITY_KEYS)[number]
 
-// Single series: omit the legend; the title already explains what this is.
-// Use bars, not a line: each day is a discrete count bucket, and a line would suggest intermediate values between days.
+export type ActivityPoint = { date: string; total: number } & Record<Key, number>
+
+// Bars show only "how much happened that day"; put the breakdown in the hover card:
+// a bar representing both trend and breakdown would turn 30 days × 5 categories into a blur, and "what happened that day"
+// is something you only want to know when focused on a particular day.
 export function ActivityChart({ data }: { data: ActivityPoint[] }) {
   const t = useTranslations('dashboard')
 
   const config = {
-    count: {
-      label: t('activityCount'),
-      color: 'var(--chart-1)',
-    },
+    total: { label: t('activityCount'), color: 'var(--chart-1)' },
   } satisfies ChartConfig
 
+  const catLabel: Record<Key, string> = {
+    node: t('catNode'),
+    route: t('catRoute'),
+    group: t('catGroup'),
+    key: t('catKey'),
+    auth: t('catAuth'),
+  }
+
   return (
-    <ChartContainer config={config} className="h-40 w-full">
+    <ChartContainer config={config} className="h-full w-full">
       <BarChart data={data} margin={{ left: -20, right: 4, top: 4 }}>
         <CartesianGrid vertical={false} />
         <XAxis
@@ -37,7 +42,7 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
           axisLine={false}
           tickMargin={8}
           minTickGap={24}
-          // Show only month-day on the axis; the year is noise in a 30-day window
+          // In a 30-day window, the year is noise
           tickFormatter={(v: string) => v.slice(5)}
         />
         <YAxis
@@ -48,9 +53,37 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
         />
         <ChartTooltip
           cursor={false}
-          content={<ChartTooltipContent labelFormatter={(l) => String(l)} />}
+          content={({ active, payload, label }) => {
+            if (!active || !payload?.length) return null
+            const d = payload[0].payload as ActivityPoint
+            if (!d.total) return null
+            const parts = ACTIVITY_KEYS.filter((k) => d[k] > 0)
+            return (
+              <div className="border-border/50 bg-background grid min-w-40 gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
+                <div className="flex items-center justify-between gap-4 font-medium">
+                  <span>{String(label)}</span>
+                  <span className="font-mono tabular-nums">
+                    {t('activityTotal', { count: d.total })}
+                  </span>
+                </div>
+                <div className="grid gap-1">
+                  {parts.map((k) => (
+                    <div
+                      key={k}
+                      className="text-muted-foreground flex items-center justify-between gap-4"
+                    >
+                      <span>{catLabel[k]}</span>
+                      <span className="text-foreground font-mono tabular-nums">
+                        {d[k]}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )
+          }}
         />
-        <Bar dataKey="count" fill="var(--color-count)" radius={[4, 4, 0, 0]} />
+        <Bar dataKey="total" fill="var(--color-total)" radius={[4, 4, 0, 0]} />
       </BarChart>
     </ChartContainer>
   )
