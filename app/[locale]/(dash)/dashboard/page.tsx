@@ -4,6 +4,10 @@ import { requireSession } from '@/lib/auth'
 import { visibleGroups, scopeNodes } from '@/lib/groups'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { isNever } from '@/lib/format'
+import { and, eq, gte, sql } from 'drizzle-orm'
+import { db } from '@/lib/db'
+import { auditLog } from '@/lib/db/schema'
+import { ActivityChart } from './activity-chart'
 import {
   Card,
   CardContent,
@@ -47,8 +51,34 @@ export default async function DashboardPage() {
     }
   }
 
-  // Of the approved subnets, how many currently have nodes actually serving them. This number drops when a serving node goes offline,
-  // which is exactly when a "subnet is currently unreachable" — more useful than listing the total number of subnets.
+  // Among the approved networks, how many currently have nodes actively serving them. This number drops when a serving node goes offline,
+  // which is exactly when "the network is currently unreachable" — more useful than listing the total number of networks.
+  // Operation frequency over the last 30 days. Filling in zeros is essential — there are 45 days with no records in an 82-day span,
+  // and plotting only days with records would make the timeline discontinuous, as if something happened every day.
+  const DAYS = 30
+  const since = new Date(now - (DAYS - 1) * 86400_000)
+  const sinceStr = since.toISOString().slice(0, 10)
+  const dayRows = db
+    .select({ d: sql<string>`date(${auditLog.ts})`, n: sql<number>`count(*)` })
+    .from(auditLog)
+    .where(
+      session.role === 'super'
+        ? gte(sql`date(${auditLog.ts})`, sinceStr)
+        : and(
+            gte(sql`date(${auditLog.ts})`, sinceStr),
+            eq(auditLog.groupId, session.gid as number),
+          ),
+    )
+    .groupBy(sql`date(${auditLog.ts})`)
+    .all()
+  const byDay = new Map(dayRows.map((r) => [r.d, Number(r.n)]))
+  const activity = Array.from({ length: DAYS }, (_, i) => {
+    const d = new Date(since.getTime() + i * 86400_000)
+      .toISOString()
+      .slice(0, 10)
+    return { date: d, count: byDay.get(d) ?? 0 }
+  })
+
   const approvedRoutes = new Set<string>()
   const servingRoutes = new Set<string>()
   for (const n of nodes) {
@@ -131,6 +161,15 @@ export default async function DashboardPage() {
         ))}
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t('activityTitle')}</CardTitle>
+          <CardDescription>{t('activityDesc', { days: 30 })}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ActivityChart data={activity} />
+        </CardContent>
+      </Card>
     </div>
   )
 }

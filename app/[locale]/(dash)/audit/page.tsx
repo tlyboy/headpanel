@@ -1,5 +1,5 @@
 import { and, count, desc, eq, like, or, type SQL } from 'drizzle-orm'
-import { getTranslations } from 'next-intl/server'
+import { getMessages, getTranslations } from 'next-intl/server'
 import { requireSession } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { auditLog } from '@/lib/db/schema'
@@ -24,15 +24,17 @@ export default async function AuditPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const [session, t, ta, sp] = await Promise.all([
+  const [session, t, messages, sp] = await Promise.all([
     requireSession(),
     getTranslations('audit'),
-    getTranslations('auditActions'),
+    getMessages(),
     searchParams,
   ])
-  // action stores internal identifiers such as route.approve; if no translation is found, display the identifier as-is,
-  // so this column doesn't end up blank when new actions are added in the future
-  const actionLabel = (a: string) => (ta.has(a) ? ta(a) : a)
+  // action stores internal identifiers such as route.approve. Don't use t('auditActions.xxx'):
+  // next-intl treats dots as namespace separators and looks for an auditActions.route object,
+  // but the key itself contains a dot, so it will never match. Read the message object directly; if there's no match, display the value as-is.
+  const actionMap = (messages.auditActions ?? {}) as Record<string, string>
+  const actionLabel = (a: string) => actionMap[a] ?? a
   const one = (k: string) => {
     const v = sp[k]
     return (Array.isArray(v) ? v[0] : v)?.trim() || ''
