@@ -85,9 +85,10 @@
     "activityDesc": "最近 {days} 天的后台操作",
     "activityCount": "操作",
     "activityTotal": "共 {count} 次",
-    "kindNormal": "常规",
-    "kindDestructive": "删除类",
-    "kindFailed": "失败",
+    "kindSuccess": "正常",
+    "kindUpdate": "修改",
+    "kindApprove": "审批",
+    "kindDanger": "删除/失败",
     "activityOther": "其他"
   },
   "audit": {

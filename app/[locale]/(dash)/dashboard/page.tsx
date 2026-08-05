@@ -8,12 +8,8 @@ import { and, eq, gte, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { auditLog } from '@/lib/db/schema'
 import { ActivityChart } from './activity-chart'
-import {
-  ACTIVITY_TOP_N,
-  activityKind,
-  type ActivityKind,
-  type ActivityPoint,
-} from './activity'
+import { auditKind, type AuditKind } from '@/lib/audit'
+import { ACTIVITY_TOP_N, type ActivityPoint } from './activity'
 import {
   Card,
   CardContent,
@@ -100,9 +96,10 @@ export default async function DashboardPage() {
       .slice(0, 10)
     const point: ActivityPoint = {
       date: d,
-      normal: 0,
-      destructive: 0,
-      failed: 0,
+      success: 0,
+      update: 0,
+      approve: 0,
+      danger: 0,
       total: 0,
       items: [],
     }
@@ -111,20 +108,20 @@ export default async function DashboardPage() {
 
     const sorted = [...bucket.entries()].sort((a, b) => b[1] - a[1])
     for (const [action, n] of sorted) {
-      point[activityKind(action)] += n
+      point[auditKind(action)] += n
       point.total += n
     }
     point.items = sorted.slice(0, ACTIVITY_TOP_N).map(([action, n]) => ({
       label: actionMap[action] ?? action,
       count: n,
-      kind: activityKind(action),
+      kind: auditKind(action),
     }))
     const rest = sorted.slice(ACTIVITY_TOP_N).reduce((n, [, c]) => n + c, 0)
     if (rest > 0) {
       point.items.push({
         label: t('activityOther'),
         count: rest,
-        kind: 'normal' as ActivityKind,
+        kind: 'success' as AuditKind,
       })
     }
     return point
@@ -187,7 +184,7 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex h-full min-h-0 flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">{t('description')}</p>
@@ -213,12 +210,12 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <Card>
+      <Card className="flex min-h-72 flex-1 flex-col">
         <CardHeader>
           <CardTitle className="text-base">{t('activityTitle')}</CardTitle>
           <CardDescription>{t('activityDesc', { days: 30 })}</CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="min-h-0 flex-1">
           <ActivityChart data={activity} />
         </CardContent>
       </Card>

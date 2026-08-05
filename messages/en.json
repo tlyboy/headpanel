@@ -85,9 +85,10 @@
     "activityDesc": "Admin operations over the last {days} days",
     "activityCount": "Operations",
     "activityTotal": "{count} total",
-    "kindNormal": "Routine",
-    "kindDestructive": "Destructive",
-    "kindFailed": "Failed",
+    "kindSuccess": "Routine",
+    "kindUpdate": "Changes",
+    "kindApprove": "Approvals",
+    "kindDanger": "Deletes & failures",
     "activityOther": "Other"
   },
   "audit": {
