@@ -1,4 +1,4 @@
-import { and, count, desc, eq, like, or, type SQL } from 'drizzle-orm'
+import { and, count, desc, eq, gte, like, or, sql, type SQL } from 'drizzle-orm'
 import { getMessages, getTranslations } from 'next-intl/server'
 import { requireSession } from '@/lib/auth'
 import { db } from '@/lib/db'
@@ -44,6 +44,10 @@ export default async function AuditPage({
   const q = one('q')
   const action = one('action')
   const page = Math.max(1, Number(one('page')) || 1)
+  // range is either today/7d/30d or a specific day — the latter is what a bar on the overview page links to.
+  // Using one parameter for both means the filter row only needs one dropdown, and "Clear" works as usual.
+  const range = one('range')
+  const isDay = /^\d{4}-\d{2}-\d{2}$/.test(range)
 
   // Group admins only see their group's audit logs; super sees everything. All filters are included in the SQL,
   // whereas before we fetched 200 rows and then truncated — there are already 200+ audit records, so the oldest ones were never visible.
@@ -52,6 +56,19 @@ export default async function AuditPage({
     conds.push(eq(auditLog.groupId, session.gid as number))
   }
   if (action) conds.push(eq(auditLog.action, action))
+  if (isDay) {
+    conds.push(eq(sql`date(${auditLog.ts})`, range))
+  } else if (range) {
+    // Use the same basis as the overview chart (both bucket by date(ts)); otherwise the counts won't match when you click through.
+    const days = range === 'today' ? 1 : range === '7d' ? 7 : 30
+    // RSC + force-dynamic: the current time is fetched on the server for every request, as expected.
+    // eslint-disable-next-line react-hooks/purity
+    const now = Date.now()
+    const since = new Date(now - (days - 1) * 86400_000)
+      .toISOString()
+      .slice(0, 10)
+    conds.push(gte(sql`date(${auditLog.ts})`, since))
+  }
   if (q) {
     const kw = `%${q}%`
     const m = or(
@@ -104,6 +121,18 @@ export default async function AuditPage({
         placeholder={t('searchPlaceholder')}
         clearLabel={t('clearFilters')}
         selects={[
+          {
+            name: 'range',
+            placeholder: t('allTime'),
+            // A specific day clicked from the chart appears as a selected option,
+            // and naturally disappears when you switch to another range — no extra "Clear this day" control needed.
+            options: [
+              ...(isDay ? [{ value: range, label: range }] : []),
+              { value: 'today', label: t('today') },
+              { value: '7d', label: t('last7d') },
+              { value: '30d', label: t('last30d') },
+            ],
+          },
           {
             name: 'action',
             placeholder: t('allActions'),

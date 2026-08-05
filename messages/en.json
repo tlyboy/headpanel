@@ -89,7 +89,8 @@
     "kindUpdate": "Changes",
     "kindApprove": "Approvals",
     "kindDanger": "Deletes & failures",
-    "activityOther": "Other"
+    "activityOther": "Other",
+    "activityHint": "Click to see that day in the audit log"
   },
   "audit": {
     "title": "Audit log",
@@ -102,6 +103,10 @@
     "empty": "No audit records",
     "searchPlaceholder": "Search actor / target / detail",
     "allActions": "All actions",
+    "allTime": "All time",
+    "today": "Today",
+    "last7d": "Last 7 days",
+    "last30d": "Last 30 days",
     "clearFilters": "Clear",
     "pageInfo": "Page {page} of {pageCount} · {total} entries"
   },
