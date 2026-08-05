@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl'
 import { Bar, BarChart, CartesianGrid, Legend, XAxis, YAxis } from 'recharts'
-import { useRouter } from '@/i18n/navigation'
 import {
   ChartContainer,
   ChartLegendContent,
@@ -17,7 +16,6 @@ import { type ActivityPoint } from './activity'
 // there's no room to distinguish a dozen kinds of actions, and "what happened that day" is something you only want to know when you stop on a day.
 export function ActivityChart({ data }: { data: ActivityPoint[] }) {
   const t = useTranslations('dashboard')
-  const router = useRouter()
 
   const label: Record<AuditKind, string> = {
     success: t('kindSuccess'),
@@ -31,18 +29,7 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
 
   return (
     <ChartContainer config={config} className="h-full w-full">
-      <BarChart
-        data={data}
-        margin={{ left: -20, right: 4, top: 4 }}
-        // After "7 actions that day," the natural question is "Which 7?", so each bar links directly to
-        // the audit log — the audit page's range parameter accepts a specific date.
-        onClick={(s) => {
-          const p = (s as { activePayload?: { payload: ActivityPoint }[] })
-            .activePayload?.[0]?.payload
-          if (p?.total) router.push(`/audit?range=${p.date}`)
-        }}
-        className="[&_.recharts-rectangle]:cursor-pointer"
-      >
+      <BarChart data={data} margin={{ left: -20, right: 4, top: 4 }}>
         <CartesianGrid vertical={false} />
         <XAxis
           dataKey="date"
