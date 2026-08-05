@@ -4,6 +4,12 @@ import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { requireSuper } from '@/lib/auth'
 import { auditAfter } from '@/lib/db'
+import { listGroups } from '@/lib/groups'
+import {
+  addSubnetDst,
+  removeSubnetDst,
+  updateBaselineAndApply,
+} from '@/lib/policy'
 import {
   approveRoutes,
   getNode,
@@ -52,6 +58,16 @@ export async function approveRouteAction(
     auditAfter('route.approve', `${nodeId}:${route}`, `approved=${after.join(',')}`, {
       actor: session.sub,
     })
+    // Approving a route only tells headscale to recognize it; if the ACL's dst doesn't include that subnet, packets will still be dropped,
+    // so allow it at the same time — otherwise users would have to SSH into the server and edit the baseline file.
+    try {
+      if (await updateBaselineAndApply(addSubnetDst(route), listGroups())) {
+        auditAfter('policy.allowSubnet', route, undefined, { actor: session.sub })
+      }
+    } catch (e) {
+      // The route has already been approved successfully. Don't roll it back just because the ACL wasn't updated — simply report that accurately.
+      return { ok: false, error: t('routeApprovedAclFailed', { reason: errMsg(e, t('unknown')) }) }
+    }
     revalidatePath('/subnets')
     revalidatePath('/nodes')
     return { ok: true }
@@ -73,6 +89,22 @@ export async function revokeRouteAction(
     auditAfter('route.revoke', `${nodeId}:${route}`, `approved=${after.join(',')}`, {
       actor: session.sub,
     })
+    // Revoke the ACL only when no nodes have this subnet approved anymore — if there are backup nodes,
+    // revoking it would cut off a subnet that's still in service.
+    try {
+      const nodes = await listNodes()
+      const stillApproved = nodes.some((n) =>
+        (n.approvedRoutes ?? []).includes(route),
+      )
+      if (
+        !stillApproved &&
+        (await updateBaselineAndApply(removeSubnetDst(route), listGroups()))
+      ) {
+        auditAfter('policy.revokeSubnet', route, undefined, { actor: session.sub })
+      }
+    } catch (e) {
+      return { ok: false, error: t('routeRevokedAclFailed', { reason: errMsg(e, t('unknown')) }) }
+    }
     revalidatePath('/subnets')
     revalidatePath('/nodes')
     return { ok: true }
