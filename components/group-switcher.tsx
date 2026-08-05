@@ -114,10 +114,6 @@ export function GroupSwitcher({
               <Plus />
               <span className="text-muted-foreground">{t('addGroup')}</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
-              {t('hint')}
-            </DropdownMenuLabel>
           </DropdownMenuContent>
         </DropdownMenu>
         {/* Must be rendered outside DropdownMenu: clicking a menu item closes it, and the dialog would be unmounted before it can open. */}

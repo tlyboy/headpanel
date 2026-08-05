@@ -104,7 +104,6 @@
     "pending": "Pending",
     "rejected": "Rejected",
     "lanIp": "LAN IP",
-    "lanIpHint": "LAN addresses reported by this node; the first is most likely its real NIC",
     "lanIpPrimary": "primary",
     "copyLanIp": "Copy"
   },
@@ -267,8 +266,6 @@
     "currentConfig": "Current config",
     "allocation": "Allocation",
     "usedIpv4": "Used IPv4",
-    "nodes": "Nodes",
-    "online": "Online",
     "count": "{count} total"
   },
   "networkForm": {
@@ -332,7 +329,6 @@
     "serving": "Serving",
     "standby": "Approved · standby",
     "pending": "Awaiting approval",
-    "staleHint": "The client stopped advertising this route, but the approval is still on record. Revoke to clean it up.",
     "approve": "Approve",
     "revoke": "Revoke",
     "approved": "Subnet approved",
@@ -345,13 +341,9 @@
     "revokePrimaryDescription": "This node is currently serving the subnet. After revoking, headscale fails over to another approved node if one exists — otherwise the subnet becomes unreachable immediately.",
     "howto": {
       "title": "Enabling and disabling subnet routes",
-      "intro": "Two steps: the client advertises (run on that machine), then you approve here. Both are required — advertising alone does nothing, and approving a route the client no longer advertises shows up here as \"no longer advertised\".",
       "step1Title": "Step 1 — advertise the subnet on the client",
-      "step1Desc": "Run this on the machine that will act as the gateway. It then appears here as awaiting approval.",
       "step2Title": "Step 2 — enable IP forwarding",
       "step2Desc": "Without it, traffic reaches the machine but cannot be forwarded — and the machine slows down under the packets it keeps failing to route.",
-      "step3Title": "Step 3 — approve it here.",
-      "step3Desc": "Use the Approve button above. Several nodes may be approved for the same subnet; headscale lets exactly one serve it and keeps the rest on standby, failing over automatically if the serving node drops.",
       "accessTitle": "Consumers need accept-routes.",
       "accessDesc": "Subnet routes only apply to nodes that opted in: tailscale set --accept-routes=true. Do not enable it on machines that already belong to that subnet, or their local traffic will detour through the gateway node.",
       "warnTitle": "The ACL is updated for you",
@@ -360,7 +352,8 @@
       "cmdAdvertiseWindows": "Windows (PowerShell as admin)",
       "cmdAdvertiseStop": "Stop advertising (all platforms)",
       "cmdForwardLinux": "Linux — enable kernel forwarding",
-      "cmdForwardWindows": "Windows — a reboot is required"
+      "cmdForwardWindows": "Windows — a reboot is required",
+      "summary": "Advertise on the client, then approve here. Both are required."
     },
     "menu": "More actions",
     "lanIp": "LAN IP",
@@ -372,7 +365,6 @@
   "groupSwitcher": {
     "label": "Switch identity",
     "allGroups": "Super admin",
-    "hint": "You will act as that group’s admin",
     "addGroup": "Add group",
     "actingAs": "acting as group admin"
   }
