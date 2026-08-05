@@ -24,11 +24,15 @@ export default async function AuditPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const [session, t, sp] = await Promise.all([
+  const [session, t, ta, sp] = await Promise.all([
     requireSession(),
     getTranslations('audit'),
+    getTranslations('auditActions'),
     searchParams,
   ])
+  // action stores internal identifiers such as route.approve; if no translation is found, display the identifier as-is,
+  // so this column doesn't end up blank when new actions are added in the future
+  const actionLabel = (a: string) => (ta.has(a) ? ta(a) : a)
   const one = (k: string) => {
     const v = sp[k]
     return (Array.isArray(v) ? v[0] : v)?.trim() || ''
@@ -99,7 +103,9 @@ export default async function AuditPage({
           {
             name: 'action',
             placeholder: t('allActions'),
-            options: actions.map((a) => ({ value: a, label: a })),
+            options: actions
+              .map((a) => ({ value: a, label: actionLabel(a) }))
+              .sort((x, y) => x.label.localeCompare(y.label)),
           },
         ]}
       />
@@ -135,8 +141,8 @@ export default async function AuditPage({
                     {fmtTime(r.ts.replace(' ', 'T') + 'Z')}
                   </TableCell>
                   <TableCell className="text-xs">{r.actor ?? '—'}</TableCell>
-                  <TableCell className="font-mono text-xs">
-                    {r.action}
+                  <TableCell className="text-xs">
+                    {actionLabel(r.action)}
                   </TableCell>
                   <TableCell className="text-xs">{r.target ?? '—'}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
