@@ -4,8 +4,6 @@ import { requireSession } from '@/lib/auth'
 import { visibleGroups, scopeNodes } from '@/lib/groups'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { isNever } from '@/lib/format'
-import { Link } from '@/i18n/navigation'
-import { Badge } from '@/components/ui/badge'
 import {
   Card,
   CardContent,
@@ -51,19 +49,6 @@ export default async function DashboardPage() {
 
   // 已批准的网段里，当前真有节点在承载的有几条。承载方掉线时这里会少，
   // 那正是「网段现在不通」的时刻——比列一个网段总数有用。
-  // 已离线节点的 last_seen 就是它掉线的那一刻——这半个历史是免费的，
-  // 需要采集的是在线节点的波动，那个另说。
-  const DAY = 86400_000
-  const stale = nodes
-    .filter((n) => !n.online && !isNever(n.lastSeen))
-    .map((n) => ({
-      id: n.id,
-      name: n.givenName,
-      days: Math.floor((now - new Date(n.lastSeen).getTime()) / DAY),
-    }))
-    .filter((n) => n.days >= 7)
-    .sort((a, b) => b.days - a.days)
-
   const approvedRoutes = new Set<string>()
   const servingRoutes = new Set<string>()
   for (const n of nodes) {
@@ -146,35 +131,6 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      {stale.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-base">{t('staleTitle')}</CardTitle>
-            <CardDescription>
-              {t('staleDesc', { count: stale.length })}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="flex flex-col gap-1">
-            {stale.slice(0, 8).map((n) => (
-              <Link
-                key={n.id}
-                href={{ pathname: '/nodes', query: { q: n.name } }}
-                className="hover:bg-muted flex items-center justify-between rounded px-2 py-1.5 text-sm transition-colors"
-              >
-                <span className="truncate">{n.name}</span>
-                <Badge variant={n.days >= 30 ? 'warning' : 'secondary'}>
-                  {t('staleDays', { days: n.days })}
-                </Badge>
-              </Link>
-            ))}
-            {stale.length > 8 && (
-              <p className="text-muted-foreground px-2 pt-1 text-xs">
-                {t('staleMore', { count: stale.length - 8 })}
-              </p>
-            )}
-          </CardContent>
-        </Card>
-      )}
     </div>
   )
 }
