@@ -1,7 +1,9 @@
 import { getTranslations } from 'next-intl/server'
 import { TriangleAlert } from 'lucide-react'
 import { requireSuper } from '@/lib/auth'
+import { readNodeNetInfo } from '@/lib/headscale-db'
 import { listNodes, type HsNode } from '@/lib/headscale'
+import { LanIpCell } from '@/components/lan-ip-cell'
 import { CmdBlock } from '@/components/cmd-block'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
@@ -65,6 +67,8 @@ export default async function SubnetsPage() {
     getTranslations('common'),
   ])
   const nodes = await listNodes()
+  // It's hard to tell which machine this route goes through from the node name and tailnet IP alone, so include the LAN address
+  const netInfo = readNodeNetInfo()
 
   // Group by subnet: multiple nodes may advertise the same subnet, but only one of them carries traffic
   const byRoute = new Map<string, RouteEntry[]>()
@@ -114,6 +118,7 @@ export default async function SubnetsPage() {
             <TableRow>
               <TableHead>{t('route')}</TableHead>
               <TableHead>{t('node')}</TableHead>
+              <TableHead>{t('lanIp')}</TableHead>
               <TableHead>{t('status')}</TableHead>
               <TableHead>{t('advertising')}</TableHead>
               <TableHead className="w-24 text-right">{t('actions')}</TableHead>
@@ -123,7 +128,7 @@ export default async function SubnetsPage() {
             {routes.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={5}
+                  colSpan={6}
                   className="text-muted-foreground py-8 text-center"
                 >
                   {t('empty')}
@@ -142,6 +147,9 @@ export default async function SubnetsPage() {
                       <span className="text-muted-foreground ml-2 font-mono text-xs">
                         {e.node.ipAddresses[0]}
                       </span>
+                    </TableCell>
+                    <TableCell className="text-xs">
+                      <LanIpCell ips={netInfo.get(e.node.id)?.lanIps ?? []} />
                     </TableCell>
                     <TableCell>
                       {e.serving ? (

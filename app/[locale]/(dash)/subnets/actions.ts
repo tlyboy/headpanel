@@ -4,7 +4,12 @@ import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { requireSuper } from '@/lib/auth'
 import { auditAfter } from '@/lib/db'
-import { approveRoutes, getNode, HeadscaleError } from '@/lib/headscale'
+import {
+  approveRoutes,
+  getNode,
+  listNodes,
+  HeadscaleError,
+} from '@/lib/headscale'
 
 export interface RouteResult {
   ok: boolean
@@ -66,6 +71,72 @@ export async function revokeRouteAction(
   try {
     const { after } = await setRouteApproval(nodeId, route, false)
     auditAfter('route.revoke', `${nodeId}:${route}`, `approved=${after.join(',')}`, {
+      actor: session.sub,
+    })
+    revalidatePath('/subnets')
+    revalidatePath('/nodes')
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: errMsg(e, t('unknown')) }
+  }
+}
+
+// headscale chooses the primary itself. Once selected, it won't change unless it fails, and there's no CLI/API to specify one directly.
+// The only way is to temporarily revoke the other approved nodes, forcing it to switch to the target, then restore them as backups.
+//
+// Two key points:
+//  1. When revoking, pass the full set remaining after removing this route, not an empty array — approve_routes takes the full set,
+//     and passing an empty array would also remove approvals for the node's other subnets.
+//  2. Put restoration in finally. If any step fails midway, all revoked backups must be restored,
+//     otherwise redundancy will be silently lost and no one will notice.
+export async function makePrimaryAction(
+  route: string,
+  targetNodeId: string,
+): Promise<RouteResult> {
+  const [session, t] = await Promise.all([
+    requireSuper(),
+    getTranslations('actionErrors'),
+  ])
+  const revoked: { id: string; routes: string[] }[] = []
+  try {
+    const nodes = await listNodes()
+    const approved = nodes.filter((n) =>
+      (n.approvedRoutes ?? []).includes(route),
+    )
+    const target = approved.find((n) => n.id === targetNodeId)
+    if (!target) return { ok: false, error: t('routeNotApproved') }
+    if ((target.subnetRoutes ?? []).includes(route)) return { ok: true }
+
+    const others = approved.filter((n) => n.id !== targetNodeId)
+    for (const n of others) {
+      const original = n.approvedRoutes ?? []
+      await approveRoutes(
+        n.id,
+        original.filter((r) => r !== route),
+      )
+      revoked.push({ id: n.id, routes: original })
+    }
+  } catch (e) {
+    return { ok: false, error: errMsg(e, t('unknown')) }
+  } finally {
+    for (const r of revoked) {
+      // If restoration fails, all we can do is log it for the audit — throwing here would mask the actual failure reason.
+      await approveRoutes(r.id, r.routes).catch(() => {
+        auditAfter('route.restoreFailed', `${r.id}:${route}`, undefined, {
+          actor: session.sub,
+        })
+      })
+    }
+  }
+
+  // Confirm that the switch actually happened, rather than just claiming success.
+  try {
+    const after = await listNodes()
+    const now = after.find((n) => (n.subnetRoutes ?? []).includes(route))
+    if (now?.id !== targetNodeId) {
+      return { ok: false, error: t('primaryNotSwitched') }
+    }
+    auditAfter('route.makePrimary', `${targetNodeId}:${route}`, undefined, {
       actor: session.sub,
     })
     revalidatePath('/subnets')
