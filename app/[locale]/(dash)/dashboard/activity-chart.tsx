@@ -8,11 +8,11 @@ import {
   type ChartConfig,
 } from '@/components/ui/chart'
 
-/** 与 page.tsx 的分类保持一致 */
-export const ACTIVITY_KEYS = ['node', 'route', 'group', 'key', 'auth'] as const
-type Key = (typeof ACTIVITY_KEYS)[number]
-
-export type ActivityPoint = { date: string; total: number } & Record<Key, number>
+import {
+  ACTIVITY_KEYS,
+  type ActivityKey as Key,
+  type ActivityPoint,
+} from './activity'
 
 // 柱只表达「那天动了多少」，构成放进悬停卡片：
 // 一根柱同时承担趋势和构成，30 天 × 5 类会糊成一片，而「那天都做了什么」

@@ -7,11 +7,12 @@ import { isNever } from '@/lib/format'
 import { and, eq, gte, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { auditLog } from '@/lib/db/schema'
+import { ActivityChart } from './activity-chart'
 import {
   ACTIVITY_KEYS,
-  ActivityChart,
+  activityCategory,
   type ActivityPoint,
-} from './activity-chart'
+} from './activity'
 import {
   Card,
   CardContent,
@@ -80,18 +81,11 @@ export default async function DashboardPage() {
     .groupBy(sql`date(${auditLog.ts})`, auditLog.action)
     .all()
 
-  // 16 种具体动作按前缀收成 5 个大类：悬停卡片里列 5 行读得完，列 16 行读不完
-  const catOf = (a: string): (typeof ACTIVITY_KEYS)[number] => {
-    if (a.startsWith('node.')) return 'node'
-    if (a.startsWith('route.') || a.startsWith('policy.')) return 'route'
-    if (a.startsWith('group.')) return 'group'
-    if (a.startsWith('preauthkey.') || a.startsWith('accesskey.')) return 'key'
-    return 'auth'
-  }
   const byDay = new Map<string, Record<string, number>>()
   for (const r of dayRows) {
     const bucket = byDay.get(r.d) ?? {}
-    bucket[catOf(r.a)] = (bucket[catOf(r.a)] ?? 0) + Number(r.n)
+    const c = activityCategory(r.a)
+    bucket[c] = (bucket[c] ?? 0) + Number(r.n)
     byDay.set(r.d, bucket)
   }
   const activity = Array.from({ length: DAYS }, (_, i) => {
