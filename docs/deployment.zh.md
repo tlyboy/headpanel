@@ -342,6 +342,43 @@ sudo headscale nodes list
 
 也可以在 Headpanel 中创建预授权密钥，并使用面板生成的安装命令连接节点。
 
+### ACL 策略基线
+
+增删组时 Headpanel 会重写 Headscale 的 ACL policy：每个组贡献一条 `tagOwners` 和一条
+`acls` 规则，使组内节点互通、且仅限组内。policy 里**其余**的内容 —— `tag:approved` 的
+归属、子网路由器所服务的网段、你手写的任何规则 —— 都来自一个基线文件，面板把自己的规则
+合并在它之上。
+
+创建第一个组之前先建好它：
+
+```bash
+sudo install -d -m 755 /etc/headpanel
+sudo tee /etc/headpanel/policy-baseline.json >/dev/null <<'JSON'
+{
+  "tagOwners": {
+    "tag:approved": ["admin@"]
+  },
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["tag:approved"],
+      "dst": ["tag:approved:*", "192.168.1.0/24:*"]
+    }
+  ]
+}
+JSON
+```
+
+把 `admin@` 换成拥有现有节点的 Headscale user，并把子网路由器宣告的每个网段都列进
+`dst`。已批准但没写进 `dst` 的路由会进入路由表、再被 policy 丢弃 —— 表现为面板里显示
+已批准，网段里却什么都连不通。
+
+没有该文件时基线为空：组功能照常可用，但第一次增删组就会把线上 policy 替换成只剩面板
+管理的那部分。文件存在却读不出或解析失败时，组操作会直接报错，而不是下发一份丢了基线的
+policy。
+
+用 `HEADPANEL_POLICY_BASELINE` 可以改变该文件位置。
+
 ## 7. 更新与备份
 
 ### 更新 Headpanel
