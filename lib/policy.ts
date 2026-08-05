@@ -37,10 +37,10 @@ type PolicyBaseline = Record<string, unknown> & {
   acls?: PolicyAcl[]
 }
 
-// The part of the policy not managed by the groups table, but that must persist: the owner of tag:approved,
-// subnet routes (e.g. 192.168.120.0/24) in dst, etc. Keep it in a file rather than hard-coding it, so adding a subnet later
-// only requires changing the file, not changing the code and rebuilding. A missing file means no baseline (for compatibility with older deployments);
-// if the file exists but cannot be read or parsed, throw an error. Better to fail the group operation than apply a policy that has lost the baseline.
+// The parts of the policy not managed by the groups table but that must persist: the owner of tag:approved,
+// subnet routes (such as 192.168.1.0/24) in dst, etc. Keep these in a file rather than hard-coding them, so adding a subnet
+// only requires changing the file, with no code changes or rebuild. A missing file means no baseline (for compatibility with older deployments);
+// if the file exists but cannot be read or parsed, throw an error. Better for group operations to fail than to deploy a policy missing the baseline.
 export function baselinePath(): string {
   return process.env.HEADPANEL_POLICY_BASELINE || DEFAULT_BASELINE_PATH
 }
@@ -115,10 +115,10 @@ export async function applyPolicy(
   }
 }
 
-// Approving a subnet route alone is not enough to make it work: dst in the ACL must explicitly include that subnet, or packets get
-// dropped in the Tailscale data plane (the reason 192.168.120.0/24 is unreachable today).
-// Since the baseline is a manually maintained file, make the smallest possible change here—add or remove
-// one "<cidr>:*" in an existing accept rule, without creating rules or touching other fields.
+// Approving a subnet route alone is not enough to make it reachable: the ACL's dst must explicitly include that subnet, or packets are
+// dropped in the tailscale data plane — the route appears approved, but nothing in the subnet can connect.
+// The baseline is a manually maintained file, so make only the smallest change here — add/remove
+// one "<cidr>:*" to an existing accept rule, without creating rules or touching other fields.
 export class BaselineNotWritableError extends Error {
   constructor(reason: string) {
     super(`Cannot update the policy baseline: ${reason}`)

@@ -71,9 +71,9 @@ function isPrivateLan(ip: number): boolean {
   )
 }
 
-// endpoints contains three kinds of addresses: public egress, real LAN IPs, and addresses from virtual adapters such as docker/WSL/VMware;
-// in addition, STUN sometimes reports gateway addresses too (e.g. 192.168.120.1).
-// headscale doesn't distinguish between them, so we can only score them by their characteristics and rank the ones most likely to be "this machine's LAN address" first.
+// endpoints contain three kinds of addresses: public egress, real local network IPs, and addresses
+// for virtual network interfaces such as Docker/WSL/VMware. In addition, STUN sometimes reports the gateway address (e.g. 192.168.1.1).
+// headscale does not distinguish between them, so we can only score them by characteristics and put the ones most likely to be "this machine's local network address" first.
 function scoreLanIp(ip: string, routable: string[]): number {
   const n = parseIpv4(ip)
   if (n == null) return -Infinity
