@@ -9,8 +9,6 @@
 | I18n      | next-intl                         |
 | Data      | SQLite, Drizzle ORM               |
 
-## Features
-
 - **Nodes** — approve, reject, rename, tag, annotate and delete, with search and
   filters. Each node's LAN address is shown next to its tailnet IP when the panel
   can read Headscale's database.
