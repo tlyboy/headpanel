@@ -83,7 +83,7 @@
   },
   "audit": {
     "title": "Audit log",
-    "description": "Latest 200 admin operations",
+    "description": "Admin operation log",
     "time": "Time",
     "actor": "Actor",
     "action": "Action",
