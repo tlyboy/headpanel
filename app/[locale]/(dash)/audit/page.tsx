@@ -1,5 +1,5 @@
 import { and, count, desc, eq, like, or, type SQL } from 'drizzle-orm'
-import { getTranslations } from 'next-intl/server'
+import { getMessages, getTranslations } from 'next-intl/server'
 import { requireSession } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { auditLog } from '@/lib/db/schema'
@@ -24,15 +24,17 @@ export default async function AuditPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const [session, t, ta, sp] = await Promise.all([
+  const [session, t, messages, sp] = await Promise.all([
     requireSession(),
     getTranslations('audit'),
-    getTranslations('auditActions'),
+    getMessages(),
     searchParams,
   ])
-  // action 存的是 route.approve 这类内部标识；查不到译文就原样显示，
-  // 免得将来新增动作时这一列变空白
-  const actionLabel = (a: string) => (ta.has(a) ? ta(a) : a)
+  // action 存的是 route.approve 这类内部标识。不能用 t('auditActions.xxx')：
+  // next-intl 把点当命名空间分隔符，会去找 auditActions.route 这个对象，
+  // 而键本身就带点，永远查不中。直接读消息对象，查不到就原样显示。
+  const actionMap = (messages.auditActions ?? {}) as Record<string, string>
+  const actionLabel = (a: string) => actionMap[a] ?? a
   const one = (k: string) => {
     const v = sp[k]
     return (Array.isArray(v) ? v[0] : v)?.trim() || ''

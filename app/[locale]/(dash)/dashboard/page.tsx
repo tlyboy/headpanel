@@ -4,6 +4,10 @@ import { requireSession } from '@/lib/auth'
 import { visibleGroups, scopeNodes } from '@/lib/groups'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { isNever } from '@/lib/format'
+import { and, eq, gte, sql } from 'drizzle-orm'
+import { db } from '@/lib/db'
+import { auditLog } from '@/lib/db/schema'
+import { ActivityChart } from './activity-chart'
 import {
   Card,
   CardContent,
@@ -49,6 +53,32 @@ export default async function DashboardPage() {
 
   // 已批准的网段里，当前真有节点在承载的有几条。承载方掉线时这里会少，
   // 那正是「网段现在不通」的时刻——比列一个网段总数有用。
+  // 最近 30 天的操作频率。补零是必须的——82 天里有 45 天没有任何记录，
+  // 只画有记录的天会让时间轴不连续，看着像每天都在动。
+  const DAYS = 30
+  const since = new Date(now - (DAYS - 1) * 86400_000)
+  const sinceStr = since.toISOString().slice(0, 10)
+  const dayRows = db
+    .select({ d: sql<string>`date(${auditLog.ts})`, n: sql<number>`count(*)` })
+    .from(auditLog)
+    .where(
+      session.role === 'super'
+        ? gte(sql`date(${auditLog.ts})`, sinceStr)
+        : and(
+            gte(sql`date(${auditLog.ts})`, sinceStr),
+            eq(auditLog.groupId, session.gid as number),
+          ),
+    )
+    .groupBy(sql`date(${auditLog.ts})`)
+    .all()
+  const byDay = new Map(dayRows.map((r) => [r.d, Number(r.n)]))
+  const activity = Array.from({ length: DAYS }, (_, i) => {
+    const d = new Date(since.getTime() + i * 86400_000)
+      .toISOString()
+      .slice(0, 10)
+    return { date: d, count: byDay.get(d) ?? 0 }
+  })
+
   const approvedRoutes = new Set<string>()
   const servingRoutes = new Set<string>()
   for (const n of nodes) {
@@ -131,6 +161,15 @@ export default async function DashboardPage() {
         ))}
       </div>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="text-base">{t('activityTitle')}</CardTitle>
+          <CardDescription>{t('activityDesc', { days: 30 })}</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <ActivityChart data={activity} />
+        </CardContent>
+      </Card>
     </div>
   )
 }

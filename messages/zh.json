@@ -80,7 +80,10 @@
     "subnetAllUp": "全部网段可达",
     "subnetDown": "{count} 条网段当前无人承载",
     "noSubnet": "未配置子网路由",
-    "noValidKey": "没有可用 key，新设备无法接入"
+    "noValidKey": "没有可用 key，新设备无法接入",
+    "activityTitle": "操作频率",
+    "activityDesc": "最近 {days} 天的后台操作",
+    "activityCount": "操作"
   },
   "audit": {
     "title": "审计日志",

@@ -80,7 +80,10 @@
     "subnetAllUp": "All subnets reachable",
     "subnetDown": "{count} subnet(s) have no serving node",
     "noSubnet": "No subnet routes",
-    "noValidKey": "No usable key — new devices cannot join"
+    "noValidKey": "No usable key — new devices cannot join",
+    "activityTitle": "Activity",
+    "activityDesc": "Admin operations over the last {days} days",
+    "activityCount": "Operations"
   },
   "audit": {
     "title": "Audit log",
