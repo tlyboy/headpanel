@@ -381,5 +381,30 @@
     "allGroups": "超级管理员",
     "addGroup": "新建组",
     "actingAs": "以该组管理员身份"
+  },
+  "auditActions": {
+    "accesskey.gen": "生成 API Key",
+    "group.create": "创建组",
+    "group.delete": "删除组",
+    "group.rename": "重命名组",
+    "group.resetPassword": "重置组管理员密码",
+    "login.fail": "登录失败",
+    "login.success": "登录成功",
+    "logout": "退出登录",
+    "network.prefix.v4.update": "修改 IPv4 地址池",
+    "node.approve": "审批节点",
+    "node.delete": "删除节点",
+    "node.note": "修改备注",
+    "node.reject": "拒绝节点",
+    "node.rename": "重命名节点",
+    "policy.allowSubnet": "ACL 放通网段",
+    "policy.revokeSubnet": "ACL 收回网段",
+    "preauthkey.create": "创建 PreAuthKey",
+    "preauthkey.delete": "删除 PreAuthKey",
+    "preauthkey.expire": "使 PreAuthKey 失效",
+    "route.approve": "批准子网路由",
+    "route.makePrimary": "切换承载节点",
+    "route.restoreFailed": "备份路由恢复失败",
+    "route.revoke": "撤销子网路由"
   }
 }

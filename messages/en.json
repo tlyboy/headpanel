@@ -381,5 +381,30 @@
     "allGroups": "Super admin",
     "addGroup": "Add group",
     "actingAs": "acting as group admin"
+  },
+  "auditActions": {
+    "accesskey.gen": "Generate API key",
+    "group.create": "Create group",
+    "group.delete": "Delete group",
+    "group.rename": "Rename group",
+    "group.resetPassword": "Reset group admin password",
+    "login.fail": "Sign-in failed",
+    "login.success": "Sign-in",
+    "logout": "Sign-out",
+    "network.prefix.v4.update": "Change IPv4 pool",
+    "node.approve": "Approve node",
+    "node.delete": "Delete node",
+    "node.note": "Edit note",
+    "node.reject": "Reject node",
+    "node.rename": "Rename node",
+    "policy.allowSubnet": "Allow subnet in ACL",
+    "policy.revokeSubnet": "Remove subnet from ACL",
+    "preauthkey.create": "Create pre-auth key",
+    "preauthkey.delete": "Delete pre-auth key",
+    "preauthkey.expire": "Expire pre-auth key",
+    "route.approve": "Approve subnet route",
+    "route.makePrimary": "Switch serving node",
+    "route.restoreFailed": "Standby route restore failed",
+    "route.revoke": "Revoke subnet route"
   }
 }
