@@ -1,4 +1,4 @@
-import { getTranslations } from 'next-intl/server'
+import { getMessages, getTranslations } from 'next-intl/server'
 import { getHeadscaleVersion, listPreAuthKeys } from '@/lib/headscale'
 import { requireSession } from '@/lib/auth'
 import { visibleGroups, scopeNodes } from '@/lib/groups'
@@ -9,8 +9,9 @@ import { db } from '@/lib/db'
 import { auditLog } from '@/lib/db/schema'
 import { ActivityChart } from './activity-chart'
 import {
-  ACTIVITY_KEYS,
-  activityCategory,
+  ACTIVITY_TOP_N,
+  activityKind,
+  type ActivityKind,
   type ActivityPoint,
 } from './activity'
 import {
@@ -81,22 +82,50 @@ export default async function DashboardPage() {
     .groupBy(sql`date(${auditLog.ts})`, auditLog.action)
     .all()
 
-  const byDay = new Map<string, Record<string, number>>()
+  // 动作名的键本身带点（node.approve），不能走 t() 的命名空间解析
+  const actionMap = ((await getMessages()).auditActions ?? {}) as Record<
+    string,
+    string
+  >
+  const byDay = new Map<string, Map<string, number>>()
   for (const r of dayRows) {
-    const bucket = byDay.get(r.d) ?? {}
-    const c = activityCategory(r.a)
-    bucket[c] = (bucket[c] ?? 0) + Number(r.n)
+    const bucket = byDay.get(r.d) ?? new Map<string, number>()
+    bucket.set(r.a, (bucket.get(r.a) ?? 0) + Number(r.n))
     byDay.set(r.d, bucket)
   }
-  const activity = Array.from({ length: DAYS }, (_, i) => {
+  // 翻译、分档、排序、截断都在服务端做完，客户端组件只负责画
+  const activity: ActivityPoint[] = Array.from({ length: DAYS }, (_, i) => {
     const d = new Date(since.getTime() + i * 86400_000)
       .toISOString()
       .slice(0, 10)
-    const b = byDay.get(d) ?? {}
-    const point = { date: d, total: 0 } as ActivityPoint
-    for (const k of ACTIVITY_KEYS) {
-      point[k] = b[k] ?? 0
-      point.total += point[k]
+    const point: ActivityPoint = {
+      date: d,
+      normal: 0,
+      destructive: 0,
+      failed: 0,
+      total: 0,
+      items: [],
+    }
+    const bucket = byDay.get(d)
+    if (!bucket) return point
+
+    const sorted = [...bucket.entries()].sort((a, b) => b[1] - a[1])
+    for (const [action, n] of sorted) {
+      point[activityKind(action)] += n
+      point.total += n
+    }
+    point.items = sorted.slice(0, ACTIVITY_TOP_N).map(([action, n]) => ({
+      label: actionMap[action] ?? action,
+      count: n,
+      kind: activityKind(action),
+    }))
+    const rest = sorted.slice(ACTIVITY_TOP_N).reduce((n, [, c]) => n + c, 0)
+    if (rest > 0) {
+      point.items.push({
+        label: t('activityOther'),
+        count: rest,
+        kind: 'normal' as ActivityKind,
+      })
     }
     return point
   })
@@ -158,7 +187,7 @@ export default async function DashboardPage() {
   ]
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex flex-col gap-4">
       <div>
         <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">{t('description')}</p>
@@ -184,12 +213,12 @@ export default async function DashboardPage() {
         ))}
       </div>
 
-      <Card className="flex min-h-64 flex-1 flex-col">
+      <Card>
         <CardHeader>
           <CardTitle className="text-base">{t('activityTitle')}</CardTitle>
           <CardDescription>{t('activityDesc', { days: 30 })}</CardDescription>
         </CardHeader>
-        <CardContent className="min-h-0 flex-1">
+        <CardContent>
           <ActivityChart data={activity} />
         </CardContent>
       </Card>

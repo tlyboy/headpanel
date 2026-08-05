@@ -84,12 +84,11 @@
     "activityTitle": "Activity",
     "activityDesc": "Admin operations over the last {days} days",
     "activityCount": "Operations",
-    "catNode": "Nodes",
-    "catRoute": "Routes & ACL",
-    "catGroup": "Groups",
-    "catKey": "Keys",
-    "catAuth": "Auth",
-    "activityTotal": "{count} total"
+    "activityTotal": "{count} total",
+    "kindNormal": "Routine",
+    "kindDestructive": "Destructive",
+    "kindFailed": "Failed",
+    "activityOther": "Other"
   },
   "audit": {
     "title": "Audit log",
