@@ -8,28 +8,27 @@ import {
   ChartTooltip,
   type ChartConfig,
 } from '@/components/ui/chart'
+import { AUDIT_KINDS, AUDIT_KIND_COLOR, type AuditKind } from '@/lib/audit'
 import { type ActivityPoint } from './activity'
 
-// Bar height shows "how much happened that day," segmented by nature: destructive actions like deletions and failures should be immediately recognizable,
-// as they represent states rather than parallel series, so use status colors. Specific actions go in the hover card — a dozen or so actions won't fit on 30 bars,
-// and "what happened that day" is something you only want to know when you focus on a particular day.
+// Bar height shows "how much happened that day," segmented by type: deletions and failures should be instantly recognizable,
+// but they are states, not peer series, so use status colors. Specific actions go in the hover card—on 30 bars,
+// there's no room to distinguish a dozen kinds of actions, and "what happened that day" is something you only want to know when you stop on a day.
 export function ActivityChart({ data }: { data: ActivityPoint[] }) {
   const t = useTranslations('dashboard')
 
-  const config = {
-    normal: { label: t('kindNormal'), color: 'var(--chart-1)' },
-    destructive: { label: t('kindDestructive'), color: 'var(--destructive)' },
-    failed: { label: t('kindFailed'), color: 'var(--warning)' },
-  } satisfies ChartConfig
-
-  const kindClass = {
-    normal: 'text-muted-foreground',
-    destructive: 'text-destructive',
-    failed: 'text-warning',
-  } as const
+  const label: Record<AuditKind, string> = {
+    success: t('kindSuccess'),
+    update: t('kindUpdate'),
+    approve: t('kindApprove'),
+    danger: t('kindDanger'),
+  }
+  const config = Object.fromEntries(
+    AUDIT_KINDS.map((k) => [k, { label: label[k], color: AUDIT_KIND_COLOR[k] }]),
+  ) satisfies ChartConfig
 
   return (
-    <ChartContainer config={config} className="h-40 w-full">
+    <ChartContainer config={config} className="h-full w-full">
       <BarChart data={data} margin={{ left: -20, right: 4, top: 4 }}>
         <CartesianGrid vertical={false} />
         <XAxis
@@ -49,14 +48,14 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
         />
         <ChartTooltip
           cursor={false}
-          content={({ active, payload, label }) => {
+          content={({ active, payload, label: day }) => {
             if (!active || !payload?.length) return null
             const d = payload[0].payload as ActivityPoint
             if (!d.total) return null
             return (
               <div className="border-border/50 bg-background grid min-w-48 gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
                 <div className="flex items-center justify-between gap-4 font-medium">
-                  <span>{String(label)}</span>
+                  <span>{String(day)}</span>
                   <span className="font-mono tabular-nums">
                     {t('activityTotal', { count: d.total })}
                   </span>
@@ -67,8 +66,15 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
                       key={it.label}
                       className="flex items-center justify-between gap-4"
                     >
-                      <span className={kindClass[it.kind]}>
-                        {it.label}
+                      {/* The color dot carries the identity; keep the text in the standard ink color—two colored elements on one line would compete */}
+                      <span className="flex items-center gap-1.5">
+                        <span
+                          className="size-2 shrink-0 rounded-[2px]"
+                          style={{ background: AUDIT_KIND_COLOR[it.kind] }}
+                        />
+                        <span className="text-muted-foreground">
+                          {it.label}
+                        </span>
                       </span>
                       <span className="text-foreground font-mono tabular-nums">
                         {it.count}
@@ -81,24 +87,16 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
           }}
         />
         <Legend content={<ChartLegendContent />} verticalAlign="bottom" />
-        <Bar
-          dataKey="normal"
-          stackId="a"
-          fill="var(--color-normal)"
-          radius={0}
-        />
-        <Bar
-          dataKey="destructive"
-          stackId="a"
-          fill="var(--color-destructive)"
-          radius={0}
-        />
-        <Bar
-          dataKey="failed"
-          stackId="a"
-          fill="var(--color-failed)"
-          radius={[4, 4, 0, 0]}
-        />
+        {AUDIT_KINDS.map((k, i) => (
+          <Bar
+            key={k}
+            dataKey={k}
+            stackId="a"
+            fill={`var(--color-${k})`}
+            // Round only the topmost segment; rounding the middle ones would leave gaps between segments
+            radius={i === AUDIT_KINDS.length - 1 ? [4, 4, 0, 0] : 0}
+          />
+        ))}
       </BarChart>
     </ChartContainer>
   )

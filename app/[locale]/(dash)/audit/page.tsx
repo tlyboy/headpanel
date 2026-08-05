@@ -6,6 +6,8 @@ import { auditLog } from '@/lib/db/schema'
 import { fmtTime } from '@/lib/format'
 import { ListFilters } from '@/components/list-filters'
 import { ListPager } from '@/components/list-pager'
+import { auditKind, AUDIT_KIND_VARIANT } from '@/lib/audit'
+import { Badge } from '@/components/ui/badge'
 import {
   Table,
   TableBody,
@@ -143,8 +145,10 @@ export default async function AuditPage({
                     {fmtTime(r.ts.replace(' ', 'T') + 'Z')}
                   </TableCell>
                   <TableCell className="text-xs">{r.actor ?? '—'}</TableCell>
-                  <TableCell className="text-xs">
-                    {actionLabel(r.action)}
+                  <TableCell>
+                    <Badge variant={AUDIT_KIND_VARIANT[auditKind(r.action)]}>
+                      {actionLabel(r.action)}
+                    </Badge>
                   </TableCell>
                   <TableCell className="text-xs">{r.target ?? '—'}</TableCell>
                   <TableCell className="text-xs text-muted-foreground">
