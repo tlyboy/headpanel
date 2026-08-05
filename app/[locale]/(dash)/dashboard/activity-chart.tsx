@@ -1,39 +1,35 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Legend, XAxis, YAxis } from 'recharts'
 import {
   ChartContainer,
+  ChartLegendContent,
   ChartTooltip,
   type ChartConfig,
 } from '@/components/ui/chart'
+import { type ActivityPoint } from './activity'
 
-import {
-  ACTIVITY_KEYS,
-  type ActivityKey as Key,
-  type ActivityPoint,
-} from './activity'
-
-// Bars show only "how much happened that day"; put the breakdown in the hover card:
-// a bar representing both trend and breakdown would turn 30 days × 5 categories into a blur, and "what happened that day"
-// is something you only want to know when focused on a particular day.
+// Bar height shows "how much happened that day," segmented by nature: destructive actions like deletions and failures should be immediately recognizable,
+// as they represent states rather than parallel series, so use status colors. Specific actions go in the hover card — a dozen or so actions won't fit on 30 bars,
+// and "what happened that day" is something you only want to know when you focus on a particular day.
 export function ActivityChart({ data }: { data: ActivityPoint[] }) {
   const t = useTranslations('dashboard')
 
   const config = {
-    total: { label: t('activityCount'), color: 'var(--chart-1)' },
+    normal: { label: t('kindNormal'), color: 'var(--chart-1)' },
+    destructive: { label: t('kindDestructive'), color: 'var(--destructive)' },
+    failed: { label: t('kindFailed'), color: 'var(--warning)' },
   } satisfies ChartConfig
 
-  const catLabel: Record<Key, string> = {
-    node: t('catNode'),
-    route: t('catRoute'),
-    group: t('catGroup'),
-    key: t('catKey'),
-    auth: t('catAuth'),
-  }
+  const kindClass = {
+    normal: 'text-muted-foreground',
+    destructive: 'text-destructive',
+    failed: 'text-warning',
+  } as const
 
   return (
-    <ChartContainer config={config} className="h-full w-full">
+    <ChartContainer config={config} className="h-40 w-full">
       <BarChart data={data} margin={{ left: -20, right: 4, top: 4 }}>
         <CartesianGrid vertical={false} />
         <XAxis
@@ -57,9 +53,8 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
             if (!active || !payload?.length) return null
             const d = payload[0].payload as ActivityPoint
             if (!d.total) return null
-            const parts = ACTIVITY_KEYS.filter((k) => d[k] > 0)
             return (
-              <div className="border-border/50 bg-background grid min-w-40 gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
+              <div className="border-border/50 bg-background grid min-w-48 gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
                 <div className="flex items-center justify-between gap-4 font-medium">
                   <span>{String(label)}</span>
                   <span className="font-mono tabular-nums">
@@ -67,14 +62,16 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
                   </span>
                 </div>
                 <div className="grid gap-1">
-                  {parts.map((k) => (
+                  {d.items.map((it) => (
                     <div
-                      key={k}
-                      className="text-muted-foreground flex items-center justify-between gap-4"
+                      key={it.label}
+                      className="flex items-center justify-between gap-4"
                     >
-                      <span>{catLabel[k]}</span>
+                      <span className={kindClass[it.kind]}>
+                        {it.label}
+                      </span>
                       <span className="text-foreground font-mono tabular-nums">
-                        {d[k]}
+                        {it.count}
                       </span>
                     </div>
                   ))}
@@ -83,7 +80,25 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
             )
           }}
         />
-        <Bar dataKey="total" fill="var(--color-total)" radius={[4, 4, 0, 0]} />
+        <Legend content={<ChartLegendContent />} verticalAlign="bottom" />
+        <Bar
+          dataKey="normal"
+          stackId="a"
+          fill="var(--color-normal)"
+          radius={0}
+        />
+        <Bar
+          dataKey="destructive"
+          stackId="a"
+          fill="var(--color-destructive)"
+          radius={0}
+        />
+        <Bar
+          dataKey="failed"
+          stackId="a"
+          fill="var(--color-failed)"
+          radius={[4, 4, 0, 0]}
+        />
       </BarChart>
     </ChartContainer>
   )
