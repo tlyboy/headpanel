@@ -95,10 +95,6 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
                     </div>
                   ))}
                 </div>
-                {/* 可点这件事没有静态的暗示，放悬停里说一次，不占版面 */}
-                <div className="text-muted-foreground border-border/50 border-t pt-1">
-                  {t('activityHint')}
-                </div>
               </div>
             )
           }}

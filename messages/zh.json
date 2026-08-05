@@ -89,8 +89,7 @@
     "kindUpdate": "修改",
     "kindApprove": "审批",
     "kindDanger": "删除/失败",
-    "activityOther": "其他",
-    "activityHint": "点击查看当天记录"
+    "activityOther": "其他"
   },
   "audit": {
     "title": "审计日志",
