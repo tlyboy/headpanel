@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { LanIpCell } from '@/components/lan-ip-cell'
+import { ListFilters } from '@/components/list-filters'
 import { NodeRowActions } from './row-actions'
 
 export const dynamic = 'force-dynamic'
@@ -27,21 +28,56 @@ const APPROVAL_VARIANT: Record<
   rejected: 'destructive',
 }
 
-export default async function NodesPage() {
-  const [session, t, common] = await Promise.all([
+export default async function NodesPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [session, t, common, sp] = await Promise.all([
     requireSession(),
     getTranslations('nodes'),
     getTranslations('common'),
+    searchParams,
   ])
-  const nodes = scopeNodes(session, await syncAndListNodes())
+  const one = (k: string) => {
+    const v = sp[k]
+    return (Array.isArray(v) ? v[0] : v)?.trim() || ''
+  }
+  const q = one('q').toLowerCase()
+  const status = one('status')
+
+  const all = scopeNodes(session, await syncAndListNodes())
   // LAN addresses can only be read from the headscale database; for deployments on separate hosts, return an empty table, and display — in this column
   const netInfo = readNodeNetInfo()
+
+  // Counts are based on the full set before filtering: even when filtering, you should still see how many devices this tailnet has in total and how many are online
   let pending = 0
   let online = 0
-  for (const node of nodes) {
+  for (const node of all) {
     if (node.status === 'pending') pending += 1
     if (node.online) online += 1
   }
+
+  // Search includes LAN IPs: when locating a machine, the address you have on hand is often that one
+  const nodes = all.filter((n) => {
+    if (status === 'online' && !n.online) return false
+    if (status === 'offline' && n.online) return false
+    if (status && status !== 'online' && status !== 'offline') {
+      if (n.status !== status) return false
+    }
+    if (!q) return true
+    const hay = [
+      n.givenName,
+      n.user?.name ?? '',
+      ...n.ipAddresses,
+      ...(netInfo.get(n.id)?.lanIps ?? []),
+      ...n.tags,
+      n.note ?? '',
+    ]
+      .join(' ')
+      .toLowerCase()
+    return hay.includes(q)
+  })
 
   return (
     <div className="flex flex-col gap-4">
@@ -55,6 +91,24 @@ export default async function NodesPage() {
           })}
         </p>
       </div>
+
+      <ListFilters
+        placeholder={t('searchPlaceholder')}
+        clearLabel={t('clearFilters')}
+        selects={[
+          {
+            name: 'status',
+            placeholder: t('allStatus'),
+            options: [
+              { value: 'online', label: common('online') },
+              { value: 'offline', label: common('offline') },
+              { value: 'pending', label: t('pending') },
+              { value: 'approved', label: t('approved') },
+              { value: 'rejected', label: t('rejected') },
+            ],
+          },
+        ]}
+      />
 
       <div className="rounded-md border">
         <Table>

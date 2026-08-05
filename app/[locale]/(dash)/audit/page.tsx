@@ -1,9 +1,11 @@
-import { desc, eq } from 'drizzle-orm'
+import { and, count, desc, eq, like, or, type SQL } from 'drizzle-orm'
 import { getTranslations } from 'next-intl/server'
 import { requireSession } from '@/lib/auth'
 import { db } from '@/lib/db'
 import { auditLog } from '@/lib/db/schema'
 import { fmtTime } from '@/lib/format'
+import { ListFilters } from '@/components/list-filters'
+import { ListPager } from '@/components/list-pager'
 import {
   Table,
   TableBody,
@@ -15,21 +17,73 @@ import {
 
 export const dynamic = 'force-dynamic'
 
-export default async function AuditPage() {
-  const [session, t] = await Promise.all([
+const PER_PAGE = 50
+
+export default async function AuditPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [session, t, sp] = await Promise.all([
     requireSession(),
     getTranslations('audit'),
+    searchParams,
   ])
-  // Group admins only see their group's audit logs; super sees everything
-  const base = db.select().from(auditLog).$dynamic()
-  const rows = (
-    session.role === 'super'
-      ? base
-      : base.where(eq(auditLog.groupId, session.gid as number))
-  )
+  const one = (k: string) => {
+    const v = sp[k]
+    return (Array.isArray(v) ? v[0] : v)?.trim() || ''
+  }
+  const q = one('q')
+  const action = one('action')
+  const page = Math.max(1, Number(one('page')) || 1)
+
+  // Group admins only see their group's audit logs; super sees everything. All filters are included in the SQL,
+  // whereas before we fetched 200 rows and then truncated — there are already 200+ audit records, so the oldest ones were never visible.
+  const conds: SQL[] = []
+  if (session.role !== 'super') {
+    conds.push(eq(auditLog.groupId, session.gid as number))
+  }
+  if (action) conds.push(eq(auditLog.action, action))
+  if (q) {
+    const kw = `%${q}%`
+    const m = or(
+      like(auditLog.actor, kw),
+      like(auditLog.target, kw),
+      like(auditLog.detail, kw),
+    )
+    if (m) conds.push(m)
+  }
+  const where = conds.length ? and(...conds) : undefined
+
+  const total =
+    db
+      .select({ n: count() })
+      .from(auditLog)
+      .where(where)
+      .get()?.n ?? 0
+  const pageCount = Math.max(1, Math.ceil(total / PER_PAGE))
+  const current = Math.min(page, pageCount)
+  const rows = db
+    .select()
+    .from(auditLog)
+    .where(where)
     .orderBy(desc(auditLog.id))
-    .limit(200)
+    .limit(PER_PAGE)
+    .offset((current - 1) * PER_PAGE)
     .all()
+
+  // Only list actions that actually appear in the dropdown, so we don't pile on options that don't exist in this deployment.
+  const actions = db
+    .selectDistinct({ a: auditLog.action })
+    .from(auditLog)
+    .where(
+      session.role === 'super'
+        ? undefined
+        : eq(auditLog.groupId, session.gid as number),
+    )
+    .all()
+    .map((r) => r.a)
+    .sort()
 
   return (
     <div className="flex flex-col gap-4">
@@ -37,6 +91,18 @@ export default async function AuditPage() {
         <h1 className="text-2xl font-semibold">{t('title')}</h1>
         <p className="text-sm text-muted-foreground">{t('description')}</p>
       </div>
+
+      <ListFilters
+        placeholder={t('searchPlaceholder')}
+        clearLabel={t('clearFilters')}
+        selects={[
+          {
+            name: 'action',
+            placeholder: t('allActions'),
+            options: actions.map((a) => ({ value: a, label: a })),
+          },
+        ]}
+      />
 
       <div className="rounded-md border">
         <Table>
@@ -82,6 +148,12 @@ export default async function AuditPage() {
           </TableBody>
         </Table>
       </div>
+
+      <ListPager
+        page={current}
+        pageCount={pageCount}
+        label={t('pageInfo', { page: current, pageCount, total })}
+      />
     </div>
   )
 }
