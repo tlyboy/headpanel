@@ -80,11 +80,7 @@
     "subnetAllUp": "All subnets reachable",
     "subnetDown": "{count} subnet(s) have no serving node",
     "noSubnet": "No subnet routes",
-    "noValidKey": "No usable key — new devices cannot join",
-    "staleTitle": "Long offline",
-    "staleDesc": "{count} node(s) unseen for over 7 days, still holding tailnet addresses",
-    "staleDays": "{days}d",
-    "staleMore": "{count} more"
+    "noValidKey": "No usable key — new devices cannot join"
   },
   "audit": {
     "title": "Audit log",
