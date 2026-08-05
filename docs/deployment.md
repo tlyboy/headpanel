@@ -297,6 +297,46 @@ sudo headscale nodes list
 Alternatively, create a pre-auth key in Headpanel and use its generated install
 command.
 
+### ACL policy baseline
+
+Headpanel rewrites Headscale's ACL policy whenever a group is created or deleted:
+each group contributes one `tagOwners` entry and one `acls` rule, so its nodes
+reach each other and nothing else. Everything _else_ in the policy — the owner of
+`tag:approved`, the subnets your routers serve, any rule you wrote by hand —
+comes from a baseline file that the panel merges its own rules on top of.
+
+Create it before adding the first group:
+
+```bash
+sudo install -d -m 755 /etc/headpanel
+sudo tee /etc/headpanel/policy-baseline.json >/dev/null <<'JSON'
+{
+  "tagOwners": {
+    "tag:approved": ["admin@"]
+  },
+  "acls": [
+    {
+      "action": "accept",
+      "src": ["tag:approved"],
+      "dst": ["tag:approved:*", "192.168.1.0/24:*"]
+    }
+  ]
+}
+JSON
+```
+
+Change `admin@` to the Headscale user that owns your existing nodes, and list
+every subnet your routers advertise in `dst`. A route that is approved but absent
+from `dst` sits in the routing table and is dropped by the policy — the symptom is
+a subnet that looks approved in the panel while nothing on it answers.
+
+Without the file the baseline is empty: groups still work, but the first group
+change replaces the live policy with only the rules the panel manages. If the file
+exists but cannot be read or parsed, group operations fail loudly rather than
+shipping a policy with the baseline silently dropped.
+
+`HEADPANEL_POLICY_BASELINE` overrides the location.
+
 ## 7. Updates and backups
 
 ### Update Headpanel
