@@ -87,7 +87,11 @@
     "action": "Action",
     "target": "Target",
     "detail": "Detail",
-    "empty": "No audit records"
+    "empty": "No audit records",
+    "searchPlaceholder": "Search actor / target / detail",
+    "allActions": "All actions",
+    "clearFilters": "Clear",
+    "pageInfo": "Page {page} of {pageCount} · {total} entries"
   },
   "nodes": {
     "title": "Nodes",
@@ -105,7 +109,10 @@
     "rejected": "Rejected",
     "lanIp": "LAN IP",
     "lanIpPrimary": "primary",
-    "copyLanIp": "Copy"
+    "copyLanIp": "Copy",
+    "searchPlaceholder": "Search name / IP / tag",
+    "allStatus": "All statuses",
+    "clearFilters": "Clear"
   },
   "pending": {
     "title": "Pending approvals",

@@ -87,7 +87,11 @@
     "action": "操作",
     "target": "对象",
     "detail": "详情",
-    "empty": "暂无记录"
+    "empty": "暂无记录",
+    "searchPlaceholder": "搜索操作者 / 对象 / 详情",
+    "allActions": "全部动作",
+    "clearFilters": "清除",
+    "pageInfo": "第 {page}/{pageCount} 页 · 共 {total} 条"
   },
   "nodes": {
     "title": "节点",
@@ -105,7 +109,10 @@
     "rejected": "已拒绝",
     "lanIp": "局域网 IP",
     "lanIpPrimary": "主",
-    "copyLanIp": "复制"
+    "copyLanIp": "复制",
+    "searchPlaceholder": "搜索名称 / IP / 标签",
+    "allStatus": "全部状态",
+    "clearFilters": "清除"
   },
   "pending": {
     "title": "待审批",
