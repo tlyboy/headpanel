@@ -104,7 +104,6 @@
     "pending": "待审批",
     "rejected": "已拒绝",
     "lanIp": "局域网 IP",
-    "lanIpHint": "该节点报上来的局域网地址,首个最可能是它的真实网卡",
     "lanIpPrimary": "主",
     "copyLanIp": "复制"
   },
@@ -267,8 +266,6 @@
     "currentConfig": "当前配置",
     "allocation": "分配策略",
     "usedIpv4": "已占用 IPv4",
-    "nodes": "节点",
-    "online": "在线",
     "count": "{count} 个"
   },
   "networkForm": {
@@ -332,7 +329,6 @@
     "serving": "承载中",
     "standby": "已批准 · 待命",
     "pending": "待批准",
-    "staleHint": "客户端已取消宣告，但批准记录还留着。撤销即可清理。",
     "approve": "批准",
     "revoke": "撤销",
     "approved": "已批准该网段",
@@ -345,13 +341,9 @@
     "revokePrimaryDescription": "这台正在承载该网段。撤销后，如果同网段还有其它已批准的节点，headscale 会切换过去；否则该网段将立即不可达。",
     "howto": {
       "title": "如何开启和关闭子网路由",
-      "intro": "分两步：客户端宣告（在那台机器上执行）、服务端批准（在本页操作）。两步缺一不可——只宣告不批准，网段不会生效；只批准而客户端没宣告，这里会显示为「客户端已取消宣告」。",
       "step1Title": "第一步：在客户端宣告网段",
-      "step1Desc": "在要充当出口的那台机器上执行。宣告后本页会出现「待批准」记录。",
       "step2Title": "第二步：开启 IP 转发",
       "step2Desc": "不开启的话，流量到得了这台机器却转不出去，而且它会因为持续收到无法转发的包而变卡。",
-      "step3Title": "第三步：在本页批准。",
-      "step3Desc": "点上表的「批准」按钮。同一网段可以批准多台，headscale 只让其中一台承载（承载中），其余作为备份待命，承载的那台掉线时自动切换。",
       "accessTitle": "访问方要开 accept-routes。",
       "accessDesc": "子网路由只对开启了 accept-routes 的节点生效：tailscale set --accept-routes=true。注意本身就是该网段成员的机器不要开，否则本地流量会绕经出口节点。",
       "warnTitle": "ACL 会自动放通",
@@ -360,7 +352,8 @@
       "cmdAdvertiseWindows": "Windows（管理员 PowerShell）",
       "cmdAdvertiseStop": "取消宣告（三平台通用）",
       "cmdForwardLinux": "Linux：开启内核转发",
-      "cmdForwardWindows": "Windows：改完必须重启才生效"
+      "cmdForwardWindows": "Windows：改完必须重启才生效",
+      "summary": "客户端宣告网段 → 在本页批准。两步缺一不可。"
     },
     "menu": "更多操作",
     "lanIp": "局域网 IP",
@@ -372,7 +365,6 @@
   "groupSwitcher": {
     "label": "切换身份",
     "allGroups": "超级管理员",
-    "hint": "切换后将以该组管理员的身份操作",
     "addGroup": "新建组",
     "actingAs": "以该组管理员身份"
   }

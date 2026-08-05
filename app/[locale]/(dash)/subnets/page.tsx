@@ -168,10 +168,7 @@ export default async function SubnetsPage() {
                       {e.available ? (
                         common('yes')
                       ) : (
-                        <span
-                          className="text-muted-foreground"
-                          title={t('staleHint')}
-                        >
+                        <span className="text-muted-foreground">
                           {common('no')}
                         </span>
                       )}
@@ -196,16 +193,13 @@ export default async function SubnetsPage() {
       <Card>
         <CardHeader>
           <CardTitle>{t('howto.title')}</CardTitle>
-          <CardDescription>{t('howto.intro')}</CardDescription>
+          <CardDescription>{t('howto.summary')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-6">
           <div className="grid gap-6 lg:grid-cols-2">
             <div className="flex flex-col gap-3">
               <div className="flex flex-col gap-1">
                 <h3 className="text-sm font-medium">{t('howto.step1Title')}</h3>
-                <p className="text-muted-foreground text-sm">
-                  {t('howto.step1Desc')}
-                </p>
               </div>
               {ADVERTISE_CMDS.map((c) => (
                 <CmdBlock key={c.key} label={t(c.key)} cmd={c.cmd} />
@@ -226,12 +220,6 @@ export default async function SubnetsPage() {
           </div>
 
           <div className="flex flex-col gap-2 text-sm">
-            <p>
-              <span className="font-medium">{t('howto.step3Title')}</span>{' '}
-              <span className="text-muted-foreground">
-                {t('howto.step3Desc')}
-              </span>
-            </p>
             <p>
               <span className="font-medium">{t('howto.accessTitle')}</span>{' '}
               <span className="text-muted-foreground">

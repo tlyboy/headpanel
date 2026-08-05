@@ -43,9 +43,7 @@ export function LanIpCell({ ips }: { ips: string[] }) {
         </button>
       </HoverCardTrigger>
       <HoverCardContent align="start" className="w-auto min-w-56">
-        <div className="flex flex-col gap-2">
-          <p className="text-muted-foreground text-xs">{t('lanIpHint')}</p>
-          <div className="flex flex-col gap-1">
+        <div className="flex flex-col gap-1">
             {ips.map((ip, i) => (
               <div key={ip} className="flex items-center gap-2">
                 <code className="flex-1 font-mono text-xs select-all">
@@ -64,7 +62,6 @@ export function LanIpCell({ ips }: { ips: string[] }) {
                 </Button>
               </div>
             ))}
-          </div>
         </div>
       </HoverCardContent>
     </HoverCard>

@@ -114,10 +114,6 @@ export function GroupSwitcher({
               <Plus />
               <span className="text-muted-foreground">{t('addGroup')}</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuLabel className="text-muted-foreground text-xs font-normal">
-              {t('hint')}
-            </DropdownMenuLabel>
           </DropdownMenuContent>
         </DropdownMenu>
         {/* 必须渲染在 DropdownMenu 之外：菜单项一点就关，弹窗跟着卸载就打不开了 */}

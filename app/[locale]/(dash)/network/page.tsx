@@ -7,23 +7,14 @@ import {
   readHeadscaleNetworkConfig,
 } from '@/lib/headscale-config'
 import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { NetworkForm } from './network-form'
 
 export const dynamic = 'force-dynamic'
 
 export default async function NetworkPage() {
-  const [, t, common] = await Promise.all([
+  const [, t] = await Promise.all([
     requireSuper(),
     getTranslations('network'),
-    getTranslations('common'),
   ])
   if (!isHeadscaleHostControlEnabled()) notFound()
   const [config, nodes] = await Promise.all([
@@ -80,38 +71,6 @@ export default async function NetworkPage() {
         </div>
       </section>
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead className="w-12">ID</TableHead>
-              <TableHead>{t('nodes')}</TableHead>
-              <TableHead>IPv4</TableHead>
-              <TableHead>{t('online')}</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {nodes.map((n) => (
-              <TableRow key={n.id}>
-                <TableCell className="text-muted-foreground">{n.id}</TableCell>
-                <TableCell className="font-medium">{n.givenName}</TableCell>
-                <TableCell className="font-mono text-xs">
-                  {n.ipAddresses.find((ip) => ip.includes('.')) ?? '—'}
-                </TableCell>
-                <TableCell>
-                  {n.online ? (
-                    <Badge variant="success">
-                      {common('online')}
-                    </Badge>
-                  ) : (
-                    <Badge variant="secondary">{common('offline')}</Badge>
-                  )}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
     </div>
   )
 }
