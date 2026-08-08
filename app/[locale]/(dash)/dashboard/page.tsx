@@ -27,9 +27,12 @@ export default async function DashboardPage() {
   ])
   const groups = visibleGroups(session)
   const hsUserIds = new Set(groups.map((g) => g.hsUserId))
+  // 与 preauthkeys 页一致：super 统计全部 key，含默认区（不归任何组）的那些。
+  // 否则零组时这张卡恒为 0，看着像 key 都没了。
+  const countUngrouped = session.role === 'super'
   const [allNodes, allKeys, version] = await Promise.all([
     syncAndListNodes(),
-    groups.length > 0 ? listPreAuthKeys() : [],
+    countUngrouped || groups.length > 0 ? listPreAuthKeys() : [],
     getHeadscaleVersion(),
   ])
   const nodes = scopeNodes(session, allNodes)
@@ -46,7 +49,7 @@ export default async function DashboardPage() {
   let keyCount = 0
   let validKeys = 0
   for (const key of allKeys) {
-    if (!hsUserIds.has(key.user?.id ?? '')) continue
+    if (!countUngrouped && !hsUserIds.has(key.user?.id ?? '')) continue
     keyCount += 1
     if (isNever(key.expiration) || new Date(key.expiration).getTime() > now) {
       validKeys += 1

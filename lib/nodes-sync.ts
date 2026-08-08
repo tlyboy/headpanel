@@ -4,6 +4,7 @@ import { eq, inArray } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { nodeMeta } from '@/lib/db/schema'
 import { listNodes, type HsNode } from '@/lib/headscale'
+import { approvedTag } from '@/lib/default-zone'
 import { listGroups } from '@/lib/groups'
 
 export interface MergedNode extends HsNode {
@@ -13,17 +14,18 @@ export interface MergedNode extends HsNode {
 }
 
 // 拉 headscale 节点，与本地 node_meta 对账（headscale 无 pending 概念，靠这张表补足）：
-//  - 新出现且已带【所属组的 ok_tag】→ approved（direct key 接入）
-//  - 新出现且未带 ok_tag → pending（待审批，此时无门票 tag 即被 ACL 隔离）
+//  - 新出现且已带放行 tag（所属组的 ok_tag，或默认区的 approvedTag）→ approved（direct key 接入）
+//  - 新出现且未带放行 tag → pending（待审批，此时无门票 tag 即被 ACL 隔离）
 //  - 已有记录：保留其 status（status 只由审批操作改，不被 sync 覆盖）
 //  - headscale 已删除的节点：清理孤立 meta
 export async function syncAndListNodes(): Promise<MergedNode[]> {
   const nodes = await listNodes()
   const liveIds = new Set(nodes.map((n) => n.id))
 
-  // 所有组的门票 tag。判断节点是否已「持票」只看 tags（不能用 user：
-  // headscale 对 tagged 节点把 user 抹成 tagged-devices，CLAUDE.md 坑 14）
-  const okTags = new Set(listGroups().map((g) => g.okTag))
+  // 所有放行 tag：各组的门票 + 默认区的。判断节点是否已「持票」只看 tags
+  // （不能用 user：headscale 对 tagged 节点把 user 抹成 tagged-devices）。
+  // 少了默认区那个，零组时用 direct key 接入的节点会被误判成待审批。
+  const okTags = new Set([approvedTag(), ...listGroups().map((g) => g.okTag)])
 
   const metas = db.select().from(nodeMeta).all()
   const metaById = new Map(metas.map((m) => [m.headscaleId, m]))

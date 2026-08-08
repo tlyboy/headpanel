@@ -34,16 +34,25 @@ const DAY_OPTIONS = [
   { labelKey: 'permanent', value: 36500 },
 ] as const
 
+// 组下拉里代表「默认区」（不归任何组）的取值。Select 不接受空串做 item value，
+// 而 null 又要留给「还没选」，所以用一个哨兵字符串。
+const DEFAULT_ZONE = 'default'
+
 export function CreateKey({
   groups,
+  canUseDefault,
 }: {
   groups: { id: number; name: string }[]
+  /** super 才能发给默认区；组身份只能发给自己组 */
+  canUseDefault: boolean
 }) {
   const t = useTranslations('createKey')
   const common = useTranslations('common')
   const [open, setOpen] = useState(false)
   const [pending, start] = useTransition()
-  const [groupId, setGroupId] = useState<number | null>(null)
+  const [groupId, setGroupId] = useState<number | null>(
+    canUseDefault ? null : (groups[0]?.id ?? null),
+  )
   const [reusable, setReusable] = useState(true)
   const [ephemeral, setEphemeral] = useState(false)
   const [days, setDays] = useState(30)
@@ -52,12 +61,18 @@ export function CreateKey({
   const { copied, copy } = useCopy()
 
   function submit() {
-    if (groupId == null) {
+    if (groupId == null && !canUseDefault) {
       toast.error(t('selectGroupRequired'))
       return
     }
     start(async () => {
-      const r = await createKeyAction({ groupId, reusable, ephemeral, days, mode })
+      const r = await createKeyAction({
+        groupId,
+        reusable,
+        ephemeral,
+        days,
+        mode,
+      })
       if (r.ok && r.key) {
         setResult(r.key)
         toast.success(t('generated'))
@@ -82,16 +97,14 @@ export function CreateKey({
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t('title')}</DialogTitle>
-          <DialogDescription>
-            {t('description')}
-          </DialogDescription>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         {result ? (
           <div className="flex min-w-0 flex-col gap-2">
             <Label>{t('resultLabel')}</Label>
             <div className="flex min-w-0 items-center gap-2">
-              <code className="bg-muted min-w-0 flex-1 truncate rounded px-2 py-1.5 font-mono text-xs">
+              <code className="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1.5 font-mono text-xs">
                 {result}
               </code>
               <Button
@@ -109,17 +122,24 @@ export function CreateKey({
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {groups.length > 0 ? (
+            {canUseDefault || groups.length > 0 ? (
               <div className="flex flex-col gap-2">
                 <Label htmlFor="group">{t('group')}</Label>
                 <Select
-                  value={groupId == null ? '' : String(groupId)}
-                  onValueChange={(v) => setGroupId(Number(v))}
+                  value={groupId == null ? DEFAULT_ZONE : String(groupId)}
+                  onValueChange={(v) =>
+                    setGroupId(v === DEFAULT_ZONE ? null : Number(v))
+                  }
                 >
                   <SelectTrigger id="group">
                     <SelectValue placeholder={t('selectGroup')} />
                   </SelectTrigger>
                   <SelectContent>
+                    {canUseDefault && (
+                      <SelectItem value={DEFAULT_ZONE}>
+                        {t('defaultZone')}
+                      </SelectItem>
+                    )}
                     {groups.map((g) => (
                       <SelectItem key={g.id} value={String(g.id)}>
                         {g.name}
@@ -129,7 +149,7 @@ export function CreateKey({
                 </Select>
               </div>
             ) : (
-              <p className="text-muted-foreground text-sm">{t('noGroups')}</p>
+              <p className="text-sm text-muted-foreground">{t('noGroups')}</p>
             )}
             <div className="flex items-center gap-2">
               <Checkbox
@@ -161,12 +181,8 @@ export function CreateKey({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="review">
-                    {t('reviewMode')}
-                  </SelectItem>
-                  <SelectItem value="direct">
-                    {t('directMode')}
-                  </SelectItem>
+                  <SelectItem value="review">{t('reviewMode')}</SelectItem>
+                  <SelectItem value="direct">{t('directMode')}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -203,7 +219,10 @@ export function CreateKey({
               >
                 {common('cancel')}
               </Button>
-              <Button onClick={submit} disabled={pending || groupId == null}>
+              <Button
+                onClick={submit}
+                disabled={pending || (groupId == null && !canUseDefault)}
+              >
                 {pending ? t('generating') : t('generate')}
               </Button>
             </>

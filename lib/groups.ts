@@ -106,10 +106,18 @@ export function scopeNodes<T extends NodeLike>(
   })
 }
 
-// 解析节点所属组并校验会话可操作（用于审批 / 改名 / 删除等）
-export function groupForNode(session: Session, node: NodeLike): Group {
+// 解析节点所属组并校验会话可操作（用于审批 / 改名 / 删除等）。
+// 组是可选的：不属于任何组的节点归默认区（见 lib/default-zone.ts），返回 null。
+// 默认区只有 super 能管——super 切进某个组后会话已降级为 group 角色（见 lib/auth.ts），
+// 那时它和普通组管理员一样碰不到组外的节点。
+export function groupForNode(session: Session, node: NodeLike): Group | null {
   const g = groupOfNode(node)
-  if (!g) throw new Error('This node does not belong to any registered group')
+  if (!g) {
+    if (session.role !== 'super') {
+      throw new Error('You are not allowed to manage nodes outside your group')
+    }
+    return null
+  }
   if (session.role !== 'super' && g.id !== session.gid) {
     throw new Error('You are not allowed to manage nodes from another group')
   }
@@ -231,11 +239,7 @@ export function resetGroupAdminPassword(input: {
 }) {
   if (input.password.length < 6)
     throw new Error('Password must be at least 6 characters')
-  const row = db
-    .select()
-    .from(admins)
-    .where(eq(admins.id, input.adminId))
-    .get()
+  const row = db.select().from(admins).where(eq(admins.id, input.adminId)).get()
   if (!row || row.groupId !== input.groupId || row.role !== 'group') {
     throw new Error('Account does not belong to this group')
   }

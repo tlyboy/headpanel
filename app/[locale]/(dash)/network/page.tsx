@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
 import { requireSuper } from '@/lib/auth'
+import { onlyIpv4 } from '@/lib/format'
 import { listNodes } from '@/lib/headscale'
 import {
   isHeadscaleHostControlEnabled,
@@ -22,7 +23,7 @@ export default async function NetworkPage() {
     listNodes(),
   ])
   const usedIpv4 = nodes
-    .flatMap((n) => n.ipAddresses.filter((ip) => ip.includes('.')))
+    .flatMap((n) => onlyIpv4(n.ipAddresses))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
 
   return (

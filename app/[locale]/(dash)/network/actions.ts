@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { requireSuper } from '@/lib/auth'
+import { onlyIpv4 } from '@/lib/format'
 import { auditAfter } from '@/lib/db'
 import {
   requireHeadscaleHostControl,
@@ -31,7 +32,7 @@ export async function updateIpv4PrefixAction(
   try {
     const nodes = await listNodes()
     const used = new Set(
-      nodes.flatMap((n) => n.ipAddresses.filter((ip) => ip.includes('.'))),
+      nodes.flatMap((n) => onlyIpv4(n.ipAddresses)),
     )
     const result = await updateHeadscaleIpv4Prefix(ipv4Prefix)
     auditAfter(

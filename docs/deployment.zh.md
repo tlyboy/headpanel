@@ -379,6 +379,16 @@ policy。
 
 用 `HEADPANEL_POLICY_BASELINE` 可以改变该文件位置。
 
+### 默认区
+
+组是可选的：不建组时，节点和 key 都归「默认区」。基线里那个 `admin@` 和
+`tag:approved` 正是默认区的两个值 —— 面板发组外的 key 时把它挂在这个 user 名下，
+审批组外的节点时给它打这个 tag。两者分别由 `HEADPANEL_DEFAULT_HS_USER` 和
+`HEADPANEL_APPROVED_TAG` 指定，默认就是 `admin` 和 `tag:approved`。
+
+改动其中任何一个，都要同步改基线：user 必须在 Headscale 里真实存在，tag 必须在基线的
+`tagOwners` 里由该 user 拥有，否则组外的节点接入后会被 ACL 隔离。
+
 ## 7. 更新与备份
 
 ### 更新 Headpanel

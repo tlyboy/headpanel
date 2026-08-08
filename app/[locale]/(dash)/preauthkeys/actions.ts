@@ -4,9 +4,10 @@ import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { eq } from 'drizzle-orm'
 import { requireSession } from '@/lib/auth'
+import { approvedTag, resolveDefaultHsUser } from '@/lib/default-zone'
 import { getGroup, visibleGroups } from '@/lib/groups'
 import { auditAfter, db } from '@/lib/db'
-import { preauthKeys } from '@/lib/db/schema'
+import { preauthKeys, type Group } from '@/lib/db/schema'
 import {
   createPreAuthKey,
   deletePreAuthKey,
@@ -14,7 +15,7 @@ import {
 } from '@/lib/headscale'
 
 // review：不带 tag，接入后无门票 → 被隔离、进待审批
-// direct：带组 ok_tag，接入即放行（组内互通）
+// direct：带放行 tag（组的 ok_tag 或默认区的 approvedTag），接入即放行
 export type AccessMode = 'review' | 'direct'
 
 export interface KeyResult {
@@ -28,8 +29,10 @@ function errMsg(e: unknown, unknownMessage: string): string {
   return e instanceof Error ? e.message : unknownMessage
 }
 
+// groupId 为 null = 发给默认区（组外）。组是可选的，零组时这是唯一的选择；
+// 默认区只有 super 能发，组身份（含 super 切进某个组后）只能发给自己组。
 export async function createKeyAction(input: {
-  groupId: number
+  groupId: number | null
   reusable: boolean
   ephemeral: boolean
   days: number
@@ -39,34 +42,43 @@ export async function createKeyAction(input: {
     requireSession(),
     getTranslations('actionErrors'),
   ])
-  // 校验目标组在会话可见范围内（防越权给他组发 key）
-  const group = getGroup(input.groupId)
-  if (!group || !visibleGroups(session).some((g) => g.id === group.id)) {
+  let group: Group | undefined
+  if (input.groupId != null) {
+    // 校验目标组在会话可见范围内（防越权给他组发 key）
+    group = getGroup(input.groupId)
+    if (!group || !visibleGroups(session).some((g) => g.id === group!.id)) {
+      return { ok: false, error: t('forbiddenGroup') }
+    }
+  } else if (session.role !== 'super') {
     return { ok: false, error: t('forbiddenGroup') }
   }
   const days = Math.max(1, Math.min(36500, Math.floor(input.days)))
   const expiration = new Date(Date.now() + days * 86400_000).toISOString()
-  const aclTags = input.mode === 'direct' ? [group.okTag] : []
   try {
+    // headscale 建 key 必须带 user；组外的 key 挂在默认区的 user 名下
+    const userId = group ? group.hsUserId : (await resolveDefaultHsUser()).id
+    const tag = group ? group.okTag : approvedTag()
+    const aclTags = input.mode === 'direct' ? [tag] : []
     const k = await createPreAuthKey({
-      userId: group.hsUserId,
+      userId,
       reusable: input.reusable,
       ephemeral: input.ephemeral,
       expiration,
       aclTags,
     })
     // 存明文（headscale 之后只给掩码），供每个 key 弹窗拼安装命令
+    const groupId = group?.id ?? null
     try {
       db.insert(preauthKeys)
         .values({
           headscaleId: k.id,
           key: k.key,
           mode: input.mode,
-          groupId: group.id,
+          groupId,
         })
         .onConflictDoUpdate({
           target: preauthKeys.headscaleId,
-          set: { key: k.key, mode: input.mode, groupId: group.id },
+          set: { key: k.key, mode: input.mode, groupId },
         })
         .run()
     } catch {
@@ -75,8 +87,8 @@ export async function createKeyAction(input: {
     auditAfter(
       'preauthkey.create',
       k.id,
-      `group=${group.slug} reusable=${input.reusable} ephemeral=${input.ephemeral} days=${days} mode=${input.mode}`,
-      { groupId: group.id, actor: session.sub },
+      `group=${group?.slug ?? 'default'} reusable=${input.reusable} ephemeral=${input.ephemeral} days=${days} mode=${input.mode}`,
+      { groupId, actor: session.sub },
     )
     revalidatePath('/preauthkeys')
     return { ok: true, key: k.key }

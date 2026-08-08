@@ -148,7 +148,7 @@
     "adminAccounts": "管理员账号",
     "createdAt": "创建时间",
     "actions": "操作",
-    "defaultGroup": "默认组"
+    "empty": "还没有组。节点默认不分组，需要网络隔离时再建组。"
   },
   "groupForm": {
     "trigger": "新建组",
@@ -212,6 +212,7 @@
     "group": "归属组",
     "selectGroup": "选择归属组",
     "selectGroupRequired": "请先选择归属组",
+    "defaultZone": "默认（不分组）",
     "noGroups": "请先创建组，再生成密钥。",
     "reusable": "可重复使用（reusable）",
     "ephemeral": "临时节点（ephemeral，离线自动删除）",

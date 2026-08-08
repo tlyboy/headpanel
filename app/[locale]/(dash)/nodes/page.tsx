@@ -3,7 +3,7 @@ import { syncAndListNodes } from '@/lib/nodes-sync'
 import { requireSession } from '@/lib/auth'
 import { scopeNodes } from '@/lib/groups'
 import { readNodeNetInfo } from '@/lib/headscale-db'
-import { fmtTime } from '@/lib/format'
+import { fmtTime, pickIpv4 } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -148,7 +148,7 @@ export default async function NodesPage({
                     </TableCell>
                     <TableCell className="font-medium">{n.givenName}</TableCell>
                     <TableCell className="font-mono text-xs">
-                      {n.ipAddresses.join(' / ')}
+                      {pickIpv4(n.ipAddresses) ?? '—'}
                     </TableCell>
                     <TableCell className="text-xs">
                       <LanIpCell ips={lanIps} />
