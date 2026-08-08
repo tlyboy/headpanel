@@ -148,7 +148,7 @@
     "adminAccounts": "Admin accounts",
     "createdAt": "Created at",
     "actions": "Actions",
-    "defaultGroup": "Default group"
+    "empty": "No groups yet. Nodes are ungrouped by default — create a group when you need network isolation."
   },
   "groupForm": {
     "trigger": "New group",
@@ -212,6 +212,7 @@
     "group": "Group",
     "selectGroup": "Select a group",
     "selectGroupRequired": "Select a group first",
+    "defaultZone": "Default (ungrouped)",
     "noGroups": "Create a group before generating keys.",
     "reusable": "Reusable",
     "ephemeral": "Ephemeral node (removed automatically when offline)",

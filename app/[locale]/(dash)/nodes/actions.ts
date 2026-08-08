@@ -25,8 +25,9 @@ function fail(e: unknown, unknownMessage: string): ActionResult {
   return { ok: false, error: e instanceof Error ? e.message : unknownMessage }
 }
 
-// Fetch the node and verify that the current session is authorized to operate on it (belongs to its group / super); return the owning group for auditing
-async function assertNode(session: Session, id: string): Promise<Group> {
+// Fetch the node and verify that the current session is authorized to operate on it (belongs to its group / super); return the owning group for auditing.
+// Nodes outside a group belong to the default zone, so return null — group_id is recorded as null in the audit log (the column is nullable anyway).
+async function assertNode(session: Session, id: string): Promise<Group | null> {
   const node = await getNode(id)
   return groupForNode(session, node)
 }
@@ -49,7 +50,7 @@ export async function renameNodeAction(
     const group = await assertNode(session, id)
     await renameNode(id, name)
     auditAfter('node.rename', id, name, {
-      groupId: group.id,
+      groupId: group?.id ?? null,
       actor: session.sub,
     })
     revalidatePath('/nodes')
@@ -68,7 +69,7 @@ export async function expireNodeAction(id: string): Promise<ActionResult> {
     const group = await assertNode(session, id)
     await expireNode(id)
     auditAfter('node.expire', id, undefined, {
-      groupId: group.id,
+      groupId: group?.id ?? null,
       actor: session.sub,
     })
     revalidatePath('/nodes')
@@ -87,7 +88,7 @@ export async function deleteNodeAction(id: string): Promise<ActionResult> {
     const group = await assertNode(session, id)
     await deleteNode(id)
     auditAfter('node.delete', id, undefined, {
-      groupId: group.id,
+      groupId: group?.id ?? null,
       actor: session.sub,
     })
     revalidatePath('/nodes')
@@ -110,7 +111,7 @@ export async function saveNoteAction(
     const group = await assertNode(session, id)
     setNodeNote(id, note)
     auditAfter('node.note', id, note.trim() || t('noteCleared'), {
-      groupId: group.id,
+      groupId: group?.id ?? null,
       actor: session.sub,
     })
     revalidatePath('/nodes')

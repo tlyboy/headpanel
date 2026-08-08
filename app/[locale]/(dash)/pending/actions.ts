@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { requireSession } from '@/lib/auth'
 import { auditAfter } from '@/lib/db'
+import { approvedTag } from '@/lib/default-zone'
 import { groupForNode } from '@/lib/groups'
 import { setNodeStatus } from '@/lib/nodes-sync'
 import {
@@ -23,8 +24,9 @@ function fail(e: unknown, unknownMessage: string): ActionResult {
   return { ok: false, error: e instanceof Error ? e.message : unknownMessage }
 }
 
-// Approve: apply the node's "owning group's ok_tag" (allow communication within the group via ACL), and record the local status as approved.
-// First resolve the node's owning group and verify that the current session is authorized to operate on it (prevent approving nodes in other groups without permission).
+// Approve: add the release tag to the node (allow ACL traffic between nodes) and set its local status to approved. Use the owning group's
+// ok_tag; nodes that don't belong to any group are assigned to the default zone and get the default zone's approvedTag.
+// First resolve the node's group and verify that the current session is authorized to act on it (to prevent approving nodes in other groups without permission).
 export async function approveNodeAction(id: string): Promise<ActionResult> {
   const [session, t] = await Promise.all([
     requireSession(),
@@ -33,14 +35,15 @@ export async function approveNodeAction(id: string): Promise<ActionResult> {
   try {
     const node = await getNode(id)
     const group = groupForNode(session, node)
-    await setNodeTags(id, [group.okTag])
+    const tag = group?.okTag ?? approvedTag()
+    await setNodeTags(id, [tag])
     setNodeStatus(id, 'approved', session.sub)
     auditAfter(
       'node.approve',
       id,
-      `group=${group.slug} tags=[${group.okTag}]`,
+      `group=${group?.slug ?? 'default'} tags=[${tag}]`,
       {
-        groupId: group.id,
+        groupId: group?.id ?? null,
         actor: session.sub,
       },
     )
@@ -63,8 +66,8 @@ export async function rejectNodeAction(id: string): Promise<ActionResult> {
     const group = groupForNode(session, node)
     setNodeStatus(id, 'rejected', session.sub)
     await deleteNode(id)
-    auditAfter('node.reject', id, `group=${group.slug} deleted`, {
-      groupId: group.id,
+    auditAfter('node.reject', id, `group=${group?.slug ?? 'default'} deleted`, {
+      groupId: group?.id ?? null,
       actor: session.sub,
     })
     revalidatePath('/pending')

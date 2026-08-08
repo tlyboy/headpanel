@@ -10,3 +10,12 @@ export function fmtTime(s?: string): string {
 export function isNever(s?: string): boolean {
   return !s || s.startsWith('0001-01-01')
 }
+
+// headscale's ipAddresses can contain IPv4 and IPv6 in any order; only display IPv4 in the UI.
+export function pickIpv4(ips?: string[]): string | undefined {
+  return ips?.find((ip) => ip.includes('.'))
+}
+
+export function onlyIpv4(ips?: string[]): string[] {
+  return ips?.filter((ip) => ip.includes('.')) ?? []
+}

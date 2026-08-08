@@ -337,6 +337,18 @@ shipping a policy with the baseline silently dropped.
 
 `HEADPANEL_POLICY_BASELINE` overrides the location.
 
+### The default zone
+
+Groups are optional. With no groups, nodes and keys belong to the default zone —
+and the `admin@` and `tag:approved` in the baseline above are exactly what that
+zone is made of: the panel issues ungrouped keys under that user, and stamps that
+tag on ungrouped nodes when you approve them. `HEADPANEL_DEFAULT_HS_USER` and
+`HEADPANEL_APPROVED_TAG` name them, defaulting to `admin` and `tag:approved`.
+
+Change either one and the baseline has to follow: the user must exist in
+Headscale, and the tag must be owned by that user under `tagOwners`, or ungrouped
+nodes stay isolated by ACL after they join.
+
 ## 7. Updates and backups
 
 ### Update Headpanel

@@ -4,6 +4,7 @@ import { eq, inArray } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { nodeMeta } from '@/lib/db/schema'
 import { listNodes, type HsNode } from '@/lib/headscale'
+import { approvedTag } from '@/lib/default-zone'
 import { listGroups } from '@/lib/groups'
 
 export interface MergedNode extends HsNode {
@@ -12,18 +13,19 @@ export interface MergedNode extends HsNode {
   note: string | null
 }
 
-// Fetch headscale nodes and reconcile them with local node_meta (headscale has no concept of pending, so this table fills the gap):
-//  - Newly seen with the owning group's ok_tag → approved (direct key enrollment)
-//  - Newly seen without an ok_tag → pending (awaiting approval; without a ticket tag, ACL isolates it)
+// Sync headscale nodes against local node_meta (headscale has no pending concept, so this table fills the gap):
+//  - Newly seen nodes that already have an approval tag (the group's ok_tag or the default area's approvedTag) → approved (direct key access)
+//  - Newly seen nodes without an approval tag → pending (awaiting approval; without a ticket tag, they are isolated by the ACL)
 //  - Existing records: preserve their status (status is changed only by approval actions, not overwritten by sync)
-//  - Nodes deleted from headscale: clean up orphaned meta
+//  - Nodes deleted from headscale: clean up orphaned metadata
 export async function syncAndListNodes(): Promise<MergedNode[]> {
   const nodes = await listNodes()
   const liveIds = new Set(nodes.map((n) => n.id))
 
-  // Ticket tags for all groups. To determine whether a node already has a "ticket," check only tags (don't use user:
-  // headscale changes user to tagged-devices for tagged nodes; see pitfall 14 in CLAUDE.md)
-  const okTags = new Set(listGroups().map((g) => g.okTag))
+  // All approval tags: each group's ticket tag plus the default area's tag. Determine whether a node already has a "ticket" by checking tags only
+  // (don't use user: headscale changes the user to tagged-devices for tagged nodes).
+  // If the default area's tag is missing, nodes using direct key access when there are no groups will be incorrectly marked as pending.
+  const okTags = new Set([approvedTag(), ...listGroups().map((g) => g.okTag)])
 
   const metas = db.select().from(nodeMeta).all()
   const metaById = new Map(metas.map((m) => [m.headscaleId, m]))

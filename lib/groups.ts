@@ -106,10 +106,18 @@ export function scopeNodes<T extends NodeLike>(
   })
 }
 
-// Resolve the node's group and verify the session can operate on it (for approval / renaming / deletion, etc.)
-export function groupForNode(session: Session, node: NodeLike): Group {
+// Resolve the group a node belongs to and check whether the session can operate on it (for approval / rename / deletion, etc.).
+// A group is optional: nodes that don't belong to any group are in the default zone (see lib/default-zone.ts); return null.
+// Only super can manage the default zone — after super switches to a group, the session is downgraded to the group role (see lib/auth.ts),
+// so it can no longer access nodes outside the group, just like an ordinary group admin.
+export function groupForNode(session: Session, node: NodeLike): Group | null {
   const g = groupOfNode(node)
-  if (!g) throw new Error('This node does not belong to any registered group')
+  if (!g) {
+    if (session.role !== 'super') {
+      throw new Error('You are not allowed to manage nodes outside your group')
+    }
+    return null
+  }
   if (session.role !== 'super' && g.id !== session.gid) {
     throw new Error('You are not allowed to manage nodes from another group')
   }
@@ -231,11 +239,7 @@ export function resetGroupAdminPassword(input: {
 }) {
   if (input.password.length < 6)
     throw new Error('Password must be at least 6 characters')
-  const row = db
-    .select()
-    .from(admins)
-    .where(eq(admins.id, input.adminId))
-    .get()
+  const row = db.select().from(admins).where(eq(admins.id, input.adminId)).get()
   if (!row || row.groupId !== input.groupId || row.role !== 'group') {
     throw new Error('Account does not belong to this group')
   }

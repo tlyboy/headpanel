@@ -1,6 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { TriangleAlert } from 'lucide-react'
 import { requireSuper } from '@/lib/auth'
+import { pickIpv4 } from '@/lib/format'
 import { readNodeNetInfo } from '@/lib/headscale-db'
 import { listNodes, type HsNode } from '@/lib/headscale'
 import { LanIpCell } from '@/components/lan-ip-cell'
@@ -145,7 +146,7 @@ export default async function SubnetsPage() {
                     <TableCell className="text-sm">
                       {e.node.givenName}
                       <span className="text-muted-foreground ml-2 font-mono text-xs">
-                        {e.node.ipAddresses[0]}
+                        {pickIpv4(e.node.ipAddresses) ?? '—'}
                       </span>
                     </TableCell>
                     <TableCell className="text-xs">

@@ -2,7 +2,7 @@ import { getTranslations } from 'next-intl/server'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { requireSession } from '@/lib/auth'
 import { scopeNodes } from '@/lib/groups'
-import { fmtTime } from '@/lib/format'
+import { fmtTime, pickIpv4 } from '@/lib/format'
 import {
   Table,
   TableBody,
@@ -62,7 +62,7 @@ export default async function PendingPage() {
                   </TableCell>
                   <TableCell className="font-medium">{n.givenName}</TableCell>
                   <TableCell className="font-mono text-xs">
-                    {n.ipAddresses.join(' / ')}
+                    {pickIpv4(n.ipAddresses) ?? '—'}
                   </TableCell>
                   <TableCell className="text-xs">
                     {n.tags.join(', ') || '—'}

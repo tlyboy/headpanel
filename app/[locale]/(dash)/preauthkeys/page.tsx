@@ -87,7 +87,10 @@ export default async function PreAuthKeysPage() {
             {t('description', { count: keys.length })}
           </p>
         </div>
-        <CreateKey groups={groups.map((g) => ({ id: g.id, name: g.name }))} />
+        <CreateKey
+          groups={groups.map((g) => ({ id: g.id, name: g.name }))}
+          canUseDefault={showUngrouped}
+        />
       </div>
 
       <div className="rounded-md border">

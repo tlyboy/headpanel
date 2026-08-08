@@ -27,9 +27,12 @@ export default async function DashboardPage() {
   ])
   const groups = visibleGroups(session)
   const hsUserIds = new Set(groups.map((g) => g.hsUserId))
+  // Same as the preauthkeys page: super counts all keys, including those in the default section (not assigned to any group).
+  // Otherwise, with no groups, this card would always show 0, making it look like all the keys are gone.
+  const countUngrouped = session.role === 'super'
   const [allNodes, allKeys, version] = await Promise.all([
     syncAndListNodes(),
-    groups.length > 0 ? listPreAuthKeys() : [],
+    countUngrouped || groups.length > 0 ? listPreAuthKeys() : [],
     getHeadscaleVersion(),
   ])
   const nodes = scopeNodes(session, allNodes)
@@ -46,7 +49,7 @@ export default async function DashboardPage() {
   let keyCount = 0
   let validKeys = 0
   for (const key of allKeys) {
-    if (!hsUserIds.has(key.user?.id ?? '')) continue
+    if (!countUngrouped && !hsUserIds.has(key.user?.id ?? '')) continue
     keyCount += 1
     if (isNever(key.expiration) || new Date(key.expiration).getTime() > now) {
       validKeys += 1

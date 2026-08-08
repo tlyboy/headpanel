@@ -77,33 +77,46 @@ export default async function GroupsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {groups.map((g) => (
-              <TableRow key={g.id}>
-                <TableCell className="text-muted-foreground">{g.id}</TableCell>
-                <TableCell className="font-medium">{g.name}</TableCell>
-                <TableCell className="font-mono text-xs">{g.slug}</TableCell>
-                <TableCell className="font-mono text-xs">{g.okTag}</TableCell>
-                <TableCell>{nodeCount.get(g.id) ?? 0}</TableCell>
-                <TableCell className="text-xs">
-                  {(adminsByGroup.get(g.id) ?? [])
-                    .map((a) => a.username)
-                    .join(', ') || '—'}
-                </TableCell>
-                <TableCell className="text-xs text-muted-foreground">
-                  {fmtTime(g.createdAt.replace(' ', 'T') + 'Z')}
-                </TableCell>
-                <TableCell className="text-right">
-                  <GroupRowActions
-                    id={g.id}
-                    name={g.name}
-                    nodeCount={nodeCount.get(g.id) ?? 0}
-                    keyCount={keyCount.get(g.id) ?? 0}
-                    isProtected={!isPanelManagedGroup(g)}
-                    admins={adminsByGroup.get(g.id) ?? []}
-                  />
+            {groups.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={8}
+                  className="py-8 text-center text-muted-foreground"
+                >
+                  {t('empty')}
                 </TableCell>
               </TableRow>
-            ))}
+            ) : (
+              groups.map((g) => (
+                <TableRow key={g.id}>
+                  <TableCell className="text-muted-foreground">
+                    {g.id}
+                  </TableCell>
+                  <TableCell className="font-medium">{g.name}</TableCell>
+                  <TableCell className="font-mono text-xs">{g.slug}</TableCell>
+                  <TableCell className="font-mono text-xs">{g.okTag}</TableCell>
+                  <TableCell>{nodeCount.get(g.id) ?? 0}</TableCell>
+                  <TableCell className="text-xs">
+                    {(adminsByGroup.get(g.id) ?? [])
+                      .map((a) => a.username)
+                      .join(', ') || '—'}
+                  </TableCell>
+                  <TableCell className="text-xs text-muted-foreground">
+                    {fmtTime(g.createdAt.replace(' ', 'T') + 'Z')}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <GroupRowActions
+                      id={g.id}
+                      name={g.name}
+                      nodeCount={nodeCount.get(g.id) ?? 0}
+                      keyCount={keyCount.get(g.id) ?? 0}
+                      isProtected={!isPanelManagedGroup(g)}
+                      admins={adminsByGroup.get(g.id) ?? []}
+                    />
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
           </TableBody>
         </Table>
       </div>
