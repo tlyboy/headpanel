@@ -1,19 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
 
-// Most list pages only have a title; nodes / subnets also show a line of stats below the title
-function PageHeaderSkeleton({
-  description = false,
-}: {
-  description?: boolean
-}) {
-  return (
-    <div className="space-y-2">
-      <Skeleton className="h-8 w-36" />
-      {description ? <Skeleton className="h-4 w-64 max-w-[70vw]" /> : null}
-    </div>
-  )
-}
-
 // The shared toolbar for list pages: filters and actions on the left, column filters on the right
 function ToolbarSkeleton({
   filters = false,
@@ -126,7 +112,6 @@ export function DashboardPageSkeleton() {
 export function NetworkPageSkeleton() {
   return (
     <div className="flex flex-col gap-6" aria-busy="true">
-      <PageHeaderSkeleton description />
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-5 rounded-md border p-4">
           <div className="space-y-2">

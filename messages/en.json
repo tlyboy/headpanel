@@ -283,8 +283,6 @@
     "confirmDelete": "Delete"
   },
   "network": {
-    "title": "Network",
-    "description": "View and modify the headscale tailaddress pool. IPv4 must be inside 100.64.0.0/10.",
     "addressPool": "Address pool",
     "configFile": "Config file:",
     "currentConfig": "Current config",
@@ -294,6 +292,7 @@
   },
   "networkForm": {
     "ipv4Pool": "IPv4 address pool",
+    "ipv4Hint": "Must fall within 100.64.0.0/10",
     "updated": "IPv4 prefix updated and headscale restarted",
     "saveRestart": "Save and restart",
     "restore": "Reset",

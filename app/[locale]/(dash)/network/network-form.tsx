@@ -61,7 +61,13 @@ export function NetworkForm({
             onChange={(e) => setValue(e.target.value)}
             placeholder="100.64.0.0/24"
             disabled={pending}
+            aria-describedby="ipv4Prefix-hint"
           />
+          {/* Keep the constraint with the input: it's the rule to follow when filling in this field,
+              and putting it at the top of the page is too far from where it's actually needed. */}
+          <p id="ipv4Prefix-hint" className="text-xs text-muted-foreground">
+            {t('ipv4Hint')}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button
