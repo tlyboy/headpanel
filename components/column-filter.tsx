@@ -58,7 +58,7 @@ export function ColumnFilter({
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" disabled={pending}>
+        <Button variant="outline" disabled={pending}>
           <SlidersHorizontal />
           {t('columns')}
         </Button>

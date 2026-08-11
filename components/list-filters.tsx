@@ -120,7 +120,7 @@ export function ListFilters({
               </Select>
             ))}
 
-            <Button size="sm" disabled={pending} onClick={submitSearch}>
+            <Button disabled={pending} onClick={submitSearch}>
               <Search />
               {t('search')}
             </Button>
@@ -128,7 +128,6 @@ export function ListFilters({
                 still makes people wonder "Can I click this right now?" — with no filter, just click it to return to the default state */}
             <Button
               variant="outline"
-              size="sm"
               disabled={pending}
               onClick={() => start(() => router.replace(pathname))}
             >
