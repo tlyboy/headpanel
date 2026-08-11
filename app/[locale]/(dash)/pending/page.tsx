@@ -21,7 +21,7 @@ import {
   visibleCount,
   type ColumnDef,
 } from '@/components/columns'
-import { STICKY_ACTIONS_WIDE } from '@/lib/table'
+import { STICKY_ACTIONS } from '@/lib/table'
 import { PendingRowActions } from './row-actions'
 
 export const dynamic = 'force-dynamic'
@@ -86,7 +86,7 @@ export default async function PendingPage({
               {show('tags') && <TableHead>{t('tags')}</TableHead>}
               {show('createdAt') && <TableHead>{t('createdAt')}</TableHead>}
               <TableHead
-                className={STICKY_ACTIONS_WIDE}
+                className={STICKY_ACTIONS}
                 aria-label={t('approval')}
               />
             </TableRow>
@@ -127,7 +127,7 @@ export default async function PendingPage({
                       {fmtTime(n.createdAt)}
                     </TableCell>
                   )}
-                  <TableCell className={STICKY_ACTIONS_WIDE}>
+                  <TableCell className={STICKY_ACTIONS}>
                     <PendingRowActions id={n.id} name={n.givenName} />
                   </TableCell>
                 </TableRow>
