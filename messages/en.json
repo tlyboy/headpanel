@@ -250,6 +250,7 @@
   "pendingActions": {
     "approve": "Approve",
     "reject": "Reject",
+    "menu": "More actions",
     "approved": "Approved {name}",
     "rejected": "Rejected {name}",
     "rejectTitle": "Reject and delete {name}?",

@@ -2,8 +2,15 @@
 
 import { useState, useTransition } from 'react'
 import { useTranslations } from 'next-intl'
+import { MoreHorizontal } from 'lucide-react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import {
   AlertDialog,
   AlertDialogAction,
@@ -20,13 +27,9 @@ import {
   type ActionResult,
 } from './actions'
 
-export function PendingRowActions({
-  id,
-  name,
-}: {
-  id: string
-  name: string
-}) {
+// 与其余列表页一致：操作列里只放一个 ⋯。并排的行内按钮会让列宽由「动作最多的
+// 那一行」决定，横向滚动时右侧那条固定列的位置也就跟着页面变。
+export function PendingRowActions({ id, name }: { id: string; name: string }) {
   const t = useTranslations('pendingActions')
   const common = useTranslations('common')
   const [pending, start] = useTransition()
@@ -41,23 +44,36 @@ export function PendingRowActions({
   }
 
   return (
-    <div className="flex justify-end gap-2">
-      <Button
-        size="sm"
-        disabled={pending}
-        onClick={() => run(approveNodeAction(id), t('approved', { name }))}
-      >
-        {t('approve')}
-      </Button>
-      <Button
-        size="sm"
-        variant="destructive"
-        disabled={pending}
-        onClick={() => setRejectOpen(true)}
-      >
-        {t('reject')}
-      </Button>
+    <>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button
+            variant="ghost"
+            size="icon"
+            aria-label={t('menu')}
+            disabled={pending}
+          >
+            <MoreHorizontal />
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem
+            onSelect={() =>
+              run(approveNodeAction(id), t('approved', { name }))
+            }
+          >
+            {t('approve')}
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            variant="destructive"
+            onSelect={() => setRejectOpen(true)}
+          >
+            {t('reject')}
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
 
+      {/* 弹窗渲染在菜单之外：菜单项一点就关，弹窗跟着卸载就打不开了 */}
       <AlertDialog open={rejectOpen} onOpenChange={setRejectOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -67,7 +83,9 @@ export function PendingRowActions({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>
+              {common('cancel')}
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
               onClick={(e) => {
@@ -81,6 +99,6 @@ export function PendingRowActions({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   )
 }

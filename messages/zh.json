@@ -250,6 +250,7 @@
   "pendingActions": {
     "approve": "批准",
     "reject": "拒绝",
+    "menu": "更多操作",
     "approved": "已批准 {name}",
     "rejected": "已拒绝 {name}",
     "rejectTitle": "拒绝并删除 {name}？",
