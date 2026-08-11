@@ -72,8 +72,6 @@ export function ListFilters({
     if (v !== urlQ) setParam('q', v)
   }
 
-  const active = urlQ !== '' || selects.some((s) => params.get(s.name))
-
   return (
     <div className="flex items-start justify-between gap-2">
       {/* 左组自己换行，列筛选始终贴右——否则窄屏下它会跟着换到下一行的最左边 */}
@@ -126,11 +124,12 @@ export function ListFilters({
               <Search />
               {t('search')}
             </Button>
-            {/* 常驻但无筛选时禁用：出现又消失会让后面的按钮左右跳 */}
+            {/* 常驻且随时可点：出现又消失会让后面的按钮左右跳，而按不动的按钮
+                同样要人先判断「现在到底能不能点」——没筛选时点一下回到原样即可 */}
             <Button
               variant="outline"
               size="sm"
-              disabled={pending || !active}
+              disabled={pending}
               onClick={() => start(() => router.replace(pathname))}
             >
               <RotateCcw />
