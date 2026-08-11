@@ -1,8 +1,9 @@
 'use client'
 
-import { useTransition } from 'react'
+import { useRef, useTransition, type ReactNode } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Search, X } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { RotateCcw, Search } from 'lucide-react'
 import { usePathname, useRouter } from '@/i18n/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -23,24 +24,34 @@ export interface FilterSelect {
   options: { value: string; label: string }[]
 }
 
-// Keep filter state in the URL instead of the component: the pages are all RSC + force-dynamic, and filtering happens on the server,
-// which also gives us shareable links and working back/forward navigation for free.
+// The single toolbar at the top of each list page: filters and actions on the left, column visibility on the right.
+// Filter state lives in the URL, not in the component: pages are all RSC + force-dynamic, and filtering happens on the server,
+// giving us shareable links and working back/forward navigation for free.
+// If placeholder is omitted, the search area isn't rendered (those pages have nothing to filter),
+// but the toolbar remains for action buttons and column filters — all six list pages look the same.
 export function ListFilters({
   placeholder,
   selects = [],
-  clearLabel,
+  actions,
+  columns,
 }: {
-  placeholder: string
+  placeholder?: string
   selects?: FilterSelect[]
-  clearLabel: string
+  /** Page-level action buttons, with Add first */
+  actions?: ReactNode
+  /** Column filter dropdown on the right */
+  columns?: ReactNode
 }) {
+  const t = useTranslations('common')
   const router = useRouter()
   const pathname = usePathname()
   const params = useSearchParams()
   const [pending, start] = useTransition()
+  const inputRef = useRef<HTMLInputElement>(null)
   // The input is uncontrolled: the URL is the single source of truth. The key changes with the URL's q,
   // so back/forward navigation remounts the component and defaultValue naturally returns to the right value.
   const urlQ = params.get('q') ?? ''
+  const searchable = placeholder != null
 
   function push(next: URLSearchParams) {
     // Any filter change should return to the first page; otherwise, you'll end up on a page number that no longer exists
@@ -56,63 +67,82 @@ export function ListFilters({
     push(next)
   }
 
+  function submitSearch() {
+    const v = inputRef.current?.value.trim() ?? ''
+    if (v !== urlQ) setParam('q', v)
+  }
+
   const active = urlQ !== '' || selects.some((s) => params.get(s.name))
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <form
-        className="relative"
-        onSubmit={(e) => {
-          e.preventDefault()
-          const v = new FormData(e.currentTarget).get('q')
-          setParam('q', String(v ?? '').trim())
-        }}
-      >
-        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2" />
-        <Input
-          key={urlQ}
-          name="q"
-          defaultValue={urlQ}
-          onBlur={(e) => {
-            const v = e.target.value.trim()
-            if (v !== urlQ) setParam('q', v)
-          }}
-          placeholder={placeholder}
-          className="w-56 pl-8"
-        />
-      </form>
+    <div className="flex items-start justify-between gap-2">
+      {/* The left group wraps on its own, while the column filter stays pinned to the right — otherwise, on narrow screens it wraps to the far left of the next row */}
+      <div className="flex flex-1 flex-wrap items-center gap-2">
+        {searchable && (
+          <>
+            <form
+              className="relative"
+              onSubmit={(e) => {
+                e.preventDefault()
+                submitSearch()
+              }}
+            >
+              <Search className="pointer-events-none absolute top-1/2 left-2.5 size-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                key={urlQ}
+                ref={inputRef}
+                name="q"
+                defaultValue={urlQ}
+                // Filter on blur: the button just provides an explicit option, without affecting people who prefer Enter or simply click away
+                onBlur={submitSearch}
+                placeholder={placeholder}
+                className="w-56 pl-8"
+              />
+            </form>
 
-      {selects.map((s) => (
-        <Select
-          key={s.name}
-          value={params.get(s.name) ?? '__all'}
-          onValueChange={(v) => setParam(s.name, v === '__all' ? '' : v)}
-        >
-          <SelectTrigger className="w-40">
-            <SelectValue placeholder={s.placeholder} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="__all">{s.placeholder}</SelectItem>
-            {s.options.map((o) => (
-              <SelectItem key={o.value} value={o.value}>
-                {o.label}
-              </SelectItem>
+            {selects.map((s) => (
+              <Select
+                key={s.name}
+                // When unfiltered, pass undefined instead of __all: Radix only shows the placeholder when
+                // no value is selected; always passing a sentinel value leaves the trigger completely blank.
+                value={params.get(s.name) ?? undefined}
+                onValueChange={(v) => setParam(s.name, v === '__all' ? '' : v)}
+              >
+                <SelectTrigger className="w-40">
+                  <SelectValue placeholder={s.placeholder} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all">{s.placeholder}</SelectItem>
+                  {s.options.map((o) => (
+                    <SelectItem key={o.value} value={o.value}>
+                      {o.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ))}
-          </SelectContent>
-        </Select>
-      ))}
 
-      {active && (
-        <Button
-          variant="ghost"
-          size="sm"
-          disabled={pending}
-          onClick={() => start(() => router.replace(pathname))}
-        >
-          <X />
-          {clearLabel}
-        </Button>
-      )}
+            <Button size="sm" disabled={pending} onClick={submitSearch}>
+              <Search />
+              {t('search')}
+            </Button>
+            {/* Keep it mounted but disable it when unfiltered: appearing and disappearing makes the buttons after it jump left and right. */}
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={pending || !active}
+              onClick={() => start(() => router.replace(pathname))}
+            >
+              <RotateCcw />
+              {t('reset')}
+            </Button>
+          </>
+        )}
+
+        {actions}
+      </div>
+
+      {columns}
     </div>
   )
 }

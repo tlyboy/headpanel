@@ -13,6 +13,8 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
+// List pages no longer have an h1, so the breadcrumb is the only page identifier — miss a route and it will silently display as
+// "Overview", making it impossible to tell which page you're on. Remember to update this table when adding a page.
 const routeKeys = {
   dashboard: 'dashboard',
   nodes: 'nodes',
@@ -22,6 +24,7 @@ const routeKeys = {
   network: 'network',
   scripts: 'scripts',
   audit: 'audit',
+  subnets: 'subnets',
 } as const
 
 export function DashboardHeader() {

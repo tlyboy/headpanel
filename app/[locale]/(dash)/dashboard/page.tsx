@@ -43,7 +43,7 @@ export default async function DashboardPage() {
     if (node.online) online += 1
     if (node.status === 'pending') pending += 1
   }
-  // RSC + force-dynamic: render on the server for every request and use the current time to check whether keys have expired, as expected
+  // RSC + force-dynamic: render on the server for every request and check whether keys have expired based on the current time, as expected
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now()
   let keyCount = 0
@@ -188,11 +188,6 @@ export default async function DashboardPage() {
 
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('description')}</p>
-      </div>
-
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {stats.map((s) => (
           <Card key={s.title}>
@@ -203,7 +198,9 @@ export default async function DashboardPage() {
             <CardContent>
               <p
                 className={
-                  s.warn ? 'text-warning text-xs' : 'text-muted-foreground text-xs'
+                  s.warn
+                    ? 'text-xs text-warning'
+                    : 'text-xs text-muted-foreground'
                 }
               >
                 {s.desc}

@@ -1,13 +1,41 @@
 import { Skeleton } from '@/components/ui/skeleton'
 
-function PageHeaderSkeleton({ action = false }: { action?: boolean }) {
+// Most list pages only have a title; nodes / subnets also show a line of stats below the title
+function PageHeaderSkeleton({
+  description = false,
+}: {
+  description?: boolean
+}) {
   return (
-    <div className="flex items-start justify-between gap-4">
-      <div className="space-y-2">
-        <Skeleton className="h-8 w-36" />
-        <Skeleton className="h-4 w-64 max-w-[70vw]" />
+    <div className="space-y-2">
+      <Skeleton className="h-8 w-36" />
+      {description ? <Skeleton className="h-4 w-64 max-w-[70vw]" /> : null}
+    </div>
+  )
+}
+
+// The shared toolbar for list pages: filters and actions on the left, column filters on the right
+function ToolbarSkeleton({
+  filters = false,
+  action = false,
+}: {
+  filters?: boolean
+  action?: boolean
+}) {
+  return (
+    <div className="flex items-center justify-between gap-2">
+      <div className="flex items-center gap-2">
+        {filters ? (
+          <>
+            <Skeleton className="h-9 w-56" />
+            <Skeleton className="h-9 w-40" />
+            <Skeleton className="h-8 w-20" />
+            <Skeleton className="h-8 w-20" />
+          </>
+        ) : null}
+        {action ? <Skeleton className="h-8 w-28" /> : null}
       </div>
-      {action ? <Skeleton className="h-9 w-24" /> : null}
+      <Skeleton className="h-8 w-20" />
     </div>
   )
 }
@@ -58,13 +86,18 @@ function TableSkeleton({
 export function TablePageSkeleton({
   columns,
   action = false,
+  filters = false,
 }: {
   columns: number
+  /** The toolbar contains page-level action buttons (such as Create Group and Generate Key) */
   action?: boolean
+  /** The toolbar contains search and filters */
+  filters?: boolean
 }) {
   return (
     <div className="flex flex-col gap-4" aria-busy="true">
-      <PageHeaderSkeleton action={action} />
+      {/* List pages no longer have a title area; the page name is in the breadcrumbs */}
+      <ToolbarSkeleton filters={filters} action={action} />
       <div className="overflow-x-auto">
         <div className="min-w-max">
           <TableSkeleton columns={columns} />
@@ -77,9 +110,8 @@ export function TablePageSkeleton({
 export function DashboardPageSkeleton() {
   return (
     <div className="flex flex-col gap-4" aria-busy="true">
-      <PageHeaderSkeleton />
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        {Array.from({ length: 6 }).map((_, index) => (
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+        {Array.from({ length: 5 }).map((_, index) => (
           <div key={index} className="rounded-xl border p-6">
             <Skeleton className="mb-3 h-4 w-24" />
             <Skeleton className="mb-5 h-9 w-14" />
@@ -94,7 +126,7 @@ export function DashboardPageSkeleton() {
 export function NetworkPageSkeleton() {
   return (
     <div className="flex flex-col gap-6" aria-busy="true">
-      <PageHeaderSkeleton />
+      <PageHeaderSkeleton description />
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-5 rounded-md border p-4">
           <div className="space-y-2">
@@ -122,7 +154,7 @@ export function NetworkPageSkeleton() {
 export function ScriptsPageSkeleton() {
   return (
     <div className="flex flex-col gap-6" aria-busy="true">
-      <PageHeaderSkeleton />
+      <PageHeaderSkeleton description />
       {Array.from({ length: 2 }).map((_, cardIndex) => (
         <div key={cardIndex} className="rounded-xl border p-6">
           <Skeleton className="mb-2 h-6 w-28" />
