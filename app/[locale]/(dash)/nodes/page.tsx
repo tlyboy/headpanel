@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server'
+import { cookies } from 'next/headers'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { requireSession } from '@/lib/auth'
 import { scopeNodes } from '@/lib/groups'
@@ -15,7 +16,18 @@ import {
 } from '@/components/ui/table'
 import { LanIpCell } from '@/components/lan-ip-cell'
 import { ListFilters } from '@/components/list-filters'
+import { ColumnFilter } from '@/components/column-filter'
+import {
+  columnCookieName,
+  makeIsVisible,
+  parseHidden,
+  visibleCount,
+  type ColumnDef,
+} from '@/components/columns'
+import { STICKY_ACTIONS } from '@/lib/table'
 import { NodeRowActions } from './row-actions'
+
+const PAGE = 'nodes'
 
 export const dynamic = 'force-dynamic'
 
@@ -33,12 +45,28 @@ export default async function NodesPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const [session, t, common, sp] = await Promise.all([
+  const [session, t, common, sp, cookieStore] = await Promise.all([
     requireSession(),
     getTranslations('nodes'),
     getTranslations('common'),
     searchParams,
+    cookies(),
   ])
+  const columns: ColumnDef[] = [
+    { key: 'id', label: 'ID' },
+    { key: 'alias', label: t('alias') },
+    { key: 'ip', label: 'IP' },
+    { key: 'lanIp', label: t('lanIp') },
+    { key: 'user', label: t('user') },
+    { key: 'online', label: common('online') },
+    { key: 'approval', label: t('approval') },
+    { key: 'note', label: t('note') },
+    { key: 'tags', label: t('tags') },
+    { key: 'lastSeen', label: t('lastSeen') },
+    { key: 'actions', label: t('actions'), locked: true },
+  ]
+  const hidden = parseHidden(cookieStore.get(columnCookieName(PAGE))?.value)
+  const show = makeIsVisible(columns, hidden)
   const one = (k: string) => {
     const v = sp[k]
     return (Array.isArray(v) ? v[0] : v)?.trim() || ''
@@ -49,14 +77,6 @@ export default async function NodesPage({
   const all = scopeNodes(session, await syncAndListNodes())
   // 局域网地址只能从 headscale 的库里读；非同机部署时返回空表，该列显示 —
   const netInfo = readNodeNetInfo()
-
-  // 计数按过滤前的全集算：筛选时也该看到这个 tailnet 一共多少台、多少在线
-  let pending = 0
-  let online = 0
-  for (const node of all) {
-    if (node.status === 'pending') pending += 1
-    if (node.online) online += 1
-  }
 
   // 搜索覆盖到局域网 IP：定位一台机器时，手边有的往往正是那个地址
   const nodes = all.filter((n) => {
@@ -81,20 +101,11 @@ export default async function NodesPage({
 
   return (
     <div className="flex flex-col gap-4">
-      <div>
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">
-          {t('summary', {
-            total: nodes.length,
-            online,
-            pending,
-          })}
-        </p>
-      </div>
-
       <ListFilters
         placeholder={t('searchPlaceholder')}
-        clearLabel={t('clearFilters')}
+        columns={
+          <ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />
+        }
         selects={[
           {
             name: 'status',
@@ -114,24 +125,25 @@ export default async function NodesPage({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">ID</TableHead>
-              <TableHead>{t('alias')}</TableHead>
-              <TableHead>IP</TableHead>
-              <TableHead>{t('lanIp')}</TableHead>
-              <TableHead>{t('user')}</TableHead>
-              <TableHead>{common('online')}</TableHead>
-              <TableHead>{t('approval')}</TableHead>
-              <TableHead>{t('note')}</TableHead>
-              <TableHead>{t('tags')}</TableHead>
-              <TableHead>{t('lastSeen')}</TableHead>
-              <TableHead className="w-12 text-right">{t('actions')}</TableHead>
+              {show('id') && <TableHead className="w-12">ID</TableHead>}
+              {show('alias') && <TableHead>{t('alias')}</TableHead>}
+              {show('ip') && <TableHead>IP</TableHead>}
+              {show('lanIp') && <TableHead>{t('lanIp')}</TableHead>}
+              {show('user') && <TableHead>{t('user')}</TableHead>}
+              {show('online') && <TableHead>{common('online')}</TableHead>}
+              {show('approval') && <TableHead>{t('approval')}</TableHead>}
+              {show('note') && <TableHead>{t('note')}</TableHead>}
+              {show('tags') && <TableHead>{t('tags')}</TableHead>}
+              {show('lastSeen') && <TableHead>{t('lastSeen')}</TableHead>}
+              {/* 表头留空：一列 ... 菜单不需要标题，省下的宽度给数据 */}
+              <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />
             </TableRow>
           </TableHeader>
           <TableBody>
             {nodes.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={11}
+                  colSpan={visibleCount(columns, hidden)}
                   className="py-8 text-center text-muted-foreground"
                 >
                   {t('empty')}
@@ -143,55 +155,75 @@ export default async function NodesPage({
                 const lanIps = netInfo.get(n.id)?.lanIps ?? []
                 return (
                   <TableRow key={n.id}>
-                    <TableCell className="text-muted-foreground">
-                      {n.id}
-                    </TableCell>
-                    <TableCell className="font-medium">{n.givenName}</TableCell>
-                    <TableCell className="font-mono text-xs">
-                      {pickIpv4(n.ipAddresses) ?? '—'}
-                    </TableCell>
-                    <TableCell className="text-xs">
-                      <LanIpCell ips={lanIps} />
-                    </TableCell>
-                    <TableCell>{n.user?.name ?? '—'}</TableCell>
-                    <TableCell>
-                      {n.online ? (
-                        <Badge variant="success">
-                          {common('online')}
+                    {show('id') && (
+                      <TableCell className="text-muted-foreground">
+                        {n.id}
+                      </TableCell>
+                    )}
+                    {show('alias') && (
+                      <TableCell className="font-medium">
+                        {n.givenName}
+                      </TableCell>
+                    )}
+                    {show('ip') && (
+                      <TableCell className="font-mono text-xs">
+                        {pickIpv4(n.ipAddresses) ?? '—'}
+                      </TableCell>
+                    )}
+                    {show('lanIp') && (
+                      <TableCell className="text-xs">
+                        <LanIpCell ips={lanIps} />
+                      </TableCell>
+                    )}
+                    {show('user') && (
+                      <TableCell>{n.user?.name ?? '—'}</TableCell>
+                    )}
+                    {show('online') && (
+                      <TableCell>
+                        {n.online ? (
+                          <Badge variant="success">{common('online')}</Badge>
+                        ) : (
+                          <Badge variant="secondary">{common('offline')}</Badge>
+                        )}
+                      </TableCell>
+                    )}
+                    {show('approval') && (
+                      <TableCell>
+                        <Badge variant={APPROVAL_VARIANT[n.status]}>
+                          {t(n.status)}
                         </Badge>
-                      ) : (
-                        <Badge variant="secondary">{common('offline')}</Badge>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <Badge variant={APPROVAL_VARIANT[n.status]}>
-                        {t(n.status)}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="max-w-[14rem] truncate text-sm">
-                      {n.note ? (
-                        n.note
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      {n.tags.length ? (
-                        <span className="flex flex-wrap gap-1">
-                          {n.tags.map((t) => (
-                            <Badge key={t} variant="outline">
-                              {t}
-                            </Badge>
-                          ))}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {fmtTime(n.lastSeen)}
-                    </TableCell>
-                    <TableCell className="text-right">
+                      </TableCell>
+                    )}
+                    {show('note') && (
+                      <TableCell className="max-w-[14rem] truncate text-sm">
+                        {n.note ? (
+                          n.note
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    )}
+                    {show('tags') && (
+                      <TableCell>
+                        {n.tags.length ? (
+                          <span className="flex flex-wrap gap-1">
+                            {n.tags.map((t) => (
+                              <Badge key={t} variant="outline">
+                                {t}
+                              </Badge>
+                            ))}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </TableCell>
+                    )}
+                    {show('lastSeen') && (
+                      <TableCell className="text-xs text-muted-foreground">
+                        {fmtTime(n.lastSeen)}
+                      </TableCell>
+                    )}
+                    <TableCell className={STICKY_ACTIONS}>
                       <NodeRowActions
                         id={n.id}
                         name={n.givenName}

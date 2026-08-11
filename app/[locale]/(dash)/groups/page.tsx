@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server'
+import { cookies } from 'next/headers'
 import { requireSuper } from '@/lib/auth'
 import {
   listGroups,
@@ -18,13 +19,36 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { ListFilters } from '@/components/list-filters'
+import { ColumnFilter } from '@/components/column-filter'
+import {
+  columnCookieName,
+  makeIsVisible,
+  parseHidden,
+  visibleCount,
+  type ColumnDef,
+} from '@/components/columns'
+import { STICKY_ACTIONS } from '@/lib/table'
 import { CreateGroup } from './group-form'
 import { GroupRowActions } from './row-actions'
 
 export const dynamic = 'force-dynamic'
 
-export default async function GroupsPage() {
-  const [, t] = await Promise.all([requireSuper(), getTranslations('groups')])
+const PAGE = 'groups'
+
+export default async function GroupsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [, t, sp, cookieStore] = await Promise.all([
+    requireSuper(),
+    getTranslations('groups'),
+    searchParams,
+    cookies(),
+  ])
+  const rawQ = sp.q
+  const q = ((Array.isArray(rawQ) ? rawQ[0] : rawQ) ?? '').trim().toLowerCase()
   const livePromise = Promise.all([listNodes(), listPreAuthKeys()])
   const groups = listGroups()
   const adminRows = db.select().from(admins).all()
@@ -52,59 +76,105 @@ export default async function GroupsPage() {
     adminsByGroup.set(a.groupId, list)
   }
 
+  // 搜索覆盖管理员账号名：找「谁能管这个组」时手边有的往往正是那个账号
+  const shown = q
+    ? groups.filter((g) =>
+        [
+          g.name,
+          g.slug,
+          g.okTag,
+          ...(adminsByGroup.get(g.id) ?? []).map((a) => a.username),
+        ]
+          .join(' ')
+          .toLowerCase()
+          .includes(q),
+      )
+    : groups
+
+  const columns: ColumnDef[] = [
+    { key: 'id', label: 'ID' },
+    { key: 'name', label: t('name') },
+    { key: 'slug', label: 'slug' },
+    { key: 'accessTag', label: t('accessTag') },
+    { key: 'nodeCount', label: t('nodeCount') },
+    { key: 'admins', label: t('adminAccounts') },
+    { key: 'createdAt', label: t('createdAt') },
+    { key: 'actions', label: t('actions'), locked: true },
+  ]
+  const hidden = parseHidden(cookieStore.get(columnCookieName(PAGE))?.value)
+  const show = makeIsVisible(columns, hidden)
+
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">{t('description')}</p>
-        </div>
-        <CreateGroup />
-      </div>
+      <ListFilters
+        placeholder={t('searchPlaceholder')}
+        actions={<CreateGroup />}
+        columns={
+          <ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />
+        }
+      />
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">ID</TableHead>
-              <TableHead>{t('name')}</TableHead>
-              <TableHead>slug</TableHead>
-              <TableHead>{t('accessTag')}</TableHead>
-              <TableHead>{t('nodeCount')}</TableHead>
-              <TableHead>{t('adminAccounts')}</TableHead>
-              <TableHead>{t('createdAt')}</TableHead>
-              <TableHead className="w-12 text-right">{t('actions')}</TableHead>
+              {show('id') && <TableHead className="w-12">ID</TableHead>}
+              {show('name') && <TableHead>{t('name')}</TableHead>}
+              {show('slug') && <TableHead>slug</TableHead>}
+              {show('accessTag') && <TableHead>{t('accessTag')}</TableHead>}
+              {show('nodeCount') && <TableHead>{t('nodeCount')}</TableHead>}
+              {show('admins') && <TableHead>{t('adminAccounts')}</TableHead>}
+              {show('createdAt') && <TableHead>{t('createdAt')}</TableHead>}
+              <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {groups.length === 0 ? (
+            {shown.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                  colSpan={visibleCount(columns, hidden)}
                   className="py-8 text-center text-muted-foreground"
                 >
                   {t('empty')}
                 </TableCell>
               </TableRow>
             ) : (
-              groups.map((g) => (
+              shown.map((g) => (
                 <TableRow key={g.id}>
-                  <TableCell className="text-muted-foreground">
-                    {g.id}
-                  </TableCell>
-                  <TableCell className="font-medium">{g.name}</TableCell>
-                  <TableCell className="font-mono text-xs">{g.slug}</TableCell>
-                  <TableCell className="font-mono text-xs">{g.okTag}</TableCell>
-                  <TableCell>{nodeCount.get(g.id) ?? 0}</TableCell>
-                  <TableCell className="text-xs">
-                    {(adminsByGroup.get(g.id) ?? [])
-                      .map((a) => a.username)
-                      .join(', ') || '—'}
-                  </TableCell>
-                  <TableCell className="text-xs text-muted-foreground">
-                    {fmtTime(g.createdAt.replace(' ', 'T') + 'Z')}
-                  </TableCell>
-                  <TableCell className="text-right">
+                  {show('id') && (
+                    <TableCell className="text-muted-foreground">
+                      {g.id}
+                    </TableCell>
+                  )}
+                  {show('name') && (
+                    <TableCell className="font-medium">{g.name}</TableCell>
+                  )}
+                  {show('slug') && (
+                    <TableCell className="font-mono text-xs">
+                      {g.slug}
+                    </TableCell>
+                  )}
+                  {show('accessTag') && (
+                    <TableCell className="font-mono text-xs">
+                      {g.okTag}
+                    </TableCell>
+                  )}
+                  {show('nodeCount') && (
+                    <TableCell>{nodeCount.get(g.id) ?? 0}</TableCell>
+                  )}
+                  {show('admins') && (
+                    <TableCell className="text-xs">
+                      {(adminsByGroup.get(g.id) ?? [])
+                        .map((a) => a.username)
+                        .join(', ') || '—'}
+                    </TableCell>
+                  )}
+                  {show('createdAt') && (
+                    <TableCell className="text-xs text-muted-foreground">
+                      {fmtTime(g.createdAt.replace(' ', 'T') + 'Z')}
+                    </TableCell>
+                  )}
+                  <TableCell className={STICKY_ACTIONS}>
                     <GroupRowActions
                       id={g.id}
                       name={g.name}

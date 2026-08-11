@@ -13,10 +13,7 @@ import { NetworkForm } from './network-form'
 export const dynamic = 'force-dynamic'
 
 export default async function NetworkPage() {
-  const [, t] = await Promise.all([
-    requireSuper(),
-    getTranslations('network'),
-  ])
+  const [, t] = await Promise.all([requireSuper(), getTranslations('network')])
   if (!isHeadscaleHostControlEnabled()) notFound()
   const [config, nodes] = await Promise.all([
     readHeadscaleNetworkConfig(),
@@ -71,7 +68,6 @@ export default async function NetworkPage() {
           </dl>
         </div>
       </section>
-
     </div>
   )
 }

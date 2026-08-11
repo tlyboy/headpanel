@@ -20,8 +20,15 @@
     "online": "Online",
     "offline": "Offline",
     "empty": "No data",
+    "search": "Search",
+    "reset": "Reset",
+    "columns": "Columns",
     "prevPage": "Previous",
-    "nextPage": "Next"
+    "nextPage": "Next",
+    "totalItems": "{total} items",
+    "perPage": "{count} / page",
+    "goTo": "Go to",
+    "pageUnit": ""
   },
   "metadata": {
     "title": "Headpanel Console",
@@ -65,8 +72,6 @@
     "en": "English"
   },
   "dashboard": {
-    "title": "Overview",
-    "description": "headscale control plane status",
     "pendingNodes": "Pending",
     "validPreAuthKeys": "Valid PreAuthKeys",
     "online": "{count} online",
@@ -93,7 +98,6 @@
   },
   "audit": {
     "title": "Audit log",
-    "description": "Admin operation log",
     "time": "Time",
     "actor": "Actor",
     "action": "Action",
@@ -105,13 +109,10 @@
     "allTime": "All time",
     "today": "Today",
     "last7d": "Last 7 days",
-    "last30d": "Last 30 days",
-    "clearFilters": "Clear",
-    "pageInfo": "Page {page} of {pageCount} · {total} entries"
+    "last30d": "Last 30 days"
   },
   "nodes": {
     "title": "Nodes",
-    "summary": "{total} total · {online} online · {pending} pending",
     "alias": "Alias",
     "user": "User",
     "approval": "Approval",
@@ -127,28 +128,27 @@
     "lanIpPrimary": "primary",
     "copyLanIp": "Copy",
     "searchPlaceholder": "Search name / IP / tag",
-    "allStatus": "All statuses",
-    "clearFilters": "Clear"
+    "allStatus": "All statuses"
   },
   "pending": {
     "title": "Pending approvals",
-    "description": "{count} nodes joined but are not approved yet. Approve to add the group access tag and open ACL access; reject to delete the node. Pending nodes remain isolated by ACL.",
     "alias": "Alias",
     "tags": "Tags",
     "createdAt": "Joined at",
     "approval": "Approval",
-    "empty": "No pending nodes"
+    "empty": "No pending nodes",
+    "searchPlaceholder": "Search name / IP / tag"
   },
   "groups": {
     "title": "Groups",
-    "description": "Each group maps to one headscale user and one access tag. Groups are isolated from each other.",
     "name": "Name",
     "accessTag": "Access tag",
     "nodeCount": "Nodes",
     "adminAccounts": "Admin accounts",
     "createdAt": "Created at",
     "actions": "Actions",
-    "empty": "No groups yet. Nodes are ungrouped by default — create a group when you need network isolation."
+    "empty": "No groups yet. Nodes are ungrouped by default — create a group when you need network isolation.",
+    "searchPlaceholder": "Search name / slug / admin"
   },
   "groupForm": {
     "trigger": "New group",
@@ -189,7 +189,6 @@
   },
   "preAuthKeys": {
     "title": "PreAuthKeys",
-    "description": "{count} keys · Each key can show install commands and can be deleted directly from headscale.",
     "group": "Group",
     "mode": "Access mode",
     "reusable": "Reusable",
@@ -202,7 +201,8 @@
     "review": "Review required",
     "expired": "Expired",
     "valid": "Valid",
-    "permanent": "Never"
+    "permanent": "Never",
+    "searchPlaceholder": "Search key / group"
   },
   "createKey": {
     "trigger": "Generate PreAuthKey",
@@ -343,7 +343,6 @@
   },
   "subnets": {
     "title": "Subnet routes",
-    "summary": "{total} subnet(s) · {serving} serving · {pending} awaiting approval",
     "route": "Subnet",
     "node": "Node",
     "status": "Status",
@@ -384,7 +383,8 @@
     "makePrimary": "Make it serve",
     "makePrimaryTitle": "Let {node} serve {route}?",
     "makePrimaryDescription": "headscale offers no way to pin the serving node, so the others are revoked to force the switch and then restored as standbys. The subnet may drop briefly during the switch; if anything fails midway, the revoked standbys are restored automatically.",
-    "madePrimary": "Serving node switched"
+    "madePrimary": "Serving node switched",
+    "searchPlaceholder": "Search route / node / LAN IP"
   },
   "groupSwitcher": {
     "label": "Switch identity",

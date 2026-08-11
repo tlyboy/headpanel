@@ -13,6 +13,8 @@ import {
 import { Separator } from '@/components/ui/separator'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
+// 列表页已经没有 h1 了，面包屑是唯一的页面标识——漏一个路由就会静默显示成
+// 「概览」，看不出自己在哪一页。新增页面记得同步这张表。
 const routeKeys = {
   dashboard: 'dashboard',
   nodes: 'nodes',
@@ -22,6 +24,7 @@ const routeKeys = {
   network: 'network',
   scripts: 'scripts',
   audit: 'audit',
+  subnets: 'subnets',
 } as const
 
 export function DashboardHeader() {

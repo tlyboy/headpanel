@@ -20,8 +20,15 @@
     "online": "在线",
     "offline": "离线",
     "empty": "暂无数据",
+    "search": "搜索",
+    "reset": "重置",
+    "columns": "列",
     "prevPage": "上一页",
-    "nextPage": "下一页"
+    "nextPage": "下一页",
+    "totalItems": "共 {total} 条",
+    "perPage": "{count} 条/页",
+    "goTo": "前往",
+    "pageUnit": "页"
   },
   "metadata": {
     "title": "Headpanel 管理控制台",
@@ -65,8 +72,6 @@
     "en": "English"
   },
   "dashboard": {
-    "title": "概览",
-    "description": "headscale 控制面状态",
     "pendingNodes": "待审批",
     "validPreAuthKeys": "有效 PreAuthKey",
     "online": "在线 {count}",
@@ -93,7 +98,6 @@
   },
   "audit": {
     "title": "审计日志",
-    "description": "后台操作记录",
     "time": "时间",
     "actor": "操作者",
     "action": "操作",
@@ -105,13 +109,10 @@
     "allTime": "全部时间",
     "today": "今天",
     "last7d": "近 7 天",
-    "last30d": "近 30 天",
-    "clearFilters": "清除",
-    "pageInfo": "第 {page}/{pageCount} 页 · 共 {total} 条"
+    "last30d": "近 30 天"
   },
   "nodes": {
     "title": "节点",
-    "summary": "共 {total} 个 · 在线 {online} · 待审批 {pending}",
     "alias": "别名",
     "user": "用户",
     "approval": "审批",
@@ -127,28 +128,27 @@
     "lanIpPrimary": "主",
     "copyLanIp": "复制",
     "searchPlaceholder": "搜索名称 / IP / 标签",
-    "allStatus": "全部状态",
-    "clearFilters": "清除"
+    "allStatus": "全部状态"
   },
   "pending": {
     "title": "待审批",
-    "description": "已接入但尚未批准的节点（共 {count} 个）。批准会打组门票 tag、放通 ACL；拒绝会删除节点。未批准前节点被 ACL 隔离。",
     "alias": "别名",
     "tags": "标签",
     "createdAt": "接入时间",
     "approval": "审批",
-    "empty": "没有待审批节点"
+    "empty": "没有待审批节点",
+    "searchPlaceholder": "搜索名称 / IP / 标签"
   },
   "groups": {
     "title": "组管理",
-    "description": "每个组 = 一个 headscale user + 一个互通门票 tag。组间网络隔离、互不可见。",
     "name": "组名",
     "accessTag": "门票 tag",
     "nodeCount": "节点数",
     "adminAccounts": "管理员账号",
     "createdAt": "创建时间",
     "actions": "操作",
-    "empty": "还没有组。节点默认不分组，需要网络隔离时再建组。"
+    "empty": "还没有组。节点默认不分组，需要网络隔离时再建组。",
+    "searchPlaceholder": "搜索组名 / slug / 管理员"
   },
   "groupForm": {
     "trigger": "新建组",
@@ -189,7 +189,6 @@
   },
   "preAuthKeys": {
     "title": "PreAuthKey",
-    "description": "共 {count} 个 · 每个 key 可弹窗复制安装命令、可直接删除（从 headscale 物理移除）",
     "group": "组",
     "mode": "接入模式",
     "reusable": "可复用",
@@ -202,7 +201,8 @@
     "review": "需审核",
     "expired": "已过期",
     "valid": "有效",
-    "permanent": "永久"
+    "permanent": "永久",
+    "searchPlaceholder": "搜索 key / 组"
   },
   "createKey": {
     "trigger": "生成 PreAuthKey",
@@ -343,7 +343,6 @@
   },
   "subnets": {
     "title": "子网路由",
-    "summary": "共 {total} 个网段 · {serving} 个正在承载 · {pending} 条待批准",
     "route": "网段",
     "node": "节点",
     "status": "状态",
@@ -384,7 +383,8 @@
     "makePrimary": "设为承载",
     "makePrimaryTitle": "让 {node} 承载 {route}？",
     "makePrimaryDescription": "headscale 不支持直接指定承载方，只能先撤销其它已批准节点、逼它切过来，再把它们恢复成备份。切换瞬间该网段可能短暂中断；若中途出错，已撤销的备份会自动还原。",
-    "madePrimary": "已切换承载节点"
+    "madePrimary": "已切换承载节点",
+    "searchPlaceholder": "搜索网段 / 节点 / 局域网 IP"
   },
   "groupSwitcher": {
     "label": "切换身份",

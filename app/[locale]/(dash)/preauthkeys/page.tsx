@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server'
+import { cookies } from 'next/headers'
 import {
   getDefaultHeadscaleConnection,
   listPreAuthKeys,
@@ -20,10 +21,22 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { ListFilters } from '@/components/list-filters'
+import { ColumnFilter } from '@/components/column-filter'
+import {
+  columnCookieName,
+  makeIsVisible,
+  parseHidden,
+  visibleCount,
+  type ColumnDef,
+} from '@/components/columns'
+import { STICKY_ACTIONS } from '@/lib/table'
 import { CreateKey } from './create-key'
 import { KeyRowActions } from './key-row-actions'
 
 export const dynamic = 'force-dynamic'
+
+const PAGE = 'preauthkeys'
 
 // 持票（含组 ok_tag）= 直接放行；无 tag = 需审核（接入后进待审批）
 function modeOf(aclTags: string[]): {
@@ -34,12 +47,33 @@ function modeOf(aclTags: string[]): {
   return { key: 'review', variant: 'warning' } as const
 }
 
-export default async function PreAuthKeysPage() {
-  const [session, t, common] = await Promise.all([
+export default async function PreAuthKeysPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [session, t, common, sp, cookieStore] = await Promise.all([
     requireSession(),
     getTranslations('preAuthKeys'),
     getTranslations('common'),
+    searchParams,
+    cookies(),
   ])
+  const rawQ = sp.q
+  const q = ((Array.isArray(rawQ) ? rawQ[0] : rawQ) ?? '').trim().toLowerCase()
+  const columns: ColumnDef[] = [
+    { key: 'id', label: 'ID' },
+    { key: 'group', label: t('group') },
+    { key: 'key', label: 'Key' },
+    { key: 'mode', label: t('mode') },
+    { key: 'reusable', label: t('reusable') },
+    { key: 'used', label: t('used') },
+    { key: 'status', label: t('status') },
+    { key: 'expiration', label: t('expiration') },
+    { key: 'actions', label: t('actions'), locked: true },
+  ]
+  const hidden = parseHidden(cookieStore.get(columnCookieName(PAGE))?.value)
+  const show = makeIsVisible(columns, hidden)
   const groups = visibleGroups(session)
   const headscaleUrl = getDefaultHeadscaleConnection().serverUrl
   const panelBasePath = getPanelBasePath()
@@ -64,6 +98,12 @@ export default async function PreAuthKeysPage() {
       keys.push({ key, groupName: key.user?.name ?? '—' })
     }
   }
+  // key 在列表里是掩码，但前缀足够用来对上某一把；连组名一起搜
+  const shown = q
+    ? keys.filter((e) =>
+        [e.key.id, e.key.key, e.groupName].join(' ').toLowerCase().includes(q),
+      )
+    : keys
 
   // RSC + force-dynamic：每次请求服务端渲染，取当前时间判断 key 是否过期，符合预期
   // eslint-disable-next-line react-hooks/purity
@@ -80,81 +120,97 @@ export default async function PreAuthKeysPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-between">
-        <div>
-          <h1 className="text-2xl font-semibold">{t('title')}</h1>
-          <p className="text-sm text-muted-foreground">
-            {t('description', { count: keys.length })}
-          </p>
-        </div>
-        <CreateKey
-          groups={groups.map((g) => ({ id: g.id, name: g.name }))}
-          canUseDefault={showUngrouped}
-        />
-      </div>
+      <ListFilters
+        placeholder={t('searchPlaceholder')}
+        actions={
+          <CreateKey
+            groups={groups.map((g) => ({ id: g.id, name: g.name }))}
+            canUseDefault={showUngrouped}
+          />
+        }
+        columns={
+          <ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />
+        }
+      />
 
       <div className="rounded-md border">
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead className="w-12">ID</TableHead>
-              <TableHead>{t('group')}</TableHead>
-              <TableHead>Key</TableHead>
-              <TableHead>{t('mode')}</TableHead>
-              <TableHead>{t('reusable')}</TableHead>
-              <TableHead>{t('used')}</TableHead>
-              <TableHead>{t('status')}</TableHead>
-              <TableHead>{t('expiration')}</TableHead>
-              <TableHead className="w-12 text-right">{t('actions')}</TableHead>
+              {show('id') && <TableHead className="w-12">ID</TableHead>}
+              {show('group') && <TableHead>{t('group')}</TableHead>}
+              {show('key') && <TableHead>Key</TableHead>}
+              {show('mode') && <TableHead>{t('mode')}</TableHead>}
+              {show('reusable') && <TableHead>{t('reusable')}</TableHead>}
+              {show('used') && <TableHead>{t('used')}</TableHead>}
+              {show('status') && <TableHead>{t('status')}</TableHead>}
+              {show('expiration') && <TableHead>{t('expiration')}</TableHead>}
+              <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />
             </TableRow>
           </TableHeader>
           <TableBody>
-            {keys.length === 0 ? (
+            {shown.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={9}
+                  colSpan={visibleCount(columns, hidden)}
                   className="py-8 text-center text-muted-foreground"
                 >
                   {t('empty')}
                 </TableCell>
               </TableRow>
             ) : (
-              keys.map(({ key: k, groupName }) => {
+              shown.map(({ key: k, groupName }) => {
                 const expired =
                   !isNever(k.expiration) &&
                   new Date(k.expiration).getTime() < now
                 const m = modeOf(k.aclTags ?? [])
                 return (
                   <TableRow key={k.id}>
-                    <TableCell className="text-muted-foreground">
-                      {k.id}
-                    </TableCell>
-                    <TableCell className="text-sm">{groupName}</TableCell>
-                    <TableCell className="font-mono text-xs">{k.key}</TableCell>
-                    <TableCell>
-                      <Badge variant={m.variant}>{t(m.key)}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {k.reusable ? common('yes') : common('no')}
-                    </TableCell>
-                    <TableCell>
-                      {k.used ? common('yes') : common('no')}
-                    </TableCell>
-                    <TableCell>
-                      {expired ? (
-                        <Badge variant="secondary">{t('expired')}</Badge>
-                      ) : (
-                        <Badge variant="success">
-                          {t('valid')}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-xs text-muted-foreground">
-                      {isNever(k.expiration)
-                        ? t('permanent')
-                        : fmtTime(k.expiration)}
-                    </TableCell>
-                    <TableCell className="text-right">
+                    {show('id') && (
+                      <TableCell className="text-muted-foreground">
+                        {k.id}
+                      </TableCell>
+                    )}
+                    {show('group') && (
+                      <TableCell className="text-sm">{groupName}</TableCell>
+                    )}
+                    {show('key') && (
+                      <TableCell className="font-mono text-xs">
+                        {k.key}
+                      </TableCell>
+                    )}
+                    {show('mode') && (
+                      <TableCell>
+                        <Badge variant={m.variant}>{t(m.key)}</Badge>
+                      </TableCell>
+                    )}
+                    {show('reusable') && (
+                      <TableCell>
+                        {k.reusable ? common('yes') : common('no')}
+                      </TableCell>
+                    )}
+                    {show('used') && (
+                      <TableCell>
+                        {k.used ? common('yes') : common('no')}
+                      </TableCell>
+                    )}
+                    {show('status') && (
+                      <TableCell>
+                        {expired ? (
+                          <Badge variant="secondary">{t('expired')}</Badge>
+                        ) : (
+                          <Badge variant="success">{t('valid')}</Badge>
+                        )}
+                      </TableCell>
+                    )}
+                    {show('expiration') && (
+                      <TableCell className="text-xs text-muted-foreground">
+                        {isNever(k.expiration)
+                          ? t('permanent')
+                          : fmtTime(k.expiration)}
+                      </TableCell>
+                    )}
+                    <TableCell className={STICKY_ACTIONS}>
                       <KeyRowActions
                         id={k.id}
                         plaintext={plain.get(k.id)}
