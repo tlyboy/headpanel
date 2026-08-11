@@ -120,7 +120,7 @@ export function ListFilters({
               </Select>
             ))}
 
-            <Button size="sm" disabled={pending} onClick={submitSearch}>
+            <Button disabled={pending} onClick={submitSearch}>
               <Search />
               {t('search')}
             </Button>
@@ -128,7 +128,6 @@ export function ListFilters({
                 同样要人先判断「现在到底能不能点」——没筛选时点一下回到原样即可 */}
             <Button
               variant="outline"
-              size="sm"
               disabled={pending}
               onClick={() => start(() => router.replace(pathname))}
             >

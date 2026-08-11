@@ -72,7 +72,7 @@ export function ListPager({
       </span>
 
       <Select value={String(perPage)} onValueChange={setPerPage}>
-        <SelectTrigger className="h-7 w-28">
+        <SelectTrigger className="w-28">
           <SelectValue />
         </SelectTrigger>
         <SelectContent>
@@ -87,19 +87,19 @@ export function ListPager({
       <div className="flex items-center gap-1">
         <Button
           variant="outline"
-          size="icon-xs"
+          size="icon"
           aria-label={t('prevPage')}
           disabled={page <= 1}
           onClick={() => go(page - 1)}
         >
           <ChevronLeft />
         </Button>
-        <span className="min-w-8 rounded-md border px-2 py-0.5 text-center tabular-nums">
+        <span className="flex h-8 min-w-8 items-center justify-center rounded-md border px-2 tabular-nums">
           {page}
         </span>
         <Button
           variant="outline"
-          size="icon-xs"
+          size="icon"
           aria-label={t('nextPage')}
           disabled={page >= pageCount}
           onClick={() => go(page + 1)}
@@ -116,7 +116,7 @@ export function ListPager({
           key={page}
           defaultValue={page}
           inputMode="numeric"
-          className="h-7 w-14 text-center"
+          className="w-14 text-center"
           onKeyDown={(e) => {
             if (e.key === 'Enter') jump()
           }}
