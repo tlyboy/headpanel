@@ -25,11 +25,6 @@ export default async function NetworkPage() {
 
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <p className="text-sm text-muted-foreground">{t('description')}</p>
-      </div>
-
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="rounded-md border p-4">
           <div className="mb-4">

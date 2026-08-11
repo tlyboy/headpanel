@@ -283,8 +283,6 @@
     "confirmDelete": "确认删除"
   },
   "network": {
-    "title": "网段设置",
-    "description": "查看并修改 headscale 的 tailaddress 地址池。IPv4 必须属于 100.64.0.0/10。",
     "addressPool": "地址池",
     "configFile": "配置文件：",
     "currentConfig": "当前配置",
@@ -294,6 +292,7 @@
   },
   "networkForm": {
     "ipv4Pool": "IPv4 地址池",
+    "ipv4Hint": "必须属于 100.64.0.0/10",
     "updated": "IPv4 网段已更新并重启 headscale",
     "saveRestart": "保存并重启",
     "restore": "还原",

@@ -61,7 +61,13 @@ export function NetworkForm({
             onChange={(e) => setValue(e.target.value)}
             placeholder="100.64.0.0/24"
             disabled={pending}
+            aria-describedby="ipv4Prefix-hint"
           />
+          {/* 约束跟着输入框走：它是填这个框时要遵守的规则，
+              放在页面顶部离真正要用到它的地方太远 */}
+          <p id="ipv4Prefix-hint" className="text-xs text-muted-foreground">
+            {t('ipv4Hint')}
+          </p>
         </div>
         <div className="flex flex-wrap gap-2">
           <Button

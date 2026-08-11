@@ -1,19 +1,5 @@
 import { Skeleton } from '@/components/ui/skeleton'
 
-// 大多数列表页只剩一个标题；nodes / subnets 标题下还有一行统计数字
-function PageHeaderSkeleton({
-  description = false,
-}: {
-  description?: boolean
-}) {
-  return (
-    <div className="space-y-2">
-      <Skeleton className="h-8 w-36" />
-      {description ? <Skeleton className="h-4 w-64 max-w-[70vw]" /> : null}
-    </div>
-  )
-}
-
 // 列表页统一的那条工具栏：左边筛选与操作，右边列筛选
 function ToolbarSkeleton({
   filters = false,
@@ -126,7 +112,6 @@ export function DashboardPageSkeleton() {
 export function NetworkPageSkeleton() {
   return (
     <div className="flex flex-col gap-6" aria-busy="true">
-      <PageHeaderSkeleton description />
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
         <div className="space-y-5 rounded-md border p-4">
           <div className="space-y-2">
