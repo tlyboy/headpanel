@@ -72,8 +72,6 @@ export function ListFilters({
     if (v !== urlQ) setParam('q', v)
   }
 
-  const active = urlQ !== '' || selects.some((s) => params.get(s.name))
-
   return (
     <div className="flex items-start justify-between gap-2">
       {/* The left group wraps on its own, while the column filter stays pinned to the right — otherwise, on narrow screens it wraps to the far left of the next row */}
@@ -126,11 +124,12 @@ export function ListFilters({
               <Search />
               {t('search')}
             </Button>
-            {/* Keep it mounted but disable it when unfiltered: appearing and disappearing makes the buttons after it jump left and right. */}
+            {/* Always visible and clickable: making it appear and disappear would cause the buttons after it to jump left and right, while a disabled button
+                still makes people wonder "Can I click this right now?" — with no filter, just click it to return to the default state */}
             <Button
               variant="outline"
               size="sm"
-              disabled={pending || !active}
+              disabled={pending}
               onClick={() => start(() => router.replace(pathname))}
             >
               <RotateCcw />

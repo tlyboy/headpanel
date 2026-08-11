@@ -303,8 +303,6 @@
     "confirm": "Apply change"
   },
   "scripts": {
-    "title": "Scripts",
-    "description": "Onboarding and uninstall scripts. One-shot onboarding commands are available from each PreAuthKey menu.",
     "onboarding": "Onboarding",
     "uninstall": "Uninstall",
     "scriptCount": "{count} scripts",

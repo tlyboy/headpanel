@@ -303,8 +303,6 @@
     "confirm": "确认修改"
   },
   "scripts": {
-    "title": "脚本下载",
-    "description": "接入/卸载脚本。一键接入命令请到「PreAuthKey」页，每个 key 的菜单里有「安装命令」弹窗。",
     "onboarding": "接入",
     "uninstall": "卸载",
     "scriptCount": "{count} 个脚本",

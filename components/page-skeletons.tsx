@@ -154,7 +154,6 @@ export function NetworkPageSkeleton() {
 export function ScriptsPageSkeleton() {
   return (
     <div className="flex flex-col gap-6" aria-busy="true">
-      <PageHeaderSkeleton description />
       {Array.from({ length: 2 }).map((_, cardIndex) => (
         <div key={cardIndex} className="rounded-xl border p-6">
           <Skeleton className="mb-2 h-6 w-28" />
