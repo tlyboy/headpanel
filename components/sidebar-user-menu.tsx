@@ -127,8 +127,12 @@ export function SidebarUserMenu({
               </DropdownMenuSub>
               {/* 明暗直接对切，不做二级菜单也不给「跟随系统」：这是一天里会点
                   好几次的开关，多一层展开就多一次等待，而那圈扩散动画也只有在
-                  点击处才有意义 */}
+                  点击处才有意义。
+                  preventDefault 拦掉菜单项默认的「选完就关」：这是个开关不是入口，
+                  关掉菜单等于每看一眼效果就得重新点开；而且过渡是对整页做快照，
+                  菜单在动画中途消失会让画面自己抖一下 */}
               <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
                 onClick={(e) =>
                   toggleThemeWithTransition(e, resolvedTheme, setTheme)
                 }
