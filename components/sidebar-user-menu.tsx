@@ -127,8 +127,12 @@ export function SidebarUserMenu({
               </DropdownMenuSub>
               {/* Switch directly between light and dark; no submenu or "follow system": this is a toggle people may click
                   several times a day, and another level of expansion means another wait. The ripple animation also only
-                  makes sense at the click location */}
+                  makes sense at the click location.
+                  preventDefault blocks the menu item's default "close after selection": this is a toggle, not an entry point,
+                  so closing the menu means having to reopen it every time you want to check the effect; the transition also snapshots the whole page,
+                  and the menu disappearing midway through the animation makes the screen jump. */}
               <DropdownMenuItem
+                onSelect={(e) => e.preventDefault()}
                 onClick={(e) =>
                   toggleThemeWithTransition(e, resolvedTheme, setTheme)
                 }
