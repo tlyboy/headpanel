@@ -2,7 +2,10 @@
 
 import { CableIcon } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
-import { GroupSwitcher, type SwitchableGroup } from '@/components/group-switcher'
+import {
+  GroupSwitcher,
+  type SwitchableGroup,
+} from '@/components/group-switcher'
 import { SidebarNav } from '@/components/sidebar-nav'
 import { SidebarUserMenu } from '@/components/sidebar-user-menu'
 import {
@@ -45,23 +48,25 @@ export function AppSidebar({
             productName={productName}
           />
         ) : (
-        <SidebarMenu>
-          <SidebarMenuItem>
-            <SidebarMenuButton asChild size="lg">
-              <Link href="/dashboard">
-                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                  <CableIcon />
-                </span>
-                <span className="grid flex-1 text-left leading-tight">
-                  <span className="truncate font-semibold">{productName}</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    headscale
+          <SidebarMenu>
+            <SidebarMenuItem>
+              <SidebarMenuButton asChild size="lg">
+                <Link href="/dashboard">
+                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                    <CableIcon />
                   </span>
-                </span>
-              </Link>
-            </SidebarMenuButton>
-          </SidebarMenuItem>
-        </SidebarMenu>
+                  <span className="grid flex-1 text-left leading-tight">
+                    <span className="truncate font-semibold">
+                      {productName}
+                    </span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      headscale
+                    </span>
+                  </span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          </SidebarMenu>
         )}
       </SidebarHeader>
       <SidebarContent>

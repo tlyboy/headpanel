@@ -101,9 +101,7 @@ export function NodeRowActions({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('renameTitle')}</DialogTitle>
-            <DialogDescription>
-              {t('renameDescription')}
-            </DialogDescription>
+            <DialogDescription>{t('renameDescription')}</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2">
             <Label htmlFor="newName">{t('newAlias')}</Label>
@@ -140,9 +138,7 @@ export function NodeRowActions({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('noteTitle')}</DialogTitle>
-            <DialogDescription>
-              {t('noteDescription')}
-            </DialogDescription>
+            <DialogDescription>{t('noteDescription')}</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-2">
             <Label htmlFor="note">{t('note')}</Label>
@@ -185,7 +181,9 @@ export function NodeRowActions({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>
+              {common('cancel')}
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
               onClick={(e) => {
@@ -210,12 +208,16 @@ export function NodeRowActions({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>
+              {common('cancel')}
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
               onClick={(e) => {
                 e.preventDefault()
-                run(deleteNodeAction(id), t('deleted'), () => setDeleteOpen(false))
+                run(deleteNodeAction(id), t('deleted'), () =>
+                  setDeleteOpen(false),
+                )
               }}
             >
               {pending ? common('processing') : t('confirmDelete')}

@@ -38,30 +38,28 @@ export function LanIpCell({ ips }: { ips: string[] }) {
         <button type="button" className="cursor-default font-mono">
           {primary}
           {rest.length > 0 && (
-            <span className="text-muted-foreground ml-1">+{rest.length}</span>
+            <span className="ml-1 text-muted-foreground">+{rest.length}</span>
           )}
         </button>
       </HoverCardTrigger>
       <HoverCardContent align="start" className="w-auto min-w-56">
         <div className="flex flex-col gap-1">
-            {ips.map((ip, i) => (
-              <div key={ip} className="flex items-center gap-2">
-                <code className="flex-1 font-mono text-xs select-all">
-                  {ip}
-                </code>
-                {i === 0 && ips.length > 1 && (
-                  <Badge variant="secondary">{t('lanIpPrimary')}</Badge>
-                )}
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  aria-label={t('copyLanIp')}
-                  onClick={() => pick(ip)}
-                >
-                  {copiedIp === ip ? <Check /> : <Copy />}
-                </Button>
-              </div>
-            ))}
+          {ips.map((ip, i) => (
+            <div key={ip} className="flex items-center gap-2">
+              <code className="flex-1 font-mono text-xs select-all">{ip}</code>
+              {i === 0 && ips.length > 1 && (
+                <Badge variant="secondary">{t('lanIpPrimary')}</Badge>
+              )}
+              <Button
+                size="icon"
+                variant="ghost"
+                aria-label={t('copyLanIp')}
+                onClick={() => pick(ip)}
+              >
+                {copiedIp === ip ? <Check /> : <Copy />}
+              </Button>
+            </div>
+          ))}
         </div>
       </HoverCardContent>
     </HoverCard>

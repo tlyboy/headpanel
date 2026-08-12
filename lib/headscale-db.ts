@@ -140,9 +140,9 @@ function openDb(): Database.Database | null {
       fileMustExist: true,
     })
     // The table structure changes across headscale versions; if a column is missing, abandon the whole operation rather than throwing partway through
-    const cols = db
-      .prepare('PRAGMA table_info(nodes)')
-      .all() as { name: string }[]
+    const cols = db.prepare('PRAGMA table_info(nodes)').all() as {
+      name: string
+    }[]
     const names = new Set(cols.map((c) => c.name))
     if (!names.has('endpoints') || !names.has('host_info')) {
       db.close()

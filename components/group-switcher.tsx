@@ -65,14 +65,14 @@ export function GroupSwitcher({
               disabled={pending}
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
             >
-              <span className="bg-primary text-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg">
+              <span className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
                 {active ? <Boxes /> : <Layers />}
               </span>
               <span className="grid flex-1 text-left leading-tight">
                 <span className="truncate font-semibold">
                   {active ? active.name : productName}
                 </span>
-                <span className="text-muted-foreground truncate text-xs">
+                <span className="truncate text-xs text-muted-foreground">
                   {active ? t('actingAs') : t('allGroups')}
                 </span>
               </span>
@@ -85,7 +85,7 @@ export function GroupSwitcher({
             side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-muted-foreground text-xs">
+            <DropdownMenuLabel className="text-xs text-muted-foreground">
               {t('label')}
             </DropdownMenuLabel>
             <DropdownMenuGroup>

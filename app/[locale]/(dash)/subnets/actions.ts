@@ -55,18 +55,28 @@ export async function approveRouteAction(
   ])
   try {
     const { after } = await setRouteApproval(nodeId, route, true)
-    auditAfter('route.approve', `${nodeId}:${route}`, `approved=${after.join(',')}`, {
-      actor: session.sub,
-    })
+    auditAfter(
+      'route.approve',
+      `${nodeId}:${route}`,
+      `approved=${after.join(',')}`,
+      {
+        actor: session.sub,
+      },
+    )
     // Approving a route only tells headscale to recognize it; if the ACL's dst doesn't include that subnet, packets will still be dropped,
     // so allow it at the same time — otherwise users would have to SSH into the server and edit the baseline file.
     try {
       if (await updateBaselineAndApply(addSubnetDst(route), listGroups())) {
-        auditAfter('policy.allowSubnet', route, undefined, { actor: session.sub })
+        auditAfter('policy.allowSubnet', route, undefined, {
+          actor: session.sub,
+        })
       }
     } catch (e) {
       // The route has already been approved successfully. Don't roll it back just because the ACL wasn't updated — simply report that accurately.
-      return { ok: false, error: t('routeApprovedAclFailed', { reason: errMsg(e, t('unknown')) }) }
+      return {
+        ok: false,
+        error: t('routeApprovedAclFailed', { reason: errMsg(e, t('unknown')) }),
+      }
     }
     revalidatePath('/subnets')
     revalidatePath('/nodes')
@@ -86,9 +96,14 @@ export async function revokeRouteAction(
   ])
   try {
     const { after } = await setRouteApproval(nodeId, route, false)
-    auditAfter('route.revoke', `${nodeId}:${route}`, `approved=${after.join(',')}`, {
-      actor: session.sub,
-    })
+    auditAfter(
+      'route.revoke',
+      `${nodeId}:${route}`,
+      `approved=${after.join(',')}`,
+      {
+        actor: session.sub,
+      },
+    )
     // Revoke the ACL only when no nodes have this subnet approved anymore — if there are backup nodes,
     // revoking it would cut off a subnet that's still in service.
     try {
@@ -100,10 +115,15 @@ export async function revokeRouteAction(
         !stillApproved &&
         (await updateBaselineAndApply(removeSubnetDst(route), listGroups()))
       ) {
-        auditAfter('policy.revokeSubnet', route, undefined, { actor: session.sub })
+        auditAfter('policy.revokeSubnet', route, undefined, {
+          actor: session.sub,
+        })
       }
     } catch (e) {
-      return { ok: false, error: t('routeRevokedAclFailed', { reason: errMsg(e, t('unknown')) }) }
+      return {
+        ok: false,
+        error: t('routeRevokedAclFailed', { reason: errMsg(e, t('unknown')) }),
+      }
     }
     revalidatePath('/subnets')
     revalidatePath('/nodes')

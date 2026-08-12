@@ -7,4 +7,3 @@ export function requiredEnv(name: string): string {
   }
   return value
 }
-
