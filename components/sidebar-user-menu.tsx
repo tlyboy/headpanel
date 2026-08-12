@@ -4,15 +4,14 @@ import { useLocale, useTranslations } from 'next-intl'
 import { useTheme } from 'next-themes'
 import {
   ChevronsUpDownIcon,
+  ContrastIcon,
   LanguagesIcon,
   LogOutIcon,
-  MonitorIcon,
-  MoonIcon,
-  SunIcon,
 } from 'lucide-react'
 import { siGithub } from 'simple-icons'
 import { logout } from '@/app/[locale]/(dash)/actions'
 import { usePathname, useRouter } from '@/i18n/navigation'
+import { toggleThemeWithTransition } from '@/lib/theme-transition'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
   DropdownMenu,
@@ -35,13 +34,8 @@ import {
   useSidebar,
 } from '@/components/ui/sidebar'
 
-const themes = [
-  { value: 'light', icon: SunIcon },
-  { value: 'dark', icon: MoonIcon },
-  { value: 'system', icon: MonitorIcon },
-] as const
-
-const locales = ['zh', 'en'] as const
+// English on top, Chinese below
+const locales = ['en', 'zh'] as const
 
 export function SidebarUserMenu({
   username,
@@ -51,7 +45,7 @@ export function SidebarUserMenu({
   scopeLabel: string
 }) {
   const { isMobile } = useSidebar()
-  const { theme, setTheme } = useTheme()
+  const { resolvedTheme, setTheme } = useTheme()
   const locale = useLocale()
   const pathname = usePathname()
   const router = useRouter()
@@ -113,27 +107,8 @@ export function SidebarUserMenu({
             <DropdownMenuGroup>
               <DropdownMenuSub>
                 <DropdownMenuSubTrigger>
-                  <SunIcon />
-                  {themeText('label')}
-                </DropdownMenuSubTrigger>
-                <DropdownMenuSubContent>
-                  <DropdownMenuRadioGroup
-                    value={theme}
-                    onValueChange={setTheme}
-                  >
-                    {themes.map(({ value, icon: Icon }) => (
-                      <DropdownMenuRadioItem key={value} value={value}>
-                        <Icon />
-                        {themeText(value)}
-                      </DropdownMenuRadioItem>
-                    ))}
-                  </DropdownMenuRadioGroup>
-                </DropdownMenuSubContent>
-              </DropdownMenuSub>
-              <DropdownMenuSub>
-                <DropdownMenuSubTrigger>
                   <LanguagesIcon />
-                  {languageText('label')}
+                  {languageText('toggle')}
                 </DropdownMenuSubTrigger>
                 <DropdownMenuSubContent>
                   <DropdownMenuRadioGroup
@@ -150,6 +125,17 @@ export function SidebarUserMenu({
                   </DropdownMenuRadioGroup>
                 </DropdownMenuSubContent>
               </DropdownMenuSub>
+              {/* Switch directly between light and dark; no submenu or "follow system": this is a toggle people may click
+                  several times a day, and another level of expansion means another wait. The ripple animation also only
+                  makes sense at the click location */}
+              <DropdownMenuItem
+                onClick={(e) =>
+                  toggleThemeWithTransition(e, resolvedTheme, setTheme)
+                }
+              >
+                <ContrastIcon />
+                {themeText('toggle')}
+              </DropdownMenuItem>
               <DropdownMenuItem asChild>
                 <a
                   href="https://github.com/tlyboy/headpanel"
