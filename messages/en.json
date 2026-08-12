@@ -58,16 +58,10 @@
     "subnets": "Subnet routes"
   },
   "theme": {
-    "toggle": "Toggle theme",
-    "label": "Appearance",
-    "light": "Light",
-    "dark": "Dark",
-    "system": "System"
+    "toggle": "Toggle theme"
   },
   "language": {
     "toggle": "Change language",
-    "current": "English",
-    "label": "Language",
     "zh": "中文",
     "en": "English"
   },

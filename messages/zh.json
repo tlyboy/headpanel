@@ -58,16 +58,10 @@
     "subnets": "子网路由"
   },
   "theme": {
-    "toggle": "切换主题",
-    "label": "外观",
-    "light": "浅色",
-    "dark": "深色",
-    "system": "跟随系统"
+    "toggle": "切换主题"
   },
   "language": {
     "toggle": "切换语言",
-    "current": "中文",
-    "label": "语言",
     "zh": "中文",
     "en": "English"
   },
