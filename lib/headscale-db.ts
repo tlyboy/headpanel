@@ -140,9 +140,9 @@ function openDb(): Database.Database | null {
       fileMustExist: true,
     })
     // 表结构随 headscale 版本变动，缺列就整体放弃而不是半路抛错
-    const cols = db
-      .prepare('PRAGMA table_info(nodes)')
-      .all() as { name: string }[]
+    const cols = db.prepare('PRAGMA table_info(nodes)').all() as {
+      name: string
+    }[]
     const names = new Set(cols.map((c) => c.name))
     if (!names.has('endpoints') || !names.has('host_info')) {
       db.close()

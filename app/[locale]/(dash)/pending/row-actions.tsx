@@ -58,9 +58,7 @@ export function PendingRowActions({ id, name }: { id: string; name: string }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onSelect={() =>
-              run(approveNodeAction(id), t('approved', { name }))
-            }
+            onSelect={() => run(approveNodeAction(id), t('approved', { name }))}
           >
             {t('approve')}
           </DropdownMenuItem>

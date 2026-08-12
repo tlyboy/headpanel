@@ -24,7 +24,10 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
     danger: t('kindDanger'),
   }
   const config = Object.fromEntries(
-    AUDIT_KINDS.map((k) => [k, { label: label[k], color: AUDIT_KIND_COLOR[k] }]),
+    AUDIT_KINDS.map((k) => [
+      k,
+      { label: label[k], color: AUDIT_KIND_COLOR[k] },
+    ]),
   ) satisfies ChartConfig
 
   return (
@@ -53,7 +56,7 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
             const d = payload[0].payload as ActivityPoint
             if (!d.total) return null
             return (
-              <div className="border-border/50 bg-background grid min-w-48 gap-1.5 rounded-lg border px-2.5 py-1.5 text-xs shadow-xl">
+              <div className="grid min-w-48 gap-1.5 rounded-lg border border-border/50 bg-background px-2.5 py-1.5 text-xs shadow-xl">
                 <div className="flex items-center justify-between gap-4 font-medium">
                   <span>{String(day)}</span>
                   <span className="font-mono tabular-nums">
@@ -76,7 +79,7 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
                           {it.label}
                         </span>
                       </span>
-                      <span className="text-foreground font-mono tabular-nums">
+                      <span className="font-mono text-foreground tabular-nums">
                         {it.count}
                       </span>
                     </div>

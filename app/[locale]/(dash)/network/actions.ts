@@ -31,9 +31,7 @@ export async function updateIpv4PrefixAction(
   requireHeadscaleHostControl()
   try {
     const nodes = await listNodes()
-    const used = new Set(
-      nodes.flatMap((n) => onlyIpv4(n.ipAddresses)),
-    )
+    const used = new Set(nodes.flatMap((n) => onlyIpv4(n.ipAddresses)))
     const result = await updateHeadscaleIpv4Prefix(ipv4Prefix)
     auditAfter(
       'network.prefix.v4.update',

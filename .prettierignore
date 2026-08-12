@@ -1,3 +1,6 @@
 .next
 next-env.d.ts
 pnpm-lock.yaml
+
+# shadcn 拉下来的组件保持上游原样，不参与格式化
+components/ui

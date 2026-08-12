@@ -104,7 +104,9 @@ export function NetworkForm({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>
+              {common('cancel')}
+            </AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
               onClick={(e) => {

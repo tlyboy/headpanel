@@ -86,9 +86,7 @@ export function CreateGroup({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('title')}</DialogTitle>
-          <DialogDescription>
-            {t('description')}
-          </DialogDescription>
+          <DialogDescription>{t('description')}</DialogDescription>
         </DialogHeader>
 
         <div className="flex flex-col gap-4">
