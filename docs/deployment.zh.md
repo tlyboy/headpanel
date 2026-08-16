@@ -115,22 +115,34 @@ sudo headscale apikeys expire --prefix <KEY_PREFIX>
 
 ## 4. 安装 Node.js 24 和 Headpanel
 
-Headpanel 需要 Node.js 24，并通过项目锁定的 pnpm 版本构建。下面使用 fnm 安装到
-root 账号；也可以使用系统包或其他 Node.js 版本管理器，只要 root 运行部署脚本时能找到
-Node.js 24 和 Corepack。
+Headpanel 需要 Node.js 24，并通过项目锁定的 pnpm 版本构建。用什么装不限 —— 系统包、
+mise、fnm、nvm 都行，唯一的要求是 **root 运行部署脚本时**能找到 Node.js 24 和 pnpm。
+
+下面以 mise 为例（它能同时管住 node 和 pnpm，且 pnpm 版本会跟随项目的
+`packageManager` 字段）：
 
 ```bash
 sudo -i
-curl -fsSL https://fnm.vercel.app/install | bash
-export PATH="/root/.local/share/fnm:$PATH"
-eval "$(fnm env --shell bash)"
-fnm install 24
-fnm use 24
-corepack enable pnpm
+curl https://mise.run | sh
+~/.local/bin/mise use -g node@24 pnpm@latest
 node --version
 pnpm --version
 exit
 ```
+
+用系统包也可以，Ubuntu 24.04 起 apt 的 nodejs 已经是 24：
+
+```bash
+sudo -i
+apt install -y nodejs
+corepack enable pnpm
+exit
+```
+
+**如果之后要配 systemd 服务，不要把版本号写进路径。** 像
+`/root/.local/share/fnm/node-versions/v24.15.0/installation/bin/node` 这样的写法，
+node 一升级服务就起不来。用版本管理器提供的稳定入口（mise 是
+`/root/.local/share/mise/shims/pnpm`），或者系统包的 `/usr/bin/node`。
 
 克隆项目并创建外置配置、数据目录：
 
