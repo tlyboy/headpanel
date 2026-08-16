@@ -109,21 +109,37 @@ sudo headscale apikeys expire --prefix <KEY_PREFIX>
 ## 4. Install Node.js 24 and Headpanel
 
 Headpanel requires Node.js 24 and builds with the pnpm version pinned by the
-project. This example installs Node for root through fnm. A system installation
-also works if root can access Node.js 24 and Corepack.
+project. Install it however you like — a system package, mise, fnm or nvm all
+work. The only requirement is that **root can find Node.js 24 and pnpm** when
+running the deployment script.
+
+The example below uses mise, which manages both node and pnpm and picks up the
+pnpm version from the project's `packageManager` field:
 
 ```bash
 sudo -i
-curl -fsSL https://fnm.vercel.app/install | bash
-export PATH="/root/.local/share/fnm:$PATH"
-eval "$(fnm env --shell bash)"
-fnm install 24
-fnm use 24
-corepack enable pnpm
+curl https://mise.run | sh
+~/.local/bin/mise use -g node@24 pnpm@latest
 node --version
 pnpm --version
 exit
 ```
+
+A system package works just as well — apt ships Node.js 24 from Ubuntu 24.04
+onward:
+
+```bash
+sudo -i
+apt install -y nodejs
+corepack enable pnpm
+exit
+```
+
+**If you later write a systemd unit, keep version numbers out of the paths.** A
+line like `/root/.local/share/fnm/node-versions/v24.15.0/installation/bin/node`
+breaks the service the moment node is upgraded. Use the stable entry point your
+version manager provides (mise: `/root/.local/share/mise/shims/pnpm`) or the
+system package's `/usr/bin/node`.
 
 ```bash
 sudo git clone https://github.com/tlyboy/headpanel.git /opt/headpanel
