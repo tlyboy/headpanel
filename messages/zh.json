@@ -230,7 +230,7 @@
     "deleteKey": "删除 key",
     "commandsTitle": "用此 key 接入（{mode}）",
     "commandsDescription": "复制到目标机器执行。需审核模式的设备接入后会进「待审批」。",
-    "linuxInstall": "Linux 一键安装（Debian / Ubuntu / Raspbian）",
+    "linuxInstall": "Linux 一键安装（Debian/Ubuntu、EulerOS/openEuler 等 RPM 系）",
     "macInstall": "macOS 一键安装（任意 mac，无需 brew，装官方 .pkg）",
     "windowsInstall": "Windows 一键安装（管理员 PowerShell）",
     "directUp": "不用脚本，直接 tailscale up",
