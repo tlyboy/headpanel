@@ -8,10 +8,12 @@
 # Behavior (idempotent):
 #   1. Leave all joined ZeroTier networks
 #   2. systemctl stop + disable zerotier-one
-#   3. apt purge zerotier-one + autoremove
-#   4. Remove leftovers: identity, config, apt source, GPG key, interfaces, user/group
+#   3. apt purge (deb) or dnf/yum remove (rpm) zerotier-one
+#   4. Remove leftovers: identity, config, repo/GPG files, interfaces, user/group
 #
-# Requirements: bash, apt-get (deb-based systems)
+# Requirements: bash, and apt-get (Debian/Ubuntu/Raspbian) or dnf/yum
+#               (Huawei Cloud EulerOS / EulerOS / openEuler / RHEL family).
+#               Without either, only leftover files are cleaned up.
 
 set -euo pipefail
 
@@ -29,6 +31,18 @@ hdr()  { echo -e "\n${BOLD}=== $* ===${NC}"; }
 # Preflight checks
 # ============================================================
 [ "$(id -u)" -eq 0 ] || { err "Root privileges are required: sudo $0"; exit 1; }
+
+# Detect the package manager by command availability so RPM distros work as well
+if command -v apt-get >/dev/null 2>&1; then
+    PKG=apt
+elif command -v dnf >/dev/null 2>&1; then
+    PKG=dnf
+elif command -v yum >/dev/null 2>&1; then
+    PKG=yum
+else
+    PKG=none
+fi
+log "Package manager: $PKG"
 
 INSTALLED=false
 if command -v zerotier-cli >/dev/null 2>&1; then
@@ -72,15 +86,29 @@ else
 fi
 
 # ============================================================
-# 3. apt purge
+# 3. Remove the package
 # ============================================================
-hdr "3. apt purge zerotier-one"
-if dpkg -l 2>/dev/null | grep -q '^ii  zerotier-one '; then
-    DEBIAN_FRONTEND=noninteractive apt-get purge -y zerotier-one 2>&1 | tail -5 || true
-    DEBIAN_FRONTEND=noninteractive apt-get autoremove -y 2>&1 | tail -3 || true
-else
-    warn "zerotier-one package is not installed"
-fi
+hdr "3. Remove the zerotier-one package"
+case "$PKG" in
+    apt)
+        if dpkg -l 2>/dev/null | grep -q '^ii  zerotier-one '; then
+            DEBIAN_FRONTEND=noninteractive apt-get purge -y zerotier-one 2>&1 | tail -5 || true
+            DEBIAN_FRONTEND=noninteractive apt-get autoremove -y 2>&1 | tail -3 || true
+        else
+            warn "zerotier-one package is not installed"
+        fi
+        ;;
+    dnf|yum)
+        if rpm -q zerotier-one >/dev/null 2>&1; then
+            $PKG remove -y zerotier-one 2>&1 | tail -5 || true
+        else
+            warn "zerotier-one package is not installed"
+        fi
+        ;;
+    *)
+        warn "No package manager found; only leftover files will be removed"
+        ;;
+esac
 
 # ============================================================
 # 4. Remove leftovers
@@ -92,6 +120,7 @@ RESIDUE=(
     /etc/zerotier-one
     /etc/apt/sources.list.d/zerotier.list
     /etc/apt/trusted.gpg.d/zerotier-debian-package-key.gpg
+    /etc/yum.repos.d/zerotier.repo
     /usr/share/keyrings/zerotier-archive-keyring.gpg
     /usr/share/keyrings/zerotier-debian-package-key.gpg
 )
@@ -126,7 +155,12 @@ if getent group zerotier-one >/dev/null 2>&1; then
     log "Removed group zerotier-one"
 fi
 
-apt-get clean 2>/dev/null || true
+# Clean the package cache. For rpm, only the downloaded packages: `clean all` would also
+# drop the system repo metadata and slow down the next dnf run for no reason.
+case "$PKG" in
+    apt)     apt-get clean 2>/dev/null || true ;;
+    dnf|yum) $PKG clean packages >/dev/null 2>&1 || true ;;
+esac
 
 # ============================================================
 # 5. Verify

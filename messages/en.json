@@ -230,7 +230,7 @@
     "deleteKey": "Delete key",
     "commandsTitle": "Use this key to join ({mode})",
     "commandsDescription": "Run on the target machine. Devices using review mode will appear under Pending after joining.",
-    "linuxInstall": "Linux one-shot install (Debian / Ubuntu / Raspbian)",
+    "linuxInstall": "Linux one-shot install (Debian/Ubuntu, EulerOS/openEuler and other RPM distros)",
     "macInstall": "macOS one-shot install (official .pkg, no Homebrew required)",
     "windowsInstall": "Windows one-shot install (admin PowerShell)",
     "directUp": "Direct tailscale up",
