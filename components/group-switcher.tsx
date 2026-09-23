@@ -87,10 +87,11 @@ export function GroupSwitcher({
             side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}
           >
-            <DropdownMenuLabel className="text-xs text-muted-foreground">
-              {t('label')}
-            </DropdownMenuLabel>
+            {/* Base UI 的 Label 必须放在 Group 里，放在外面整个菜单会直接抛错 */}
             <DropdownMenuGroup>
+              <DropdownMenuLabel className="text-xs text-muted-foreground">
+                {t('label')}
+              </DropdownMenuLabel>
               <DropdownMenuItem onClick={() => pick(null)} className="gap-2">
                 <Layers />
                 <span className="flex-1">{t('allGroups')}</span>

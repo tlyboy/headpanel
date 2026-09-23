@@ -88,21 +88,24 @@ export function SidebarUserMenu({
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuLabel className="font-normal">
-              <span className="flex items-center gap-2">
-                <Avatar className="rounded-lg">
-                  <AvatarFallback className="rounded-lg">
-                    {fallback}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="grid min-w-0 flex-1 leading-tight">
-                  <span className="truncate font-medium">{username}</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {scopeLabel}
+            {/* Base UI 的 Label 必须放在 Group 里，放在外面整个菜单会直接抛错 */}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="font-normal">
+                <span className="flex items-center gap-2">
+                  <Avatar className="rounded-lg">
+                    <AvatarFallback className="rounded-lg">
+                      {fallback}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="grid min-w-0 flex-1 leading-tight">
+                    <span className="truncate font-medium">{username}</span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {scopeLabel}
+                    </span>
                   </span>
                 </span>
-              </span>
-            </DropdownMenuLabel>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuSub>
