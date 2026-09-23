@@ -61,6 +61,7 @@
     "toggle": "切换主题"
   },
   "language": {
+    "current": "当前语言：中文",
     "toggle": "切换语言",
     "zh": "中文",
     "en": "English"
