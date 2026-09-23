@@ -101,10 +101,16 @@ export function ListFilters({
             {selects.map((s) => (
               <Select
                 key={s.name}
-                // When unfiltered, pass undefined instead of __all: Radix only shows the placeholder when
-                // no value is selected; always passing a sentinel value leaves the trigger completely blank.
-                value={params.get(s.name) ?? undefined}
-                onValueChange={(v) => setParam(s.name, v === '__all' ? '' : v)}
+                items={[
+                  { value: '__all', label: s.placeholder },
+                  ...s.options.map((o) => ({ value: o.value, label: o.label })),
+                ]}
+                // Pass null when unfiltered, not __all: the placeholder is shown only when no value is selected.
+                // Don't pass undefined either; that makes Select uncontrolled, so it won't update when the URL changes
+                value={params.get(s.name) ?? null}
+                onValueChange={(v) =>
+                  setParam(s.name, !v || v === '__all' ? '' : v)
+                }
               >
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder={s.placeholder} />

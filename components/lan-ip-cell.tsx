@@ -33,14 +33,16 @@ export function LanIpCell({ ips }: { ips: string[] }) {
   const [primary, ...rest] = ips
 
   return (
-    <HoverCard openDelay={100} closeDelay={200}>
-      <HoverCardTrigger asChild>
-        <button type="button" className="cursor-default font-mono">
-          {primary}
-          {rest.length > 0 && (
-            <span className="ml-1 text-muted-foreground">+{rest.length}</span>
-          )}
-        </button>
+    <HoverCard>
+      <HoverCardTrigger
+        delay={100}
+        closeDelay={200}
+        render={<button type="button" className="cursor-default font-mono" />}
+      >
+        {primary}
+        {rest.length > 0 && (
+          <span className="ml-1 text-muted-foreground">+{rest.length}</span>
+        )}
       </HoverCardTrigger>
       <HoverCardContent align="start" className="w-auto min-w-56">
         <div className="flex flex-col gap-1">

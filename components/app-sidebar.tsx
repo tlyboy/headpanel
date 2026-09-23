@@ -50,20 +50,16 @@ export function AppSidebar({
         ) : (
           <SidebarMenu>
             <SidebarMenuItem>
-              <SidebarMenuButton asChild size="lg">
-                <Link href="/dashboard">
-                  <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                    <CableIcon />
+              <SidebarMenuButton size="lg" render={<Link href="/dashboard" />}>
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+                  <CableIcon />
+                </span>
+                <span className="grid flex-1 text-left leading-tight">
+                  <span className="truncate font-semibold">{productName}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    headscale
                   </span>
-                  <span className="grid flex-1 text-left leading-tight">
-                    <span className="truncate font-semibold">
-                      {productName}
-                    </span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      headscale
-                    </span>
-                  </span>
-                </Link>
+                </span>
               </SidebarMenuButton>
             </SidebarMenuItem>
           </SidebarMenu>

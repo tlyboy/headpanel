@@ -75,11 +75,16 @@ export default async function ScriptsPage() {
                     {t(it.descKey)}
                   </div>
                 </div>
-                <Button asChild size="sm" variant="outline">
-                  <a href={`${basePath}/api/scripts/${it.file}`} download>
-                    <Download className="size-4" />
-                    {common('download')}
-                  </a>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  nativeButton={false}
+                  render={
+                    <a href={`${basePath}/api/scripts/${it.file}`} download />
+                  }
+                >
+                  <Download className="size-4" />
+                  {common('download')}
                 </Button>
               </div>
             ))}
