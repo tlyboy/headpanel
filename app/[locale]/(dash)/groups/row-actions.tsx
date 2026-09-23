@@ -46,6 +46,7 @@ import {
   renameGroupAction,
   resetGroupAdminPasswordAction,
 } from './actions'
+import { noAutofill } from '@/lib/no-autofill'
 
 export interface GroupAdmin {
   id: number
@@ -150,6 +151,7 @@ export function GroupRowActions({
             <Label htmlFor={`gname-${id}`}>{t('newName')}</Label>
             <Input
               id={`gname-${id}`}
+              {...noAutofill}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />

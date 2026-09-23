@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { noAutofill } from '@/lib/no-autofill'
 
 export interface FilterSelect {
   /** URL 参数名 */
@@ -90,6 +91,7 @@ export function ListFilters({
                 key={urlQ}
                 ref={inputRef}
                 name="q"
+                {...noAutofill}
                 defaultValue={urlQ}
                 // 失焦即筛选：按钮只是多给一个显式入口，习惯回车或直接点走的人不受影响
                 onBlur={submitSearch}

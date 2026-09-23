@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { PER_PAGE_OPTIONS } from '@/components/pager'
+import { noAutofill } from '@/lib/no-autofill'
 
 // 共 N 条 · 每页条数 · 上一页/页码/下一页 · 跳页，整条右对齐。
 // 页码只显示当前页而不铺开一排：审计是按时间倒序的流水，
@@ -123,6 +124,7 @@ export function ListPager({
           key={page}
           defaultValue={page}
           inputMode="numeric"
+          {...noAutofill}
           className="w-14 text-center"
           onKeyDown={(e) => {
             if (e.key === 'Enter') jump()

@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { createGroupAction } from './actions'
+import { noAutofill } from '@/lib/no-autofill'
 
 // 默认自管开关并自带触发按钮（groups 页面的用法）；传入 open/onOpenChange 则转为
 // 受控，配合 hideTrigger 可由别处唤起（如侧边栏的组切换器）。
@@ -92,6 +93,7 @@ export function CreateGroup({
             <Label htmlFor="name">{t('name')}</Label>
             <Input
               id="name"
+              {...noAutofill}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('namePlaceholder')}
@@ -101,6 +103,7 @@ export function CreateGroup({
             <Label htmlFor="slug">{t('slug')}</Label>
             <Input
               id="slug"
+              {...noAutofill}
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               placeholder={t('slugPlaceholder')}

@@ -19,6 +19,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { updateIpv4PrefixAction } from './actions'
+import { noAutofill } from '@/lib/no-autofill'
 
 export function NetworkForm({
   ipv4Prefix,
@@ -56,6 +57,7 @@ export function NetworkForm({
           <Label htmlFor="ipv4Prefix">{t('ipv4Pool')}</Label>
           <Input
             id="ipv4Prefix"
+            {...noAutofill}
             className="font-mono"
             value={value}
             onChange={(e) => setValue(e.target.value)}
