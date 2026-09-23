@@ -17,6 +17,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { createGroupAction } from './actions'
+import { noAutofill } from '@/lib/no-autofill'
 
 // Defaults to self-managed open state with a built-in trigger button (used on the groups page); passing open/onOpenChange makes it
 // controlled, and hideTrigger lets it be opened elsewhere (such as the group switcher in the sidebar).
@@ -92,6 +93,7 @@ export function CreateGroup({
             <Label htmlFor="name">{t('name')}</Label>
             <Input
               id="name"
+              {...noAutofill}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('namePlaceholder')}
@@ -101,6 +103,7 @@ export function CreateGroup({
             <Label htmlFor="slug">{t('slug')}</Label>
             <Input
               id="slug"
+              {...noAutofill}
               value={slug}
               onChange={(e) => setSlug(e.target.value)}
               placeholder={t('slugPlaceholder')}

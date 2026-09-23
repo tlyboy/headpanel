@@ -38,6 +38,7 @@ import {
   saveNoteAction,
   type ActionResult,
 } from './actions'
+import { noAutofill } from '@/lib/no-autofill'
 
 export function NodeRowActions({
   id,
@@ -107,6 +108,7 @@ export function NodeRowActions({
             <Label htmlFor="newName">{t('newAlias')}</Label>
             <Input
               id="newName"
+              {...noAutofill}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
               placeholder={t('aliasPlaceholder')}
@@ -144,6 +146,7 @@ export function NodeRowActions({
             <Label htmlFor="note">{t('note')}</Label>
             <Input
               id="note"
+              {...noAutofill}
               value={noteVal}
               onChange={(e) => setNoteVal(e.target.value)}
               placeholder={t('notePlaceholder')}

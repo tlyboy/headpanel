@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { PER_PAGE_OPTIONS } from '@/components/pager'
+import { noAutofill } from '@/lib/no-autofill'
 
 // N total · rows per page · previous/page number/next · jump to page, all right-aligned.
 // Show only the current page number instead of a row of page numbers: the audit log is a time-descending stream,
@@ -123,6 +124,7 @@ export function ListPager({
           key={page}
           defaultValue={page}
           inputMode="numeric"
+          {...noAutofill}
           className="w-14 text-center"
           onKeyDown={(e) => {
             if (e.key === 'Enter') jump()

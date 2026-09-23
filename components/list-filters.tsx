@@ -14,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { noAutofill } from '@/lib/no-autofill'
 
 export interface FilterSelect {
   /** URL parameter name */
@@ -90,6 +91,7 @@ export function ListFilters({
                 key={urlQ}
                 ref={inputRef}
                 name="q"
+                {...noAutofill}
                 defaultValue={urlQ}
                 // Filter on blur: the button just provides an explicit option, without affecting people who prefer Enter or simply click away
                 onBlur={submitSearch}

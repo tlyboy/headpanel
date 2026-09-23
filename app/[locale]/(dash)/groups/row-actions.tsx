@@ -46,6 +46,7 @@ import {
   renameGroupAction,
   resetGroupAdminPasswordAction,
 } from './actions'
+import { noAutofill } from '@/lib/no-autofill'
 
 export interface GroupAdmin {
   id: number
@@ -139,7 +140,7 @@ export function GroupRowActions({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      {/* The dialog renders outside the menu: clicking a menu item closes it, so placing it inside would unmount it */}
+      {/* The dialog renders outside the menu: clicking a menu item closes it, so it would be unmounted if placed inside */}
       <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
         <DialogContent>
           <DialogHeader>
@@ -150,6 +151,7 @@ export function GroupRowActions({
             <Label htmlFor={`gname-${id}`}>{t('newName')}</Label>
             <Input
               id={`gname-${id}`}
+              {...noAutofill}
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
             />
