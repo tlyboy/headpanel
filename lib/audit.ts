@@ -33,3 +33,48 @@ export const AUDIT_KIND_COLOR: Record<AuditKind, string> = {
   approve: 'var(--warning)',
   danger: 'var(--destructive)',
 }
+
+/**
+ * 审计「对象」列里的节点写法：节点名 + ID。只记 ID 的话日志里就剩一串数字，
+ * 看不出是哪台机器；只记名字又会在节点改名后对不上号，所以两个都留。
+ */
+export function nodeTarget(node: { id: string; givenName: string }) {
+  return `${node.givenName} (#${node.id})`
+}
+
+/** 子网路由相关的对象：哪台节点上的哪个网段 */
+export function routeTarget(
+  node: { id: string; givenName: string },
+  route: string,
+) {
+  return `${nodeTarget(node)} ${route}`
+}
+
+// 旧记录的对象只有节点 ID（node.* 记成 "65"，route.* 记成 "65:10.0.0.0/24"）。
+// 展示时按当前节点列表补上名字；节点已删除、查不到名字的，原样显示。
+const LEGACY_NODE_TARGET = /^(\d+)$/
+const LEGACY_ROUTE_TARGET = /^(\d+):(.+)$/
+
+export function legacyNodeId(action: string, target: string | null) {
+  if (!target) return null
+  if (action.startsWith('node.'))
+    return LEGACY_NODE_TARGET.exec(target)?.[1] ?? null
+  if (action.startsWith('route.'))
+    return LEGACY_ROUTE_TARGET.exec(target)?.[1] ?? null
+  return null
+}
+
+export function displayTarget(
+  action: string,
+  target: string | null,
+  nodeNames: ReadonlyMap<string, string>,
+) {
+  const id = legacyNodeId(action, target)
+  const name = id ? nodeNames.get(id) : undefined
+  if (!target || !id || !name) return target
+  const node = { id, givenName: name }
+  if (action.startsWith('route.')) {
+    return routeTarget(node, LEGACY_ROUTE_TARGET.exec(target)![2])
+  }
+  return nodeTarget(node)
+}

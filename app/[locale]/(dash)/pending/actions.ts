@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { requireSession } from '@/lib/auth'
+import { nodeTarget } from '@/lib/audit'
 import { auditAfter } from '@/lib/db'
 import { approvedTag } from '@/lib/default-zone'
 import { groupForNode } from '@/lib/groups'
@@ -40,7 +41,7 @@ export async function approveNodeAction(id: string): Promise<ActionResult> {
     setNodeStatus(id, 'approved', session.sub)
     auditAfter(
       'node.approve',
-      id,
+      nodeTarget(node),
       `group=${group?.slug ?? 'default'} tags=[${tag}]`,
       {
         groupId: group?.id ?? null,
@@ -66,10 +67,15 @@ export async function rejectNodeAction(id: string): Promise<ActionResult> {
     const group = groupForNode(session, node)
     setNodeStatus(id, 'rejected', session.sub)
     await deleteNode(id)
-    auditAfter('node.reject', id, `group=${group?.slug ?? 'default'} deleted`, {
-      groupId: group?.id ?? null,
-      actor: session.sub,
-    })
+    auditAfter(
+      'node.reject',
+      nodeTarget(node),
+      `group=${group?.slug ?? 'default'} deleted`,
+      {
+        groupId: group?.id ?? null,
+        actor: session.sub,
+      },
+    )
     revalidatePath('/pending')
     revalidatePath('/nodes')
     return { ok: true }

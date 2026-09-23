@@ -16,7 +16,13 @@ import {
 } from '@/components/columns'
 import { ListPager } from '@/components/list-pager'
 import { resolvePerPage } from '@/components/pager'
-import { auditKind, AUDIT_KIND_VARIANT } from '@/lib/audit'
+import {
+  auditKind,
+  AUDIT_KIND_VARIANT,
+  displayTarget,
+  legacyNodeId,
+} from '@/lib/audit'
+import { listNodes } from '@/lib/headscale'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -115,6 +121,17 @@ export default async function AuditPage({
     .offset((current - 1) * perPage)
     .all()
 
+  // 旧记录的对象只存了节点 ID。只有这一页里真有这种记录时才去 headscale
+  // 取一次节点列表补名字；取不到（headscale 不可用）就照旧显示 ID。
+  const nodeNames = new Map<string, string>()
+  if (rows.some((r) => legacyNodeId(r.action, r.target))) {
+    try {
+      for (const n of await listNodes()) nodeNames.set(n.id, n.givenName)
+    } catch {
+      // 补名字只是锦上添花，不影响审计列表本身
+    }
+  }
+
   // 下拉只列实际出现过的动作，省得堆一串这个部署里根本没有的选项
   const actions = db
     .selectDistinct({ a: auditLog.action })
@@ -203,7 +220,9 @@ export default async function AuditPage({
                     </TableCell>
                   )}
                   {show('target') && (
-                    <TableCell className="text-xs">{r.target ?? '—'}</TableCell>
+                    <TableCell className="text-xs">
+                      {displayTarget(r.action, r.target, nodeNames) ?? '—'}
+                    </TableCell>
                   )}
                   {show('detail') && (
                     <TableCell className="text-xs text-muted-foreground">

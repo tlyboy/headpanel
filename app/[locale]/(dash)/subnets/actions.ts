@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { requireSuper } from '@/lib/auth'
+import { routeTarget } from '@/lib/audit'
 import { auditAfter } from '@/lib/db'
 import { listGroups } from '@/lib/groups'
 import {
@@ -15,6 +16,7 @@ import {
   getNode,
   listNodes,
   HeadscaleError,
+  type HsNode,
 } from '@/lib/headscale'
 
 export interface RouteResult {
@@ -33,7 +35,7 @@ async function setRouteApproval(
   nodeId: string,
   route: string,
   approved: boolean,
-): Promise<{ before: string[]; after: string[] }> {
+): Promise<{ node: HsNode; before: string[]; after: string[] }> {
   const node = await getNode(nodeId)
   const before = node.approvedRoutes ?? []
   const next = approved
@@ -42,7 +44,7 @@ async function setRouteApproval(
       : [...before, route]
     : before.filter((r) => r !== route)
   if (next.length !== before.length) await approveRoutes(nodeId, next)
-  return { before, after: next }
+  return { node, before, after: next }
 }
 
 export async function approveRouteAction(
@@ -54,10 +56,10 @@ export async function approveRouteAction(
     getTranslations('actionErrors'),
   ])
   try {
-    const { after } = await setRouteApproval(nodeId, route, true)
+    const { node, after } = await setRouteApproval(nodeId, route, true)
     auditAfter(
       'route.approve',
-      `${nodeId}:${route}`,
+      routeTarget(node, route),
       `approved=${after.join(',')}`,
       {
         actor: session.sub,
@@ -95,10 +97,10 @@ export async function revokeRouteAction(
     getTranslations('actionErrors'),
   ])
   try {
-    const { after } = await setRouteApproval(nodeId, route, false)
+    const { node, after } = await setRouteApproval(nodeId, route, false)
     auditAfter(
       'route.revoke',
-      `${nodeId}:${route}`,
+      routeTarget(node, route),
       `approved=${after.join(',')}`,
       {
         actor: session.sub,
@@ -149,7 +151,7 @@ export async function makePrimaryAction(
     requireSuper(),
     getTranslations('actionErrors'),
   ])
-  const revoked: { id: string; routes: string[] }[] = []
+  const revoked: { node: HsNode; routes: string[] }[] = []
   try {
     const nodes = await listNodes()
     const approved = nodes.filter((n) =>
@@ -166,17 +168,22 @@ export async function makePrimaryAction(
         n.id,
         original.filter((r) => r !== route),
       )
-      revoked.push({ id: n.id, routes: original })
+      revoked.push({ node: n, routes: original })
     }
   } catch (e) {
     return { ok: false, error: errMsg(e, t('unknown')) }
   } finally {
     for (const r of revoked) {
       // 恢复失败只能记审计——此时抛错会盖掉真正的失败原因
-      await approveRoutes(r.id, r.routes).catch(() => {
-        auditAfter('route.restoreFailed', `${r.id}:${route}`, undefined, {
-          actor: session.sub,
-        })
+      await approveRoutes(r.node.id, r.routes).catch(() => {
+        auditAfter(
+          'route.restoreFailed',
+          routeTarget(r.node, route),
+          undefined,
+          {
+            actor: session.sub,
+          },
+        )
       })
     }
   }
@@ -188,7 +195,7 @@ export async function makePrimaryAction(
     if (now?.id !== targetNodeId) {
       return { ok: false, error: t('primaryNotSwitched') }
     }
-    auditAfter('route.makePrimary', `${targetNodeId}:${route}`, undefined, {
+    auditAfter('route.makePrimary', routeTarget(now, route), undefined, {
       actor: session.sub,
     })
     revalidatePath('/subnets')
