@@ -88,21 +88,24 @@ export function SidebarUserMenu({
             align="end"
             sideOffset={4}
           >
-            <DropdownMenuLabel className="font-normal">
-              <span className="flex items-center gap-2">
-                <Avatar className="rounded-lg">
-                  <AvatarFallback className="rounded-lg">
-                    {fallback}
-                  </AvatarFallback>
-                </Avatar>
-                <span className="grid min-w-0 flex-1 leading-tight">
-                  <span className="truncate font-medium">{username}</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    {scopeLabel}
+            {/* Base UI's Label must be inside a Group; placing it outside causes the entire menu to throw an error */}
+            <DropdownMenuGroup>
+              <DropdownMenuLabel className="font-normal">
+                <span className="flex items-center gap-2">
+                  <Avatar className="rounded-lg">
+                    <AvatarFallback className="rounded-lg">
+                      {fallback}
+                    </AvatarFallback>
+                  </Avatar>
+                  <span className="grid min-w-0 flex-1 leading-tight">
+                    <span className="truncate font-medium">{username}</span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {scopeLabel}
+                    </span>
                   </span>
                 </span>
-              </span>
-            </DropdownMenuLabel>
+              </DropdownMenuLabel>
+            </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
               <DropdownMenuSub>
