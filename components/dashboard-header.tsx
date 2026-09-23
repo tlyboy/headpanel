@@ -45,8 +45,8 @@ export function DashboardHeader() {
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem className="hidden sm:inline-flex">
-              <BreadcrumbLink asChild>
-                <Link href="/dashboard">{common('productName')}</Link>
+              <BreadcrumbLink render={<Link href="/dashboard" />}>
+                {common('productName')}
               </BreadcrumbLink>
             </BreadcrumbItem>
             <BreadcrumbSeparator className="hidden sm:block" />

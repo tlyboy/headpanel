@@ -79,9 +79,7 @@ export function CreateGroup({
       }}
     >
       {!hideTrigger && (
-        <DialogTrigger asChild>
-          <Button>{t('trigger')}</Button>
-        </DialogTrigger>
+        <DialogTrigger render={<Button />}>{t('trigger')}</DialogTrigger>
       )}
       <DialogContent>
         <DialogHeader>

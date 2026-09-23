@@ -91,9 +91,7 @@ export function CreateKey({
 
   return (
     <Dialog open={open} onOpenChange={close}>
-      <DialogTrigger asChild>
-        <Button>{t('trigger')}</Button>
-      </DialogTrigger>
+      <DialogTrigger render={<Button />}>{t('trigger')}</DialogTrigger>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{t('title')}</DialogTitle>
@@ -126,9 +124,18 @@ export function CreateKey({
               <div className="flex flex-col gap-2">
                 <Label htmlFor="group">{t('group')}</Label>
                 <Select
+                  items={[
+                    ...(canUseDefault
+                      ? [{ value: DEFAULT_ZONE, label: t('defaultZone') }]
+                      : []),
+                    ...groups.map((g) => ({
+                      value: String(g.id),
+                      label: g.name,
+                    })),
+                  ]}
                   value={groupId == null ? DEFAULT_ZONE : String(groupId)}
                   onValueChange={(v) =>
-                    setGroupId(v === DEFAULT_ZONE ? null : Number(v))
+                    v && setGroupId(v === DEFAULT_ZONE ? null : Number(v))
                   }
                 >
                   <SelectTrigger id="group">
@@ -174,8 +181,12 @@ export function CreateKey({
             <div className="flex flex-col gap-2">
               <Label htmlFor="mode">{t('mode')}</Label>
               <Select
+                items={[
+                  { value: 'review', label: t('reviewMode') },
+                  { value: 'direct', label: t('directMode') },
+                ]}
                 value={mode}
-                onValueChange={(v) => setMode(v as AccessMode)}
+                onValueChange={(v) => v && setMode(v as AccessMode)}
               >
                 <SelectTrigger id="mode">
                   <SelectValue />
@@ -189,8 +200,12 @@ export function CreateKey({
             <div className="flex flex-col gap-2">
               <Label htmlFor="days">{t('expiration')}</Label>
               <Select
+                items={DAY_OPTIONS.map((o) => ({
+                  value: String(o.value),
+                  label: t(o.labelKey),
+                }))}
                 value={String(days)}
-                onValueChange={(v) => setDays(Number(v))}
+                onValueChange={(v) => v && setDays(Number(v))}
               >
                 <SelectTrigger id="days">
                   <SelectValue />

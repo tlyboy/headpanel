@@ -71,7 +71,14 @@ export function ListPager({
         {t('totalItems', { total })}
       </span>
 
-      <Select value={String(perPage)} onValueChange={setPerPage}>
+      <Select
+        items={PER_PAGE_OPTIONS.map((n) => ({
+          value: String(n),
+          label: t('perPage', { count: n }),
+        }))}
+        value={String(perPage)}
+        onValueChange={(v) => v && setPerPage(v)}
+      >
         <SelectTrigger className="w-28">
           <SelectValue />
         </SelectTrigger>

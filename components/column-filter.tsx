@@ -57,11 +57,11 @@ export function ColumnFilter({
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button variant="outline" disabled={pending}>
-          <SlidersHorizontal />
-          {t('columns')}
-        </Button>
+      <DropdownMenuTrigger
+        render={<Button variant="outline" disabled={pending} />}
+      >
+        <SlidersHorizontal />
+        {t('columns')}
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-44">
         {toggleable.map((c) => {
@@ -73,7 +73,7 @@ export function ColumnFilter({
               // 全部隐藏会得到一张空表，留最后一列不给取消
               disabled={checked && visibleCount <= 1}
               onCheckedChange={(v) => toggle(c.key, v === true)}
-              onSelect={(e) => e.preventDefault()}
+              closeOnClick={false}
             >
               {c.label}
             </DropdownMenuCheckboxItem>

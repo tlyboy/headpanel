@@ -63,24 +63,24 @@ export function SidebarUserMenu({
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <Avatar className="rounded-lg">
-                <AvatarFallback className="rounded-lg">
-                  {fallback}
-                </AvatarFallback>
-              </Avatar>
-              <span className="grid min-w-0 flex-1 text-left leading-tight">
-                <span className="truncate font-medium">{username}</span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {scopeLabel}
-                </span>
+          <DropdownMenuTrigger
+            render={
+              <SidebarMenuButton
+                size="lg"
+                className="data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
+              />
+            }
+          >
+            <Avatar className="rounded-lg">
+              <AvatarFallback className="rounded-lg">{fallback}</AvatarFallback>
+            </Avatar>
+            <span className="grid min-w-0 flex-1 text-left leading-tight">
+              <span className="truncate font-medium">{username}</span>
+              <span className="truncate text-xs text-muted-foreground">
+                {scopeLabel}
               </span>
-              <ChevronsUpDownIcon className="ml-auto" />
-            </SidebarMenuButton>
+            </span>
+            <ChevronsUpDownIcon className="ml-auto" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className="min-w-56"
@@ -128,11 +128,11 @@ export function SidebarUserMenu({
               {/* 明暗直接对切，不做二级菜单也不给「跟随系统」：这是一天里会点
                   好几次的开关，多一层展开就多一次等待，而那圈扩散动画也只有在
                   点击处才有意义。
-                  preventDefault 拦掉菜单项默认的「选完就关」：这是个开关不是入口，
+                  closeOnClick={false} 关掉菜单项默认的「点完就关」：这是个开关不是入口，
                   关掉菜单等于每看一眼效果就得重新点开；而且过渡是对整页做快照，
                   菜单在动画中途消失会让画面自己抖一下 */}
               <DropdownMenuItem
-                onSelect={(e) => e.preventDefault()}
+                closeOnClick={false}
                 onClick={(e) =>
                   toggleThemeWithTransition(e, resolvedTheme, setTheme)
                 }
@@ -140,31 +140,35 @@ export function SidebarUserMenu({
                 <ContrastIcon />
                 {themeText('toggle')}
               </DropdownMenuItem>
-              <DropdownMenuItem asChild>
-                <a
-                  href="https://github.com/tlyboy/headpanel"
-                  target="_blank"
-                  rel="noreferrer"
+              <DropdownMenuItem
+                render={
+                  <a
+                    href="https://github.com/tlyboy/headpanel"
+                    target="_blank"
+                    rel="noreferrer"
+                  />
+                }
+              >
+                <svg
+                  aria-hidden="true"
+                  fill="currentColor"
+                  role="img"
+                  viewBox="0 0 24 24"
                 >
-                  <svg
-                    aria-hidden="true"
-                    fill="currentColor"
-                    role="img"
-                    viewBox="0 0 24 24"
-                  >
-                    <path d={siGithub.path} />
-                  </svg>
-                  GitHub
-                </a>
+                  <path d={siGithub.path} />
+                </svg>
+                GitHub
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <form action={logout}>
-              <DropdownMenuItem asChild variant="destructive">
-                <button type="submit" className="w-full">
-                  <LogOutIcon />
-                  {common('signOut')}
-                </button>
+              <DropdownMenuItem
+                variant="destructive"
+                nativeButton
+                render={<button type="submit" className="w-full" />}
+              >
+                <LogOutIcon />
+                {common('signOut')}
               </DropdownMenuItem>
             </form>
           </DropdownMenuContent>

@@ -29,17 +29,19 @@ export function LanguageToggle() {
 
   return (
     <DropdownMenu>
-      <DropdownMenuTrigger asChild>
-        <Button
-          variant="secondary"
-          size="icon"
-          className="size-8"
-          title={t('toggle')}
-          aria-label={t('toggle')}
-        >
-          <Languages className="size-4" />
-          <span className="sr-only">{t('current')}</span>
-        </Button>
+      <DropdownMenuTrigger
+        render={
+          <Button
+            variant="secondary"
+            size="icon"
+            className="size-8"
+            title={t('toggle')}
+            aria-label={t('toggle')}
+          />
+        }
+      >
+        <Languages className="size-4" />
+        <span className="sr-only">{t('current')}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
         {Object.entries(localeLabels).map(([key, label]) => (

@@ -70,10 +70,10 @@ export function KeyRowActions({
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" className="size-8">
-            <MoreHorizontal className="size-4" />
-          </Button>
+        <DropdownMenuTrigger
+          render={<Button variant="ghost" size="icon" className="size-8" />}
+        >
+          <MoreHorizontal className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setCmdOpen(true)}>

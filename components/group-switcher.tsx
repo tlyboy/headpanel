@@ -59,28 +59,30 @@ export function GroupSwitcher({
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <SidebarMenuButton
-              size="lg"
-              disabled={pending}
-              className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-            >
-              <span className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
-                {active ? <Boxes /> : <Layers />}
+          <DropdownMenuTrigger
+            render={
+              <SidebarMenuButton
+                size="lg"
+                disabled={pending}
+                className="data-popup-open:bg-sidebar-accent data-popup-open:text-sidebar-accent-foreground"
+              />
+            }
+          >
+            <span className="flex aspect-square size-8 items-center justify-center rounded-lg bg-primary text-primary-foreground">
+              {active ? <Boxes /> : <Layers />}
+            </span>
+            <span className="grid flex-1 text-left leading-tight">
+              <span className="truncate font-semibold">
+                {active ? active.name : productName}
               </span>
-              <span className="grid flex-1 text-left leading-tight">
-                <span className="truncate font-semibold">
-                  {active ? active.name : productName}
-                </span>
-                <span className="truncate text-xs text-muted-foreground">
-                  {active ? t('actingAs') : t('allGroups')}
-                </span>
+              <span className="truncate text-xs text-muted-foreground">
+                {active ? t('actingAs') : t('allGroups')}
               </span>
-              <ChevronsUpDown className="ml-auto" />
-            </SidebarMenuButton>
+            </span>
+            <ChevronsUpDown className="ml-auto" />
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) min-w-56"
+            className="w-(--anchor-width) min-w-56"
             align="start"
             side={isMobile ? 'bottom' : 'right'}
             sideOffset={4}

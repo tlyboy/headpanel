@@ -46,25 +46,27 @@ export function PendingRowActions({ id, name }: { id: string; name: string }) {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon"
-            aria-label={t('menu')}
-            disabled={pending}
-          >
-            <MoreHorizontal />
-          </Button>
+        <DropdownMenuTrigger
+          render={
+            <Button
+              variant="ghost"
+              size="icon"
+              aria-label={t('menu')}
+              disabled={pending}
+            />
+          }
+        >
+          <MoreHorizontal />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem
-            onSelect={() => run(approveNodeAction(id), t('approved', { name }))}
+            onClick={() => run(approveNodeAction(id), t('approved', { name }))}
           >
             {t('approve')}
           </DropdownMenuItem>
           <DropdownMenuItem
             variant="destructive"
-            onSelect={() => setRejectOpen(true)}
+            onClick={() => setRejectOpen(true)}
           >
             {t('reject')}
           </DropdownMenuItem>

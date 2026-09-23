@@ -103,10 +103,10 @@ export function GroupRowActions({
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label={t('menu')}>
-            <MoreHorizontal />
-          </Button>
+        <DropdownMenuTrigger
+          render={<Button variant="ghost" size="icon" aria-label={t('menu')} />}
+        >
+          <MoreHorizontal />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuGroup>
@@ -191,8 +191,12 @@ export function GroupRowActions({
               <div className="flex flex-col gap-2">
                 <Label>{t('account')}</Label>
                 <Select
-                  value={adminId == null ? '' : String(adminId)}
-                  onValueChange={(v) => setAdminId(Number(v))}
+                  items={admins.map((a) => ({
+                    value: String(a.id),
+                    label: a.username,
+                  }))}
+                  value={adminId == null ? null : String(adminId)}
+                  onValueChange={(v) => v && setAdminId(Number(v))}
                 >
                   <SelectTrigger>
                     <SelectValue />

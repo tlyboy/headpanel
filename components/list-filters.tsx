@@ -101,10 +101,16 @@ export function ListFilters({
             {selects.map((s) => (
               <Select
                 key={s.name}
-                // 未筛选时传 undefined 而不是 __all：Radix 只有在没有选中值时
-                // 才显示 placeholder，恒定给个哨兵值会让触发器变成一片空白
-                value={params.get(s.name) ?? undefined}
-                onValueChange={(v) => setParam(s.name, v === '__all' ? '' : v)}
+                items={[
+                  { value: '__all', label: s.placeholder },
+                  ...s.options.map((o) => ({ value: o.value, label: o.label })),
+                ]}
+                // 未筛选时传 null 而不是 __all：没有选中值时才显示 placeholder。
+                // 也不能传 undefined，那会让 Select 变成非受控，URL 变了它不跟着变
+                value={params.get(s.name) ?? null}
+                onValueChange={(v) =>
+                  setParam(s.name, !v || v === '__all' ? '' : v)
+                }
               >
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder={s.placeholder} />

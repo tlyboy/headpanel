@@ -100,14 +100,12 @@ export function SidebarNav({
               return (
                 <SidebarMenuItem key={href}>
                   <SidebarMenuButton
-                    asChild
                     isActive={active}
                     tooltip={t(label)}
+                    render={<Link href={href} />}
                   >
-                    <Link href={href}>
-                      <Icon />
-                      <span>{t(label)}</span>
-                    </Link>
+                    <Icon />
+                    <span>{t(label)}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               )

@@ -70,10 +70,10 @@ export function RouteRowActions({
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon" aria-label={t('menu')}>
-            <MoreHorizontal />
-          </Button>
+        <DropdownMenuTrigger
+          render={<Button variant="ghost" size="icon" aria-label={t('menu')} />}
+        >
+          <MoreHorizontal />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuGroup>
