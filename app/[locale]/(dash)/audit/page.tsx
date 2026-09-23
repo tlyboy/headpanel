@@ -16,7 +16,13 @@ import {
 } from '@/components/columns'
 import { ListPager } from '@/components/list-pager'
 import { resolvePerPage } from '@/components/pager'
-import { auditKind, AUDIT_KIND_VARIANT } from '@/lib/audit'
+import {
+  auditKind,
+  AUDIT_KIND_VARIANT,
+  displayTarget,
+  legacyNodeId,
+} from '@/lib/audit'
+import { listNodes } from '@/lib/headscale'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -115,6 +121,17 @@ export default async function AuditPage({
     .offset((current - 1) * perPage)
     .all()
 
+  // Older records only stored the node ID. Only if this page actually has such a record do we call headscale
+  // once to get the node list and fill in the names; if that fails (headscale is unavailable), display the ID as before.
+  const nodeNames = new Map<string, string>()
+  if (rows.some((r) => legacyNodeId(r.action, r.target))) {
+    try {
+      for (const n of await listNodes()) nodeNames.set(n.id, n.givenName)
+    } catch {
+      // Filling in names is just a nice-to-have and doesn't affect the audit list itself.
+    }
+  }
+
   // Only list actions that actually appear in the dropdown, so we don't pile on options that don't exist in this deployment.
   const actions = db
     .selectDistinct({ a: auditLog.action })
@@ -203,7 +220,9 @@ export default async function AuditPage({
                     </TableCell>
                   )}
                   {show('target') && (
-                    <TableCell className="text-xs">{r.target ?? '—'}</TableCell>
+                    <TableCell className="text-xs">
+                      {displayTarget(r.action, r.target, nodeNames) ?? '—'}
+                    </TableCell>
                   )}
                   {show('detail') && (
                     <TableCell className="text-xs text-muted-foreground">
