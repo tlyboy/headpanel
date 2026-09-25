@@ -1,7 +1,6 @@
 import { defineConfig, globalIgnores } from 'eslint/config'
 import nextVitals from 'eslint-config-next/core-web-vitals'
 import nextTs from 'eslint-config-next/typescript'
-import { version as reactVersion } from 'react'
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -14,11 +13,6 @@ const eslintConfig = defineConfig([
     'build/**',
     'next-env.d.ts',
   ]),
-  {
-    // eslint-plugin-react 7.37 自动检测 React 版本时会调用 ESLint 10 已删除的
-    // context.getFilename()，整个 lint 直接崩溃。直接给出已安装的版本，跳过检测。
-    settings: { react: { version: reactVersion } },
-  },
   {
     rules: {
       // 下划线前缀是这些项目里已有的「有意丢弃」约定，例如从 props 里解构掉
