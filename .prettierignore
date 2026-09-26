@@ -4,3 +4,6 @@ pnpm-lock.yaml
 
 # shadcn 拉下来的组件保持上游原样，不参与格式化
 components/ui
+
+# 项目级 agent skill 由 npx skills 安装，保持上游原样
+.agents
