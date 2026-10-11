@@ -80,11 +80,7 @@ export function ensureSeedAdmin() {
 // Validate the account password; return the account on success, or null on failure
 export function authenticate(username: string, password: string) {
   ensureSeedAdmin()
-  const row = db
-    .select()
-    .from(admins)
-    .where(eq(admins.username, username))
-    .get()
+  const row = db.select().from(admins).where(eq(admins.username, username)).get()
   if (!row) return null
   if (!verifyPassword(password, row.passwordHash)) return null
   return row
@@ -115,32 +111,28 @@ export async function destroySession() {
 
 // The real identity in the JWT, unaffected by group switching. The switcher itself and the switch action must use it,
 // otherwise, once super switches into a group, it can never switch back.
-export const getRealSession = cache(
-  async function getRealSession(): Promise<Session | null> {
-    const jar = await cookies()
-    const token = jar.get(COOKIE)?.value
-    if (!token) return null
-    try {
-      const { payload } = await jwtVerify(token, secret())
-      const role: Role = payload.role === 'super' ? 'super' : 'group'
-      const gid = typeof payload.gid === 'number' ? payload.gid : null
-      return { sub: String(payload.sub ?? ''), role, gid }
-    } catch {
-      return null
-    }
-  },
-)
+export const getRealSession = cache(async function getRealSession(): Promise<Session | null> {
+  const jar = await cookies()
+  const token = jar.get(COOKIE)?.value
+  if (!token) return null
+  try {
+    const { payload } = await jwtVerify(token, secret())
+    const role: Role = payload.role === 'super' ? 'super' : 'group'
+    const gid = typeof payload.gid === 'number' ? payload.gid : null
+    return { sub: String(payload.sub ?? ''), role, gid }
+  } catch {
+    return null
+  }
+})
 
 // Always use this on the business side: when super selects a group, downgrade to that group's group role.
-export const getSession = cache(
-  async function getSession(): Promise<Session | null> {
-    const real = await getRealSession()
-    if (!real || real.role !== 'super') return real
-    const gid = await readImpersonatedGid()
-    if (gid == null) return real
-    return { sub: real.sub, role: 'group', gid, impersonating: true }
-  },
-)
+export const getSession = cache(async function getSession(): Promise<Session | null> {
+  const real = await getRealSession()
+  if (!real || real.role !== 'super') return real
+  const gid = await readImpersonatedGid()
+  if (gid == null) return real
+  return { sub: real.sub, role: 'group', gid, impersonating: true }
+})
 
 // Call inside a protected page / server action: redirect immediately if not logged in
 export async function requireSession(): Promise<Session> {

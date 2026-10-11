@@ -4,10 +4,7 @@
   "singleQuote": true,
   "sortTailwindcss": {
     "stylesheet": "app/globals.css",
-    "functions": [
-      "cn",
-      "cva"
-    ]
+    "functions": ["cn", "cva"]
   },
   "ignorePatterns": [
     ".next",

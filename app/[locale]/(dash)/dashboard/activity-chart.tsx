@@ -24,10 +24,7 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
     danger: t('kindDanger'),
   }
   const config = Object.fromEntries(
-    AUDIT_KINDS.map((k) => [
-      k,
-      { label: label[k], color: AUDIT_KIND_COLOR[k] },
-    ]),
+    AUDIT_KINDS.map((k) => [k, { label: label[k], color: AUDIT_KIND_COLOR[k] }]),
   ) satisfies ChartConfig
 
   return (
@@ -43,12 +40,7 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
           // In a 30-day window, the year is noise
           tickFormatter={(v: string) => v.slice(5)}
         />
-        <YAxis
-          tickLine={false}
-          axisLine={false}
-          width={40}
-          allowDecimals={false}
-        />
+        <YAxis tickLine={false} axisLine={false} width={40} allowDecimals={false} />
         <ChartTooltip
           cursor={false}
           content={({ active, payload, label: day }) => {
@@ -65,23 +57,16 @@ export function ActivityChart({ data }: { data: ActivityPoint[] }) {
                 </div>
                 <div className="grid gap-1">
                   {d.items.map((it) => (
-                    <div
-                      key={it.label}
-                      className="flex items-center justify-between gap-4"
-                    >
+                    <div key={it.label} className="flex items-center justify-between gap-4">
                       {/* The color dot carries the identity; keep the text in the standard ink color—two colored elements on one line would compete */}
                       <span className="flex items-center gap-1.5">
                         <span
                           className="size-2 shrink-0 rounded-[2px]"
                           style={{ background: AUDIT_KIND_COLOR[it.kind] }}
                         />
-                        <span className="text-muted-foreground">
-                          {it.label}
-                        </span>
+                        <span className="text-muted-foreground">{it.label}</span>
                       </span>
-                      <span className="font-mono text-foreground tabular-nums">
-                        {it.count}
-                      </span>
+                      <span className="font-mono text-foreground tabular-nums">{it.count}</span>
                     </div>
                   ))}
                 </div>

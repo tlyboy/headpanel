@@ -82,9 +82,7 @@ export class HeadscaleError extends Error {
   }
 }
 
-export function normalizeHeadscaleConnection(
-  input: HeadscaleConnectionInput,
-): HeadscaleConnection {
+export function normalizeHeadscaleConnection(input: HeadscaleConnectionInput): HeadscaleConnection {
   const rawUrl = input.apiUrl.trim()
   const apiKey = input.apiKey.trim()
   if (!rawUrl) throw new Error('Headscale API URL is required')
@@ -106,9 +104,7 @@ export function normalizeHeadscaleConnection(
   url.hash = ''
   url.search = ''
   const basePath = url.pathname.replace(/\/+$/, '')
-  const pathname = basePath.endsWith(API_SUFFIX)
-    ? basePath
-    : `${basePath}${API_SUFFIX}`
+  const pathname = basePath.endsWith(API_SUFFIX) ? basePath : `${basePath}${API_SUFFIX}`
   url.pathname = pathname
 
   const apiUrl = url.toString().replace(/\/$/, '')
@@ -122,9 +118,7 @@ export function normalizeHeadscaleConnection(
 export function getDefaultHeadscaleConnection(): HeadscaleConnection {
   const apiUrl = process.env.HEADSCALE_API_URL || process.env.HEADSCALE_URL
   if (!apiUrl) {
-    throw new Error(
-      'HEADSCALE_API_URL is required (HEADSCALE_URL is supported for compatibility)',
-    )
+    throw new Error('HEADSCALE_API_URL is required (HEADSCALE_URL is supported for compatibility)')
   }
   return normalizeHeadscaleConnection({
     apiUrl,
@@ -169,10 +163,7 @@ export class HeadscaleClient {
       signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
     })
     if (!res.ok) {
-      throw new HeadscaleError(
-        res.status,
-        `headscale GET /version -> ${res.status}`,
-      )
+      throw new HeadscaleError(res.status, `headscale GET /version -> ${res.status}`)
     }
     return (await res.json()) as HeadscaleVersion
   }
@@ -217,9 +208,7 @@ export class HeadscaleClient {
   }
 
   async listPreAuthKeys(): Promise<HsPreAuthKey[]> {
-    const data = await this.request<{ preAuthKeys: HsPreAuthKey[] }>(
-      '/preauthkey',
-    )
+    const data = await this.request<{ preAuthKeys: HsPreAuthKey[] }>('/preauthkey')
     return data.preAuthKeys ?? []
   }
 
@@ -230,19 +219,16 @@ export class HeadscaleClient {
     expiration: string
     aclTags: string[]
   }): Promise<HsPreAuthKey> {
-    const data = await this.request<{ preAuthKey: HsPreAuthKey }>(
-      '/preauthkey',
-      {
-        method: 'POST',
-        body: JSON.stringify({
-          user: opts.userId,
-          reusable: opts.reusable,
-          ephemeral: opts.ephemeral,
-          expiration: opts.expiration,
-          aclTags: opts.aclTags,
-        }),
-      },
-    )
+    const data = await this.request<{ preAuthKey: HsPreAuthKey }>('/preauthkey', {
+      method: 'POST',
+      body: JSON.stringify({
+        user: opts.userId,
+        reusable: opts.reusable,
+        ephemeral: opts.ephemeral,
+        expiration: opts.expiration,
+        aclTags: opts.aclTags,
+      }),
+    })
     return data.preAuthKey
   }
 
@@ -288,9 +274,7 @@ export class HeadscaleClient {
   }
 }
 
-export function createHeadscaleClient(
-  input: HeadscaleConnectionInput,
-): HeadscaleClient {
+export function createHeadscaleClient(input: HeadscaleConnectionInput): HeadscaleClient {
   return new HeadscaleClient(input)
 }
 
@@ -301,22 +285,17 @@ function defaultClient(): HeadscaleClient {
 export const getHeadscaleVersion = () => defaultClient().getVersion()
 export const listNodes = () => defaultClient().listNodes()
 export const getNode = (id: string) => defaultClient().getNode(id)
-export const renameNode = (id: string, newName: string) =>
-  defaultClient().renameNode(id, newName)
+export const renameNode = (id: string, newName: string) => defaultClient().renameNode(id, newName)
 export const expireNode = (id: string) => defaultClient().expireNode(id)
 export const deleteNode = (id: string) => defaultClient().deleteNode(id)
-export const setNodeTags = (id: string, tags: string[]) =>
-  defaultClient().setNodeTags(id, tags)
+export const setNodeTags = (id: string, tags: string[]) => defaultClient().setNodeTags(id, tags)
 export const approveRoutes = (id: string, routes: string[]) =>
   defaultClient().approveRoutes(id, routes)
 export const listPreAuthKeys = () => defaultClient().listPreAuthKeys()
-export const createPreAuthKey = (
-  opts: Parameters<HeadscaleClient['createPreAuthKey']>[0],
-) => defaultClient().createPreAuthKey(opts)
-export const expirePreAuthKey = (id: string) =>
-  defaultClient().expirePreAuthKey(id)
-export const deletePreAuthKey = (id: string) =>
-  defaultClient().deletePreAuthKey(id)
+export const createPreAuthKey = (opts: Parameters<HeadscaleClient['createPreAuthKey']>[0]) =>
+  defaultClient().createPreAuthKey(opts)
+export const expirePreAuthKey = (id: string) => defaultClient().expirePreAuthKey(id)
+export const deletePreAuthKey = (id: string) => defaultClient().deletePreAuthKey(id)
 export const listUsers = () => defaultClient().listUsers()
 export const createHsUser = (name: string) => defaultClient().createUser(name)
 export const deleteHsUser = (id: string) => defaultClient().deleteUser(id)

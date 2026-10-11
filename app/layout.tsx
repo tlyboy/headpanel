@@ -14,11 +14,7 @@ export const metadata: Metadata = {
   description: 'A modern management console for headscale control planes',
 }
 
-export default async function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const locale = await getLocale()
 
   return (

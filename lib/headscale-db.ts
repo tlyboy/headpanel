@@ -64,11 +64,7 @@ function inCidr(ip: number, cidr: string): boolean {
 // Private subnets. Deliberately exclude 100.64/10 (those are tailnet addresses) and 198.18/15
 // (fake IPs used by user-space implementations such as Surge, not real local network addresses).
 function isPrivateLan(ip: number): boolean {
-  return (
-    inCidr(ip, '10.0.0.0/8') ||
-    inCidr(ip, '172.16.0.0/12') ||
-    inCidr(ip, '192.168.0.0/16')
-  )
+  return inCidr(ip, '10.0.0.0/8') || inCidr(ip, '172.16.0.0/12') || inCidr(ip, '192.168.0.0/16')
 }
 
 // endpoints contain three kinds of addresses: public egress, real local network IPs, and addresses
@@ -167,9 +163,7 @@ export function readNodeNetInfo(): Map<string, NodeNetInfo> {
   if (!db) return out
   let rows: HeadscaleNodeRow[]
   try {
-    rows = db
-      .prepare('SELECT id, endpoints, host_info FROM nodes')
-      .all() as HeadscaleNodeRow[]
+    rows = db.prepare('SELECT id, endpoints, host_info FROM nodes').all() as HeadscaleNodeRow[]
   } catch {
     return out
   }
@@ -181,9 +175,7 @@ export function readNodeNetInfo(): Map<string, NodeNetInfo> {
       try {
         const h = JSON.parse(r.host_info) as Record<string, unknown>
         if (Array.isArray(h.RoutableIPs)) {
-          routable = h.RoutableIPs.filter(
-            (x): x is string => typeof x === 'string',
-          )
+          routable = h.RoutableIPs.filter((x): x is string => typeof x === 'string')
         }
         if (typeof h.OS === 'string') os = h.OS
         if (typeof h.IPNVersion === 'string') {

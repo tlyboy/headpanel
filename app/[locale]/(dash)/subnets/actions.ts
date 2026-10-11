@@ -6,18 +6,8 @@ import { requireSuper } from '@/lib/auth'
 import { routeTarget } from '@/lib/audit'
 import { auditAfter } from '@/lib/db'
 import { listGroups } from '@/lib/groups'
-import {
-  addSubnetDst,
-  removeSubnetDst,
-  updateBaselineAndApply,
-} from '@/lib/policy'
-import {
-  approveRoutes,
-  getNode,
-  listNodes,
-  HeadscaleError,
-  type HsNode,
-} from '@/lib/headscale'
+import { addSubnetDst, removeSubnetDst, updateBaselineAndApply } from '@/lib/policy'
+import { approveRoutes, getNode, listNodes, HeadscaleError, type HsNode } from '@/lib/headscale'
 
 export interface RouteResult {
   ok: boolean
@@ -47,24 +37,13 @@ async function setRouteApproval(
   return { node, before, after: next }
 }
 
-export async function approveRouteAction(
-  nodeId: string,
-  route: string,
-): Promise<RouteResult> {
-  const [session, t] = await Promise.all([
-    requireSuper(),
-    getTranslations('actionErrors'),
-  ])
+export async function approveRouteAction(nodeId: string, route: string): Promise<RouteResult> {
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
   try {
     const { node, after } = await setRouteApproval(nodeId, route, true)
-    auditAfter(
-      'route.approve',
-      routeTarget(node, route),
-      `approved=${after.join(',')}`,
-      {
-        actor: session.sub,
-      },
-    )
+    auditAfter('route.approve', routeTarget(node, route), `approved=${after.join(',')}`, {
+      actor: session.sub,
+    })
     // Approving a route only tells headscale to recognize it; if the ACL's dst doesn't include that subnet, packets will still be dropped,
     // so allow it at the same time — otherwise users would have to SSH into the server and edit the baseline file.
     try {
@@ -88,35 +67,19 @@ export async function approveRouteAction(
   }
 }
 
-export async function revokeRouteAction(
-  nodeId: string,
-  route: string,
-): Promise<RouteResult> {
-  const [session, t] = await Promise.all([
-    requireSuper(),
-    getTranslations('actionErrors'),
-  ])
+export async function revokeRouteAction(nodeId: string, route: string): Promise<RouteResult> {
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
   try {
     const { node, after } = await setRouteApproval(nodeId, route, false)
-    auditAfter(
-      'route.revoke',
-      routeTarget(node, route),
-      `approved=${after.join(',')}`,
-      {
-        actor: session.sub,
-      },
-    )
+    auditAfter('route.revoke', routeTarget(node, route), `approved=${after.join(',')}`, {
+      actor: session.sub,
+    })
     // Revoke the ACL only when no nodes have this subnet approved anymore — if there are backup nodes,
     // revoking it would cut off a subnet that's still in service.
     try {
       const nodes = await listNodes()
-      const stillApproved = nodes.some((n) =>
-        (n.approvedRoutes ?? []).includes(route),
-      )
-      if (
-        !stillApproved &&
-        (await updateBaselineAndApply(removeSubnetDst(route), listGroups()))
-      ) {
+      const stillApproved = nodes.some((n) => (n.approvedRoutes ?? []).includes(route))
+      if (!stillApproved && (await updateBaselineAndApply(removeSubnetDst(route), listGroups()))) {
         auditAfter('policy.revokeSubnet', route, undefined, {
           actor: session.sub,
         })
@@ -143,20 +106,12 @@ export async function revokeRouteAction(
 //     and passing an empty array would also remove approvals for the node's other subnets.
 //  2. Put restoration in finally. If any step fails midway, all revoked backups must be restored,
 //     otherwise redundancy will be silently lost and no one will notice.
-export async function makePrimaryAction(
-  route: string,
-  targetNodeId: string,
-): Promise<RouteResult> {
-  const [session, t] = await Promise.all([
-    requireSuper(),
-    getTranslations('actionErrors'),
-  ])
+export async function makePrimaryAction(route: string, targetNodeId: string): Promise<RouteResult> {
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
   const revoked: { node: HsNode; routes: string[] }[] = []
   try {
     const nodes = await listNodes()
-    const approved = nodes.filter((n) =>
-      (n.approvedRoutes ?? []).includes(route),
-    )
+    const approved = nodes.filter((n) => (n.approvedRoutes ?? []).includes(route))
     const target = approved.find((n) => n.id === targetNodeId)
     if (!target) return { ok: false, error: t('routeNotApproved') }
     if ((target.subnetRoutes ?? []).includes(route)) return { ok: true }
@@ -176,14 +131,9 @@ export async function makePrimaryAction(
     for (const r of revoked) {
       // If restoration fails, all we can do is log it for the audit — throwing here would mask the actual failure reason.
       await approveRoutes(r.node.id, r.routes).catch(() => {
-        auditAfter(
-          'route.restoreFailed',
-          routeTarget(r.node, route),
-          undefined,
-          {
-            actor: session.sub,
-          },
-        )
+        auditAfter('route.restoreFailed', routeTarget(r.node, route), undefined, {
+          actor: session.sub,
+        })
       })
     }
   }

@@ -50,10 +50,7 @@ export default async function PendingPage({
     .filter((n) => n.status === 'pending')
     .filter((n) => {
       if (!q) return true
-      return [n.givenName, ...n.ipAddresses, ...n.tags]
-        .join(' ')
-        .toLowerCase()
-        .includes(q)
+      return [n.givenName, ...n.ipAddresses, ...n.tags].join(' ').toLowerCase().includes(q)
     })
 
   const columns: ColumnDef[] = [
@@ -71,9 +68,7 @@ export default async function PendingPage({
     <div className="flex flex-col gap-4">
       <ListFilters
         placeholder={t('searchPlaceholder')}
-        columns={
-          <ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />
-        }
+        columns={<ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />}
       />
 
       <div className="rounded-md border">
@@ -85,10 +80,7 @@ export default async function PendingPage({
               {show('ip') && <TableHead>IP</TableHead>}
               {show('tags') && <TableHead>{t('tags')}</TableHead>}
               {show('createdAt') && <TableHead>{t('createdAt')}</TableHead>}
-              <TableHead
-                className={STICKY_ACTIONS}
-                aria-label={t('approval')}
-              />
+              <TableHead className={STICKY_ACTIONS} aria-label={t('approval')} />
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -104,23 +96,15 @@ export default async function PendingPage({
             ) : (
               pending.map((n) => (
                 <TableRow key={n.id}>
-                  {show('id') && (
-                    <TableCell className="text-muted-foreground">
-                      {n.id}
-                    </TableCell>
-                  )}
-                  {show('alias') && (
-                    <TableCell className="font-medium">{n.givenName}</TableCell>
-                  )}
+                  {show('id') && <TableCell className="text-muted-foreground">{n.id}</TableCell>}
+                  {show('alias') && <TableCell className="font-medium">{n.givenName}</TableCell>}
                   {show('ip') && (
                     <TableCell className="font-mono text-xs">
                       {pickIpv4(n.ipAddresses) ?? '—'}
                     </TableCell>
                   )}
                   {show('tags') && (
-                    <TableCell className="text-xs">
-                      {n.tags.join(', ') || '—'}
-                    </TableCell>
+                    <TableCell className="text-xs">{n.tags.join(', ') || '—'}</TableCell>
                   )}
                   {show('createdAt') && (
                     <TableCell className="text-xs text-muted-foreground">

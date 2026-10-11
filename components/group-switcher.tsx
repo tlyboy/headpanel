@@ -72,9 +72,7 @@ export function GroupSwitcher({
               {active ? <Boxes /> : <Layers />}
             </span>
             <span className="grid flex-1 text-left leading-tight">
-              <span className="truncate font-semibold">
-                {active ? active.name : productName}
-              </span>
+              <span className="truncate font-semibold">{active ? active.name : productName}</span>
               <span className="truncate text-xs text-muted-foreground">
                 {active ? t('actingAs') : t('allGroups')}
               </span>
@@ -98,11 +96,7 @@ export function GroupSwitcher({
                 {activeId === null && <Check />}
               </DropdownMenuItem>
               {groups.map((g) => (
-                <DropdownMenuItem
-                  key={g.id}
-                  onClick={() => pick(g.id)}
-                  className="gap-2"
-                >
+                <DropdownMenuItem key={g.id} onClick={() => pick(g.id)} className="gap-2">
                   <Boxes />
                   <span className="flex-1 truncate">{g.name}</span>
                   {activeId === g.id && <Check />}
@@ -110,21 +104,14 @@ export function GroupSwitcher({
               ))}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem
-              onClick={() => setCreateOpen(true)}
-              className="gap-2"
-            >
+            <DropdownMenuItem onClick={() => setCreateOpen(true)} className="gap-2">
               <Plus />
               <span className="text-muted-foreground">{t('addGroup')}</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
         {/* Must be rendered outside DropdownMenu: clicking a menu item closes it, and the dialog would be unmounted before it can open. */}
-        <CreateGroup
-          open={createOpen}
-          onOpenChange={setCreateOpen}
-          hideTrigger
-        />
+        <CreateGroup open={createOpen} onOpenChange={setCreateOpen} hideTrigger />
       </SidebarMenuItem>
     </SidebarMenu>
   )

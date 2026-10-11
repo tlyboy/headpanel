@@ -105,16 +105,8 @@ export function CreateKey({
               <code className="min-w-0 flex-1 truncate rounded bg-muted px-2 py-1.5 font-mono text-xs">
                 {result}
               </code>
-              <Button
-                size="icon"
-                variant="outline"
-                onClick={() => copy(result)}
-              >
-                {copied ? (
-                  <Check className="size-4" />
-                ) : (
-                  <Copy className="size-4" />
-                )}
+              <Button size="icon" variant="outline" onClick={() => copy(result)}>
+                {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
               </Button>
             </div>
           </div>
@@ -125,27 +117,21 @@ export function CreateKey({
                 <Label htmlFor="group">{t('group')}</Label>
                 <Select
                   items={[
-                    ...(canUseDefault
-                      ? [{ value: DEFAULT_ZONE, label: t('defaultZone') }]
-                      : []),
+                    ...(canUseDefault ? [{ value: DEFAULT_ZONE, label: t('defaultZone') }] : []),
                     ...groups.map((g) => ({
                       value: String(g.id),
                       label: g.name,
                     })),
                   ]}
                   value={groupId == null ? DEFAULT_ZONE : String(groupId)}
-                  onValueChange={(v) =>
-                    v && setGroupId(v === DEFAULT_ZONE ? null : Number(v))
-                  }
+                  onValueChange={(v) => v && setGroupId(v === DEFAULT_ZONE ? null : Number(v))}
                 >
                   <SelectTrigger id="group">
                     <SelectValue placeholder={t('selectGroup')} />
                   </SelectTrigger>
                   <SelectContent>
                     {canUseDefault && (
-                      <SelectItem value={DEFAULT_ZONE}>
-                        {t('defaultZone')}
-                      </SelectItem>
+                      <SelectItem value={DEFAULT_ZONE}>{t('defaultZone')}</SelectItem>
                     )}
                     {groups.map((g) => (
                       <SelectItem key={g.id} value={String(g.id)}>
@@ -227,17 +213,10 @@ export function CreateKey({
             <Button onClick={() => close(false)}>{t('done')}</Button>
           ) : (
             <>
-              <Button
-                variant="outline"
-                onClick={() => close(false)}
-                disabled={pending}
-              >
+              <Button variant="outline" onClick={() => close(false)} disabled={pending}>
                 {common('cancel')}
               </Button>
-              <Button
-                onClick={submit}
-                disabled={pending || (groupId == null && !canUseDefault)}
-              >
+              <Button onClick={submit} disabled={pending || (groupId == null && !canUseDefault)}>
                 {pending ? t('generating') : t('generate')}
               </Button>
             </>

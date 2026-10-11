@@ -19,8 +19,6 @@ export function pruneOrphanKeys(liveKeys: HsPreAuthKey[]): void {
     .map((r) => r.headscaleId)
     .filter((id) => !liveIds.has(id))
   if (orphanIds.length) {
-    db.delete(preauthKeys)
-      .where(inArray(preauthKeys.headscaleId, orphanIds))
-      .run()
+    db.delete(preauthKeys).where(inArray(preauthKeys.headscaleId, orphanIds)).run()
   }
 }

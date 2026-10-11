@@ -21,13 +21,7 @@ import {
 import { updateIpv4PrefixAction } from './actions'
 import { noAutofill } from '@/lib/no-autofill'
 
-export function NetworkForm({
-  ipv4Prefix,
-  usedIpv4,
-}: {
-  ipv4Prefix: string
-  usedIpv4: string[]
-}) {
+export function NetworkForm({ ipv4Prefix, usedIpv4 }: { ipv4Prefix: string; usedIpv4: string[] }) {
   const t = useTranslations('networkForm')
   const common = useTranslations('common')
   const router = useRouter()
@@ -72,11 +66,7 @@ export function NetworkForm({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
-            type="button"
-            disabled={pending || !changed}
-            onClick={() => setConfirmOpen(true)}
-          >
+          <Button type="button" disabled={pending || !changed} onClick={() => setConfirmOpen(true)}>
             <Save className="size-4" />
             {pending ? common('saving') : t('saveRestart')}
           </Button>
@@ -106,9 +96,7 @@ export function NetworkForm({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>
-              {common('cancel')}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
               onClick={(e) => {

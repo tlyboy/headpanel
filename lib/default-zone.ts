@@ -30,11 +30,9 @@ export function approvedTag(): string {
 
 // Look up the default user by name and get its id (createPreAuthKey requires an id, not a name).
 // Cache by request so multiple uses within one request don't call headscale repeatedly.
-export const resolveDefaultHsUser = cache(
-  async function resolveDefaultHsUser(): Promise<HsUser> {
-    const name = defaultHsUserName()
-    const user = (await listUsers()).find((u) => u.name === name)
-    if (!user) throw new DefaultZoneError(name)
-    return user
-  },
-)
+export const resolveDefaultHsUser = cache(async function resolveDefaultHsUser(): Promise<HsUser> {
+  const name = defaultHsUserName()
+  const user = (await listUsers()).find((u) => u.name === name)
+  if (!user) throw new DefaultZoneError(name)
+  return user
+})

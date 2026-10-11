@@ -110,9 +110,7 @@ export function ListFilters({
                 // Pass null when unfiltered, not __all: the placeholder is shown only when no value is selected.
                 // Don't pass undefined either; that makes Select uncontrolled, so it won't update when the URL changes
                 value={params.get(s.name) ?? null}
-                onValueChange={(v) =>
-                  setParam(s.name, !v || v === '__all' ? '' : v)
-                }
+                onValueChange={(v) => setParam(s.name, !v || v === '__all' ? '' : v)}
               >
                 <SelectTrigger className="w-40">
                   <SelectValue placeholder={s.placeholder} />

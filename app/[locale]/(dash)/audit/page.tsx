@@ -16,12 +16,7 @@ import {
 } from '@/components/columns'
 import { ListPager } from '@/components/list-pager'
 import { resolvePerPage } from '@/components/pager'
-import {
-  auditKind,
-  AUDIT_KIND_VARIANT,
-  displayTarget,
-  legacyNodeId,
-} from '@/lib/audit'
+import { auditKind, AUDIT_KIND_VARIANT, displayTarget, legacyNodeId } from '@/lib/audit'
 import { listNodes } from '@/lib/headscale'
 import { Badge } from '@/components/ui/badge'
 import {
@@ -82,24 +77,17 @@ export default async function AuditPage({
     // RSC + force-dynamic: the current time is fetched on the server for every request, as expected.
     // eslint-disable-next-line react-hooks/purity
     const now = Date.now()
-    const since = new Date(now - (days - 1) * 86400_000)
-      .toISOString()
-      .slice(0, 10)
+    const since = new Date(now - (days - 1) * 86400_000).toISOString().slice(0, 10)
     conds.push(gte(sql`date(${auditLog.ts})`, since))
   }
   if (q) {
     const kw = `%${q}%`
-    const m = or(
-      like(auditLog.actor, kw),
-      like(auditLog.target, kw),
-      like(auditLog.detail, kw),
-    )
+    const m = or(like(auditLog.actor, kw), like(auditLog.target, kw), like(auditLog.detail, kw))
     if (m) conds.push(m)
   }
   const where = conds.length ? and(...conds) : undefined
 
-  const total =
-    db.select({ n: count() }).from(auditLog).where(where).get()?.n ?? 0
+  const total = db.select({ n: count() }).from(auditLog).where(where).get()?.n ?? 0
   const pageCount = Math.max(1, Math.ceil(total / perPage))
   const columns: ColumnDef[] = [
     { key: 'time', label: t('time') },
@@ -136,11 +124,7 @@ export default async function AuditPage({
   const actions = db
     .selectDistinct({ a: auditLog.action })
     .from(auditLog)
-    .where(
-      session.role === 'super'
-        ? undefined
-        : eq(auditLog.groupId, session.gid as number),
-    )
+    .where(session.role === 'super' ? undefined : eq(auditLog.groupId, session.gid as number))
     .all()
     .map((r) => r.a)
     .sort()
@@ -149,9 +133,7 @@ export default async function AuditPage({
     <div className="flex flex-col gap-4">
       <ListFilters
         placeholder={t('searchPlaceholder')}
-        columns={
-          <ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />
-        }
+        columns={<ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />}
         selects={[
           {
             name: 'range',
@@ -179,9 +161,7 @@ export default async function AuditPage({
         <Table>
           <TableHeader>
             <TableRow>
-              {show('time') && (
-                <TableHead className="w-44">{t('time')}</TableHead>
-              )}
+              {show('time') && <TableHead className="w-44">{t('time')}</TableHead>}
               {show('actor') && <TableHead>{t('actor')}</TableHead>}
               {show('action') && <TableHead>{t('action')}</TableHead>}
               {show('target') && <TableHead>{t('target')}</TableHead>}
@@ -209,9 +189,7 @@ export default async function AuditPage({
                       {fmtTime(r.ts.replace(' ', 'T') + 'Z')}
                     </TableCell>
                   )}
-                  {show('actor') && (
-                    <TableCell className="text-xs">{r.actor ?? '—'}</TableCell>
-                  )}
+                  {show('actor') && <TableCell className="text-xs">{r.actor ?? '—'}</TableCell>}
                   {show('action') && (
                     <TableCell>
                       <Badge variant={AUDIT_KIND_VARIANT[auditKind(r.action)]}>
@@ -236,12 +214,7 @@ export default async function AuditPage({
         </Table>
       </div>
 
-      <ListPager
-        page={current}
-        pageCount={pageCount}
-        total={total}
-        perPage={perPage}
-      />
+      <ListPager page={current} pageCount={pageCount} total={total} perPage={perPage} />
     </div>
   )
 }

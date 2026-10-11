@@ -16,10 +16,7 @@ export const SCRIPT_FILES = [
   'uninstall-zerotier.ps1',
 ] as const
 
-export async function GET(
-  _req: Request,
-  { params }: { params: Promise<{ name: string }> },
-) {
+export async function GET(_req: Request, { params }: { params: Promise<{ name: string }> }) {
   const { name } = await params
   const safe = basename(name) // Prevent path traversal
 

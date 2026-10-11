@@ -41,11 +41,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import {
-  deleteGroupAction,
-  renameGroupAction,
-  resetGroupAdminPasswordAction,
-} from './actions'
+import { deleteGroupAction, renameGroupAction, resetGroupAdminPasswordAction } from './actions'
 import { noAutofill } from '@/lib/no-autofill'
 
 export interface GroupAdmin {
@@ -104,9 +100,7 @@ export function GroupRowActions({
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger
-          render={<Button variant="ghost" size="icon" aria-label={t('menu')} />}
-        >
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t('menu')} />}>
           <MoreHorizontal />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -131,10 +125,7 @@ export function GroupRowActions({
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => setDelOpen(true)}
-          >
+          <DropdownMenuItem variant="destructive" onClick={() => setDelOpen(true)}>
             {common('delete')}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -157,11 +148,7 @@ export function GroupRowActions({
             />
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRenameOpen(false)}
-              disabled={pending}
-            >
+            <Button variant="outline" onClick={() => setRenameOpen(false)} disabled={pending}>
               {common('cancel')}
             </Button>
             <Button
@@ -184,9 +171,7 @@ export function GroupRowActions({
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('resetPasswordTitle', { name })}</DialogTitle>
-            <DialogDescription>
-              {t('resetPasswordDescription')}
-            </DialogDescription>
+            <DialogDescription>{t('resetPasswordDescription')}</DialogDescription>
           </DialogHeader>
           <div className="flex flex-col gap-4">
             {admins.length > 1 && (
@@ -229,11 +214,7 @@ export function GroupRowActions({
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setPwOpen(false)}
-              disabled={pending}
-            >
+            <Button variant="outline" onClick={() => setPwOpen(false)} disabled={pending}>
               {common('cancel')}
             </Button>
             <Button
@@ -273,9 +254,7 @@ export function GroupRowActions({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>
-              {common('cancel')}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               disabled={pending || blocked}
               onClick={(e) => {

@@ -5,10 +5,7 @@ import { getTranslations } from 'next-intl/server'
 import { requireSuper } from '@/lib/auth'
 import { onlyIpv4 } from '@/lib/format'
 import { auditAfter } from '@/lib/db'
-import {
-  requireHeadscaleHostControl,
-  updateHeadscaleIpv4Prefix,
-} from '@/lib/headscale-config'
+import { requireHeadscaleHostControl, updateHeadscaleIpv4Prefix } from '@/lib/headscale-config'
 import { listNodes } from '@/lib/headscale'
 
 export interface ActionResult {
@@ -21,13 +18,8 @@ function fail(e: unknown, unknownMessage: string): ActionResult {
   return { ok: false, error: e instanceof Error ? e.message : unknownMessage }
 }
 
-export async function updateIpv4PrefixAction(
-  ipv4Prefix: string,
-): Promise<ActionResult> {
-  const [session, t] = await Promise.all([
-    requireSuper(),
-    getTranslations('actionErrors'),
-  ])
+export async function updateIpv4PrefixAction(ipv4Prefix: string): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
   requireHeadscaleHostControl()
   try {
     const nodes = await listNodes()

@@ -3,10 +3,7 @@ import { notFound } from 'next/navigation'
 import { requireSuper } from '@/lib/auth'
 import { onlyIpv4 } from '@/lib/format'
 import { listNodes } from '@/lib/headscale'
-import {
-  isHeadscaleHostControlEnabled,
-  readHeadscaleNetworkConfig,
-} from '@/lib/headscale-config'
+import { isHeadscaleHostControlEnabled, readHeadscaleNetworkConfig } from '@/lib/headscale-config'
 import { Badge } from '@/components/ui/badge'
 import { NetworkForm } from './network-form'
 
@@ -15,10 +12,7 @@ export const dynamic = 'force-dynamic'
 export default async function NetworkPage() {
   const [, t] = await Promise.all([requireSuper(), getTranslations('network')])
   if (!isHeadscaleHostControlEnabled()) notFound()
-  const [config, nodes] = await Promise.all([
-    readHeadscaleNetworkConfig(),
-    listNodes(),
-  ])
+  const [config, nodes] = await Promise.all([readHeadscaleNetworkConfig(), listNodes()])
   const usedIpv4 = nodes
     .flatMap((n) => onlyIpv4(n.ipAddresses))
     .sort((a, b) => a.localeCompare(b, undefined, { numeric: true }))
@@ -55,9 +49,7 @@ export default async function NetworkPage() {
             <div>
               <dt className="text-muted-foreground">{t('usedIpv4')}</dt>
               <dd>
-                <Badge variant="secondary">
-                  {t('count', { count: usedIpv4.length })}
-                </Badge>
+                <Badge variant="secondary">{t('count', { count: usedIpv4.length })}</Badge>
               </dd>
             </div>
           </dl>

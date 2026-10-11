@@ -26,13 +26,7 @@ function ToolbarSkeleton({
   )
 }
 
-function TableSkeleton({
-  columns,
-  rows = 6,
-}: {
-  columns: number
-  rows?: number
-}) {
+function TableSkeleton({ columns, rows = 6 }: { columns: number; rows?: number }) {
   return (
     <div className="overflow-hidden rounded-md border">
       <div
@@ -144,20 +138,18 @@ export function ScriptsPageSkeleton() {
           <Skeleton className="mb-2 h-6 w-28" />
           <Skeleton className="mb-6 h-4 w-36" />
           <div className="space-y-2">
-            {Array.from({ length: cardIndex === 0 ? 3 : 4 }).map(
-              (_, rowIndex) => (
-                <div
-                  key={rowIndex}
-                  className="flex items-center justify-between gap-4 rounded-md border px-3 py-2"
-                >
-                  <div className="space-y-2">
-                    <Skeleton className="h-4 w-48 max-w-[50vw]" />
-                    <Skeleton className="h-3 w-60 max-w-[55vw]" />
-                  </div>
-                  <Skeleton className="h-8 w-20" />
+            {Array.from({ length: cardIndex === 0 ? 3 : 4 }).map((_, rowIndex) => (
+              <div
+                key={rowIndex}
+                className="flex items-center justify-between gap-4 rounded-md border px-3 py-2"
+              >
+                <div className="space-y-2">
+                  <Skeleton className="h-4 w-48 max-w-[50vw]" />
+                  <Skeleton className="h-3 w-60 max-w-[55vw]" />
                 </div>
-              ),
-            )}
+                <Skeleton className="h-8 w-20" />
+              </div>
+            ))}
           </div>
         </div>
       ))}

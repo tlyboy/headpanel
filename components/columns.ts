@@ -37,19 +37,13 @@ export function serializeHidden(hidden: Set<string>): string {
 }
 
 /** Check during rendering whether a column is visible. Locked columns ignore the cookie and are always shown */
-export function makeIsVisible(
-  columns: ColumnDef[],
-  hidden: Set<string>,
-): (key: string) => boolean {
+export function makeIsVisible(columns: ColumnDef[], hidden: Set<string>): (key: string) => boolean {
   const locked = new Set(columns.filter((c) => c.locked).map((c) => c.key))
   return (key) => locked.has(key) || !hidden.has(key)
 }
 
 /** The colSpan on the table's empty-state row must track the number of visible columns, or it will be misaligned */
-export function visibleCount(
-  columns: ColumnDef[],
-  hidden: Set<string>,
-): number {
+export function visibleCount(columns: ColumnDef[], hidden: Set<string>): number {
   const isVisible = makeIsVisible(columns, hidden)
   return columns.filter((c) => isVisible(c.key)).length
 }

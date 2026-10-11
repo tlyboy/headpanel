@@ -3,12 +3,7 @@
 import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import { getLocale } from 'next-intl/server'
-import {
-  destroySession,
-  requireRealSession,
-  requireSession,
-  IMPERSONATE_COOKIE,
-} from '@/lib/auth'
+import { destroySession, requireRealSession, requireSession, IMPERSONATE_COOKIE } from '@/lib/auth'
 import { auditAfter } from '@/lib/db'
 import { visibleGroups } from '@/lib/groups'
 import { redirect } from '@/i18n/navigation'

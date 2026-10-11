@@ -8,12 +8,7 @@ import { auditAfter } from '@/lib/db'
 import { approvedTag } from '@/lib/default-zone'
 import { groupForNode } from '@/lib/groups'
 import { setNodeStatus } from '@/lib/nodes-sync'
-import {
-  deleteNode,
-  getNode,
-  setNodeTags,
-  HeadscaleError,
-} from '@/lib/headscale'
+import { deleteNode, getNode, setNodeTags, HeadscaleError } from '@/lib/headscale'
 
 export interface ActionResult {
   ok: boolean
@@ -29,10 +24,7 @@ function fail(e: unknown, unknownMessage: string): ActionResult {
 // ok_tag; nodes that don't belong to any group are assigned to the default zone and get the default zone's approvedTag.
 // First resolve the node's group and verify that the current session is authorized to act on it (to prevent approving nodes in other groups without permission).
 export async function approveNodeAction(id: string): Promise<ActionResult> {
-  const [session, t] = await Promise.all([
-    requireSession(),
-    getTranslations('actionErrors'),
-  ])
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   try {
     const node = await getNode(id)
     const group = groupForNode(session, node)
@@ -58,24 +50,16 @@ export async function approveNodeAction(id: string): Promise<ActionResult> {
 
 // Reject: permanently delete the node (reclaim its IP) and set its local status to rejected (after the node is deleted, its meta will be cleaned up during synchronization)
 export async function rejectNodeAction(id: string): Promise<ActionResult> {
-  const [session, t] = await Promise.all([
-    requireSession(),
-    getTranslations('actionErrors'),
-  ])
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   try {
     const node = await getNode(id)
     const group = groupForNode(session, node)
     setNodeStatus(id, 'rejected', session.sub)
     await deleteNode(id)
-    auditAfter(
-      'node.reject',
-      nodeTarget(node),
-      `group=${group?.slug ?? 'default'} deleted`,
-      {
-        groupId: group?.id ?? null,
-        actor: session.sub,
-      },
-    )
+    auditAfter('node.reject', nodeTarget(node), `group=${group?.slug ?? 'default'} deleted`, {
+      groupId: group?.id ?? null,
+      actor: session.sub,
+    })
     revalidatePath('/pending')
     revalidatePath('/nodes')
     return { ok: true }

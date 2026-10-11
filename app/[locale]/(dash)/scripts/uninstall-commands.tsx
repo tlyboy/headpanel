@@ -1,13 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CmdBlock } from '@/components/cmd-block'
 import { useCurrentOrigin } from '@/lib/use-current-origin'
 

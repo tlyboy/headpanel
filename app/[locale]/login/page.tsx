@@ -6,19 +6,8 @@ import { CableIcon } from 'lucide-react'
 import { login, type LoginState } from './actions'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
-import {
-  Field,
-  FieldError,
-  FieldGroup,
-  FieldLabel,
-} from '@/components/ui/field'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Field, FieldError, FieldGroup, FieldLabel } from '@/components/ui/field'
 import { LanguageToggle } from '@/components/language-toggle'
 import { ModeToggle } from '@/components/mode-toggle'
 import { GitHubLink } from '@/components/github-link'

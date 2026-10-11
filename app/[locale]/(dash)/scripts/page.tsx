@@ -2,13 +2,7 @@ import { Download } from 'lucide-react'
 import { getTranslations } from 'next-intl/server'
 import { getPanelBasePath } from '@/lib/panel-base-path'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { UninstallCommands } from './uninstall-commands'
 
 type ScriptDescKey =
@@ -48,10 +42,7 @@ const GROUPS: {
 
 export default async function ScriptsPage() {
   const basePath = getPanelBasePath()
-  const [t, common] = await Promise.all([
-    getTranslations('scripts'),
-    getTranslations('common'),
-  ])
+  const [t, common] = await Promise.all([getTranslations('scripts'), getTranslations('common')])
 
   return (
     <div className="flex flex-col gap-6">
@@ -59,9 +50,7 @@ export default async function ScriptsPage() {
         <Card key={g.titleKey}>
           <CardHeader>
             <CardTitle>{t(g.titleKey)}</CardTitle>
-            <CardDescription>
-              {t('scriptCount', { count: g.items.length })}
-            </CardDescription>
+            <CardDescription>{t('scriptCount', { count: g.items.length })}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-col gap-2">
             {g.items.map((it) => (
@@ -71,17 +60,13 @@ export default async function ScriptsPage() {
               >
                 <div className="min-w-0">
                   <div className="font-mono text-sm">{it.file}</div>
-                  <div className="text-xs text-muted-foreground">
-                    {t(it.descKey)}
-                  </div>
+                  <div className="text-xs text-muted-foreground">{t(it.descKey)}</div>
                 </div>
                 <Button
                   size="sm"
                   variant="outline"
                   nativeButton={false}
-                  render={
-                    <a href={`${basePath}/api/scripts/${it.file}`} download />
-                  }
+                  render={<a href={`${basePath}/api/scripts/${it.file}`} download />}
                 >
                   <Download className="size-4" />
                   {common('download')}

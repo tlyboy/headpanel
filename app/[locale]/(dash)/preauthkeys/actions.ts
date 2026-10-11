@@ -8,11 +8,7 @@ import { approvedTag, resolveDefaultHsUser } from '@/lib/default-zone'
 import { getGroup, visibleGroups } from '@/lib/groups'
 import { auditAfter, db } from '@/lib/db'
 import { preauthKeys, type Group } from '@/lib/db/schema'
-import {
-  createPreAuthKey,
-  deletePreAuthKey,
-  HeadscaleError,
-} from '@/lib/headscale'
+import { createPreAuthKey, deletePreAuthKey, HeadscaleError } from '@/lib/headscale'
 
 // review: No tag; upon joining, there is no access tag, so the node is quarantined and awaits approval.
 // direct: Includes an allow tag (the group's ok_tag or the default area's approvedTag), so the node is allowed in immediately.
@@ -38,10 +34,7 @@ export async function createKeyAction(input: {
   days: number
   mode: AccessMode
 }): Promise<KeyResult> {
-  const [session, t] = await Promise.all([
-    requireSession(),
-    getTranslations('actionErrors'),
-  ])
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   let group: Group | undefined
   if (input.groupId != null) {
     // Validate that the target group is visible in the session (to prevent issuing keys to other groups without authorization).
@@ -99,16 +92,9 @@ export async function createKeyAction(input: {
 
 // Both v0.28 and v0.29 support DELETE /api/v1/preauthkey?id=..., so Headscale does not need to run on the same host.
 export async function deleteKeyAction(id: string): Promise<KeyResult> {
-  const [session, t] = await Promise.all([
-    requireSession(),
-    getTranslations('actionErrors'),
-  ])
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   // Use the local group_id to validate ownership (only super can delete older keys with no local record).
-  const local = db
-    .select()
-    .from(preauthKeys)
-    .where(eq(preauthKeys.headscaleId, id))
-    .get()
+  const local = db.select().from(preauthKeys).where(eq(preauthKeys.headscaleId, id)).get()
   if (session.role !== 'super') {
     if (!local || local.groupId == null || local.groupId !== session.gid) {
       return { ok: false, error: t('forbiddenDeleteKey') }

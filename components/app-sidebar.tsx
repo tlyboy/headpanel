@@ -2,10 +2,7 @@
 
 import { CableIcon } from 'lucide-react'
 import { Link } from '@/i18n/navigation'
-import {
-  GroupSwitcher,
-  type SwitchableGroup,
-} from '@/components/group-switcher'
+import { GroupSwitcher, type SwitchableGroup } from '@/components/group-switcher'
 import { SidebarNav } from '@/components/sidebar-nav'
 import { SidebarUserMenu } from '@/components/sidebar-user-menu'
 import {
@@ -42,11 +39,7 @@ export function AppSidebar({
     <Sidebar collapsible="icon">
       <SidebarHeader>
         {showSwitcher ? (
-          <GroupSwitcher
-            groups={groups}
-            activeId={activeGroupId}
-            productName={productName}
-          />
+          <GroupSwitcher groups={groups} activeId={activeGroupId} productName={productName} />
         ) : (
           <SidebarMenu>
             <SidebarMenuItem>
@@ -56,9 +49,7 @@ export function AppSidebar({
                 </span>
                 <span className="grid flex-1 text-left leading-tight">
                   <span className="truncate font-semibold">{productName}</span>
-                  <span className="truncate text-xs text-muted-foreground">
-                    headscale
-                  </span>
+                  <span className="truncate text-xs text-muted-foreground">headscale</span>
                 </span>
               </SidebarMenuButton>
             </SidebarMenuItem>

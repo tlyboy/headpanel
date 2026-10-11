@@ -68,9 +68,7 @@ export function ListPager({
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-3 text-sm">
-      <span className="text-muted-foreground">
-        {t('totalItems', { total })}
-      </span>
+      <span className="text-muted-foreground">{t('totalItems', { total })}</span>
 
       <Select
         items={PER_PAGE_OPTIONS.map((n) => ({

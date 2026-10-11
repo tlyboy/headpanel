@@ -46,19 +46,11 @@ export async function createGroupAction(input: {
   adminUsername: string
   adminPassword: string
 }): Promise<GroupResult> {
-  const [session, t] = await Promise.all([
-    requireSuper(),
-    getTranslations('actionErrors'),
-  ])
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
   const username = input.adminUsername.trim()
   if (!username) return { ok: false, error: t('groupAdminRequired') }
-  if (input.adminPassword.length < 6)
-    return { ok: false, error: t('groupAdminPasswordLength') }
-  const dup = db
-    .select()
-    .from(admins)
-    .where(eq(admins.username, username))
-    .get()
+  if (input.adminPassword.length < 6) return { ok: false, error: t('groupAdminPasswordLength') }
+  const dup = db.select().from(admins).where(eq(admins.username, username)).get()
   if (dup) return { ok: false, error: t('accountExists', { username }) }
 
   try {
@@ -80,19 +72,14 @@ export async function createGroupAction(input: {
 }
 
 export async function deleteGroupAction(id: number): Promise<GroupResult> {
-  const [session, t] = await Promise.all([
-    requireSuper(),
-    getTranslations('actionErrors'),
-  ])
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
   try {
     const group = await deleteGroup(id)
     // The group has been deleted, so group_id would become a dangling reference; therefore, include the identifier in target/detail (consistent with group.create).
-    auditAfter(
-      'group.delete',
-      group.slug,
-      `name=${group.name} hsUser=${group.hsUserName}`,
-      { groupId: null, actor: session.sub },
-    )
+    auditAfter('group.delete', group.slug, `name=${group.name} hsUser=${group.hsUserName}`, {
+      groupId: null,
+      actor: session.sub,
+    })
     revalidatePath('/groups')
     revalidatePath('/preauthkeys')
     return { ok: true }
@@ -101,14 +88,8 @@ export async function deleteGroupAction(id: number): Promise<GroupResult> {
   }
 }
 
-export async function renameGroupAction(
-  id: number,
-  name: string,
-): Promise<GroupResult> {
-  const [session, t] = await Promise.all([
-    requireSuper(),
-    getTranslations('actionErrors'),
-  ])
+export async function renameGroupAction(id: number, name: string): Promise<GroupResult> {
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
   try {
     const g = renameGroup(id, name)
     auditAfter('group.rename', g.slug, `name=${g.name}`, {
@@ -128,10 +109,7 @@ export async function resetGroupAdminPasswordAction(input: {
   adminId: number
   password: string
 }): Promise<GroupResult> {
-  const [session, t] = await Promise.all([
-    requireSuper(),
-    getTranslations('actionErrors'),
-  ])
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
   try {
     const username = resetGroupAdminPassword(input)
     auditAfter('group.resetPassword', username, undefined, {

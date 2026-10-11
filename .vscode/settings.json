@@ -10,7 +10,5 @@
   "files.associations": {
     "*.css": "tailwindcss"
   },
-  "i18n-ally.localesPaths": [
-    "messages"
-  ]
+  "i18n-ally.localesPaths": ["messages"]
 }

@@ -90,9 +90,7 @@ CREATE TABLE IF NOT EXISTS preauth_keys (
   addColumnIfMissing('audit_log', 'group_id', 'group_id INTEGER')
   addColumnIfMissing('audit_log', 'actor', 'actor TEXT')
   addColumnIfMissing('groups', 'hs_user_name', 'hs_user_name TEXT')
-  sqlite.exec(
-    'UPDATE groups SET hs_user_name = slug WHERE hs_user_name IS NULL',
-  )
+  sqlite.exec('UPDATE groups SET hs_user_name = slug WHERE hs_user_name IS NULL')
 
   return instance
 }

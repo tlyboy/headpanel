@@ -9,10 +9,7 @@ export interface LoginState {
   error?: string
 }
 
-export async function login(
-  _prev: LoginState,
-  formData: FormData,
-): Promise<LoginState> {
+export async function login(_prev: LoginState, formData: FormData): Promise<LoginState> {
   const [locale, t] = await Promise.all([getLocale(), getTranslations('auth')])
   const username = String(formData.get('username') ?? '').trim()
   const password = String(formData.get('password') ?? '')

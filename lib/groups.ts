@@ -3,19 +3,8 @@ import 'server-only'
 import { cache } from 'react'
 import { eq } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import {
-  admins,
-  auditLog,
-  groups,
-  preauthKeys,
-  type Group,
-} from '@/lib/db/schema'
-import {
-  createHsUser,
-  deleteHsUser,
-  listNodes,
-  listPreAuthKeys,
-} from '@/lib/headscale'
+import { admins, auditLog, groups, preauthKeys, type Group } from '@/lib/db/schema'
+import { createHsUser, deleteHsUser, listNodes, listPreAuthKeys } from '@/lib/headscale'
 import { applyPolicy } from '@/lib/policy'
 import { hashPassword, type Session } from '@/lib/auth'
 
@@ -29,9 +18,7 @@ const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,30}$/
 // ticket (such as tag:approved), and removing tagOwner would zero out the ACL for the entire network.
 export class ProtectedGroupError extends Error {
   constructor(readonly slug: string) {
-    super(
-      `Group "${slug}" was not created by the panel and must not be deleted here`,
-    )
+    super(`Group "${slug}" was not created by the panel and must not be deleted here`)
     this.name = 'ProtectedGroupError'
   }
 }
@@ -47,9 +34,7 @@ export class GroupNotEmptyError extends Error {
     readonly nodeCount: number,
     readonly keyCount: number,
   ) {
-    super(
-      `Group still has ${nodeCount} node(s) and ${keyCount} pre-auth key(s); remove them first`,
-    )
+    super(`Group still has ${nodeCount} node(s) and ${keyCount} pre-auth key(s); remove them first`)
     this.name = 'GroupNotEmptyError'
   }
 }
@@ -74,10 +59,7 @@ type NodeLike = { tags?: string[]; user?: { id: string } | null }
 // Resolve the group a node belongs to. Key point: headscale uniformly overwrites the user field of nodes with forced tags to
 // tagged-devices, so [use the ticket tag first to determine ownership];
 // only pending nodes without a ticket have their real user field, so fall back to matching hsUserId only in that case.
-export function groupOfNode(
-  node: NodeLike,
-  groups: Group[] = listGroups(),
-): Group | undefined {
+export function groupOfNode(node: NodeLike, groups: Group[] = listGroups()): Group | undefined {
   const tags = node.tags ?? []
   const byTag = groups.find((g) => tags.includes(g.okTag))
   if (byTag) return byTag
@@ -88,16 +70,11 @@ export function groupOfNode(
 // Filter nodes to the scope visible to the session. super sees all; group sees only nodes belonging to its group.
 // When super switches to a group, the session itself is already downgraded to that group's group role (see lib/auth.ts),
 // so there is no need to handle the concept of a "current group" here.
-export function scopeNodes<T extends NodeLike>(
-  session: Session,
-  nodes: T[],
-): T[] {
+export function scopeNodes<T extends NodeLike>(session: Session, nodes: T[]): T[] {
   if (session.role === 'super') return nodes
   const groups = listGroups()
   const groupIdByTag = new Map(groups.map((group) => [group.okTag, group.id]))
-  const groupIdByUser = new Map(
-    groups.map((group) => [group.hsUserId, group.id]),
-  )
+  const groupIdByUser = new Map(groups.map((group) => [group.hsUserId, group.id]))
   return nodes.filter((node) => {
     for (const tag of node.tags ?? []) {
       if (groupIdByTag.get(tag) === session.gid) return true
@@ -126,10 +103,7 @@ export function groupForNode(session: Session, node: NodeLike): Group | null {
 
 // Create a group: create a user in headscale → apply ACLs including the new group → save to the database (ok_tag=tag:ok-<slug>).
 // Apply ACLs before saving: if the update fails, remove the newly created headscale user, leaving no orphan or partial result.
-export async function createGroup(input: {
-  slug: string
-  name: string
-}): Promise<Group> {
+export async function createGroup(input: { slug: string; name: string }): Promise<Group> {
   const slug = input.slug.trim().toLowerCase()
   const name = input.name.trim()
   if (!SLUG_RE.test(slug)) {
@@ -172,10 +146,7 @@ export function nodeBelongsToGroup(node: NodeLike, g: Group): boolean {
   return (node.tags ?? []).includes(g.okTag)
 }
 
-export function keyBelongsToGroup(
-  key: { user?: { id: string } | null },
-  g: Group,
-): boolean {
+export function keyBelongsToGroup(key: { user?: { id: string } | null }, g: Group): boolean {
   return key.user?.id === g.hsUserId
 }
 
@@ -211,10 +182,7 @@ export async function deleteGroup(id: number): Promise<Group> {
   db.delete(admins).where(eq(admins.groupId, id)).run()
   // Plaintext key backups must not be retained (security); keep audit records, setting only the dangling group_id to null
   db.delete(preauthKeys).where(eq(preauthKeys.groupId, id)).run()
-  db.update(auditLog)
-    .set({ groupId: null })
-    .where(eq(auditLog.groupId, id))
-    .run()
+  db.update(auditLog).set({ groupId: null }).where(eq(auditLog.groupId, id)).run()
   db.delete(groups).where(eq(groups.id, id)).run()
   return g
 }
@@ -237,8 +205,7 @@ export function resetGroupAdminPassword(input: {
   adminId: number
   password: string
 }) {
-  if (input.password.length < 6)
-    throw new Error('Password must be at least 6 characters')
+  if (input.password.length < 6) throw new Error('Password must be at least 6 characters')
   const row = db.select().from(admins).where(eq(admins.id, input.adminId)).get()
   if (!row || row.groupId !== input.groupId || row.role !== 'group') {
     throw new Error('Account does not belong to this group')
@@ -251,20 +218,11 @@ export function resetGroupAdminPassword(input: {
 }
 
 // Issue a login account (role=group) for the group
-export function createGroupAdmin(input: {
-  groupId: number
-  username: string
-  password: string
-}) {
+export function createGroupAdmin(input: { groupId: number; username: string; password: string }) {
   const username = input.username.trim()
   if (!username) throw new Error('Username is required')
-  if (input.password.length < 6)
-    throw new Error('Password must be at least 6 characters')
-  const dup = db
-    .select()
-    .from(admins)
-    .where(eq(admins.username, username))
-    .get()
+  if (input.password.length < 6) throw new Error('Password must be at least 6 characters')
+  const dup = db.select().from(admins).where(eq(admins.username, username)).get()
   if (dup) throw new Error(`Account "${username}" already exists`)
   db.insert(admins)
     .values({

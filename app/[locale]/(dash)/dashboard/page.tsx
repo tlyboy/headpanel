@@ -10,21 +10,12 @@ import { auditLog } from '@/lib/db/schema'
 import { ActivityChart } from './activity-chart'
 import { auditKind, type AuditKind } from '@/lib/audit'
 import { ACTIVITY_TOP_N, type ActivityPoint } from './activity'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
-  const [session, t] = await Promise.all([
-    requireSession(),
-    getTranslations('dashboard'),
-  ])
+  const [session, t] = await Promise.all([requireSession(), getTranslations('dashboard')])
   const groups = visibleGroups(session)
   const hsUserIds = new Set(groups.map((g) => g.hsUserId))
   // Same as the preauthkeys page: super counts all keys, including those in the default section (not assigned to any group).
@@ -82,10 +73,7 @@ export default async function DashboardPage() {
     .all()
 
   // The action name key itself contains a dot (node.approve), so it can't go through t()'s namespace resolution
-  const actionMap = ((await getMessages()).auditActions ?? {}) as Record<
-    string,
-    string
-  >
+  const actionMap = ((await getMessages()).auditActions ?? {}) as Record<string, string>
   const byDay = new Map<string, Map<string, number>>()
   for (const r of dayRows) {
     const bucket = byDay.get(r.d) ?? new Map<string, number>()
@@ -94,9 +82,7 @@ export default async function DashboardPage() {
   }
   // Translation, bucketing, sorting, and truncation are all done on the server; the client component only renders
   const activity: ActivityPoint[] = Array.from({ length: DAYS }, (_, i) => {
-    const d = new Date(since.getTime() + i * 86400_000)
-      .toISOString()
-      .slice(0, 10)
+    const d = new Date(since.getTime() + i * 86400_000).toISOString().slice(0, 10)
     const point: ActivityPoint = {
       date: d,
       success: 0,
@@ -152,10 +138,7 @@ export default async function DashboardPage() {
     },
     {
       title: t('subnetServing'),
-      value:
-        approvedRoutes.size === 0
-          ? '—'
-          : `${servingRoutes.size}/${approvedRoutes.size}`,
+      value: approvedRoutes.size === 0 ? '—' : `${servingRoutes.size}/${approvedRoutes.size}`,
       desc:
         approvedRoutes.size === 0
           ? t('noSubnet')
@@ -196,13 +179,7 @@ export default async function DashboardPage() {
               <CardTitle className="text-3xl">{s.value}</CardTitle>
             </CardHeader>
             <CardContent>
-              <p
-                className={
-                  s.warn
-                    ? 'text-xs text-warning'
-                    : 'text-xs text-muted-foreground'
-                }
-              >
+              <p className={s.warn ? 'text-xs text-warning' : 'text-xs text-muted-foreground'}>
                 {s.desc}
               </p>
             </CardContent>

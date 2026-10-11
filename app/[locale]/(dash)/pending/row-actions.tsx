@@ -21,11 +21,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import {
-  approveNodeAction,
-  rejectNodeAction,
-  type ActionResult,
-} from './actions'
+import { approveNodeAction, rejectNodeAction, type ActionResult } from './actions'
 
 // Like the other list pages, keep just one ⋯ in the actions column. Inline buttons side by side make the column width depend on "the row with the most actions",
 // so the position of the fixed column on the right shifts with the page when scrolling horizontally.
@@ -47,27 +43,15 @@ export function PendingRowActions({ id, name }: { id: string; name: string }) {
     <>
       <DropdownMenu>
         <DropdownMenuTrigger
-          render={
-            <Button
-              variant="ghost"
-              size="icon"
-              aria-label={t('menu')}
-              disabled={pending}
-            />
-          }
+          render={<Button variant="ghost" size="icon" aria-label={t('menu')} disabled={pending} />}
         >
           <MoreHorizontal />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem
-            onClick={() => run(approveNodeAction(id), t('approved', { name }))}
-          >
+          <DropdownMenuItem onClick={() => run(approveNodeAction(id), t('approved', { name }))}>
             {t('approve')}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => setRejectOpen(true)}
-          >
+          <DropdownMenuItem variant="destructive" onClick={() => setRejectOpen(true)}>
             {t('reject')}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -78,14 +62,10 @@ export function PendingRowActions({ id, name }: { id: string; name: string }) {
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('rejectTitle', { name })}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('rejectDescription')}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t('rejectDescription')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>
-              {common('cancel')}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
               onClick={(e) => {

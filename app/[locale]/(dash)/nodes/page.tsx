@@ -103,9 +103,7 @@ export default async function NodesPage({
     <div className="flex flex-col gap-4">
       <ListFilters
         placeholder={t('searchPlaceholder')}
-        columns={
-          <ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />
-        }
+        columns={<ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />}
         selects={[
           {
             name: 'status',
@@ -155,16 +153,8 @@ export default async function NodesPage({
                 const lanIps = netInfo.get(n.id)?.lanIps ?? []
                 return (
                   <TableRow key={n.id}>
-                    {show('id') && (
-                      <TableCell className="text-muted-foreground">
-                        {n.id}
-                      </TableCell>
-                    )}
-                    {show('alias') && (
-                      <TableCell className="font-medium">
-                        {n.givenName}
-                      </TableCell>
-                    )}
+                    {show('id') && <TableCell className="text-muted-foreground">{n.id}</TableCell>}
+                    {show('alias') && <TableCell className="font-medium">{n.givenName}</TableCell>}
                     {show('ip') && (
                       <TableCell className="font-mono text-xs">
                         {pickIpv4(n.ipAddresses) ?? '—'}
@@ -175,9 +165,7 @@ export default async function NodesPage({
                         <LanIpCell ips={lanIps} />
                       </TableCell>
                     )}
-                    {show('user') && (
-                      <TableCell>{n.user?.name ?? '—'}</TableCell>
-                    )}
+                    {show('user') && <TableCell>{n.user?.name ?? '—'}</TableCell>}
                     {show('online') && (
                       <TableCell>
                         {n.online ? (
@@ -189,18 +177,12 @@ export default async function NodesPage({
                     )}
                     {show('approval') && (
                       <TableCell>
-                        <Badge variant={APPROVAL_VARIANT[n.status]}>
-                          {t(n.status)}
-                        </Badge>
+                        <Badge variant={APPROVAL_VARIANT[n.status]}>{t(n.status)}</Badge>
                       </TableCell>
                     )}
                     {show('note') && (
                       <TableCell className="max-w-[14rem] truncate text-sm">
-                        {n.note ? (
-                          n.note
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
+                        {n.note ? n.note : <span className="text-muted-foreground">—</span>}
                       </TableCell>
                     )}
                     {show('tags') && (
@@ -224,11 +206,7 @@ export default async function NodesPage({
                       </TableCell>
                     )}
                     <TableCell className={STICKY_ACTIONS}>
-                      <NodeRowActions
-                        id={n.id}
-                        name={n.givenName}
-                        note={n.note ?? undefined}
-                      />
+                      <NodeRowActions id={n.id} name={n.givenName} note={n.note ?? undefined} />
                     </TableCell>
                   </TableRow>
                 )

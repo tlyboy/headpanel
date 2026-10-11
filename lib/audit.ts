@@ -43,10 +43,7 @@ export function nodeTarget(node: { id: string; givenName: string }) {
 }
 
 /** Object for subnet routes: which subnet on which node */
-export function routeTarget(
-  node: { id: string; givenName: string },
-  route: string,
-) {
+export function routeTarget(node: { id: string; givenName: string }, route: string) {
   return `${nodeTarget(node)} ${route}`
 }
 
@@ -57,10 +54,8 @@ const LEGACY_ROUTE_TARGET = /^(\d+):(.+)$/
 
 export function legacyNodeId(action: string, target: string | null) {
   if (!target) return null
-  if (action.startsWith('node.'))
-    return LEGACY_NODE_TARGET.exec(target)?.[1] ?? null
-  if (action.startsWith('route.'))
-    return LEGACY_ROUTE_TARGET.exec(target)?.[1] ?? null
+  if (action.startsWith('node.')) return LEGACY_NODE_TARGET.exec(target)?.[1] ?? null
+  if (action.startsWith('route.')) return LEGACY_ROUTE_TARGET.exec(target)?.[1] ?? null
   return null
 }
 

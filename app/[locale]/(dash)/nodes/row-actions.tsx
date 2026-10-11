@@ -40,15 +40,7 @@ import {
 } from './actions'
 import { noAutofill } from '@/lib/no-autofill'
 
-export function NodeRowActions({
-  id,
-  name,
-  note,
-}: {
-  id: string
-  name: string
-  note?: string
-}) {
+export function NodeRowActions({ id, name, note }: { id: string; name: string; note?: string }) {
   const t = useTranslations('nodeActions')
   const common = useTranslations('common')
   const [pending, start] = useTransition()
@@ -74,25 +66,14 @@ export function NodeRowActions({
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger
-          render={<Button variant="ghost" size="icon" className="size-8" />}
-        >
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="size-8" />}>
           <MoreHorizontal className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
-          <DropdownMenuItem onClick={() => setRenameOpen(true)}>
-            {t('rename')}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setNoteOpen(true)}>
-            {t('editNote')}
-          </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setExpireOpen(true)}>
-            {t('expire')}
-          </DropdownMenuItem>
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => setDeleteOpen(true)}
-          >
+          <DropdownMenuItem onClick={() => setRenameOpen(true)}>{t('rename')}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setNoteOpen(true)}>{t('editNote')}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setExpireOpen(true)}>{t('expire')}</DropdownMenuItem>
+          <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
             {t('deleteNode')}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -115,19 +96,13 @@ export function NodeRowActions({
             />
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRenameOpen(false)}
-              disabled={pending}
-            >
+            <Button variant="outline" onClick={() => setRenameOpen(false)} disabled={pending}>
               {common('cancel')}
             </Button>
             <Button
               disabled={pending || !newName.trim() || newName === name}
               onClick={() =>
-                run(renameNodeAction(id, newName), t('renamed'), () =>
-                  setRenameOpen(false),
-                )
+                run(renameNodeAction(id, newName), t('renamed'), () => setRenameOpen(false))
               }
             >
               {pending ? t('submitting') : t('confirm')}
@@ -154,19 +129,13 @@ export function NodeRowActions({
             />
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setNoteOpen(false)}
-              disabled={pending}
-            >
+            <Button variant="outline" onClick={() => setNoteOpen(false)} disabled={pending}>
               {common('cancel')}
             </Button>
             <Button
               disabled={pending || noteVal === (note ?? '')}
               onClick={() =>
-                run(saveNoteAction(id, noteVal), t('noteSaved'), () =>
-                  setNoteOpen(false),
-                )
+                run(saveNoteAction(id, noteVal), t('noteSaved'), () => setNoteOpen(false))
               }
             >
               {pending ? common('saving') : common('save')}
@@ -179,21 +148,15 @@ export function NodeRowActions({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('expireTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('expireDescription')}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t('expireDescription')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>
-              {common('cancel')}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
               onClick={(e) => {
                 e.preventDefault()
-                run(expireNodeAction(id), t('expired'), () =>
-                  setExpireOpen(false),
-                )
+                run(expireNodeAction(id), t('expired'), () => setExpireOpen(false))
               }}
             >
               {pending ? common('processing') : t('confirmExpire')}
@@ -206,21 +169,15 @@ export function NodeRowActions({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('deleteTitle')}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('deleteDescription')}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t('deleteDescription')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>
-              {common('cancel')}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
               onClick={(e) => {
                 e.preventDefault()
-                run(deleteNodeAction(id), t('deleted'), () =>
-                  setDeleteOpen(false),
-                )
+                run(deleteNodeAction(id), t('deleted'), () => setDeleteOpen(false))
               }}
             >
               {pending ? common('processing') : t('confirmDelete')}

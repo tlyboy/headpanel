@@ -6,13 +6,9 @@ const withNextIntl = createNextIntlPlugin('./i18n/request.ts')
 const rawBasePath = process.env.HEADPANEL_BASE_PATH?.trim() ?? ''
 if (
   rawBasePath &&
-  (!rawBasePath.startsWith('/') ||
-    rawBasePath === '/' ||
-    rawBasePath.endsWith('/'))
+  (!rawBasePath.startsWith('/') || rawBasePath === '/' || rawBasePath.endsWith('/'))
 ) {
-  throw new Error(
-    'HEADPANEL_BASE_PATH must start with / and must not end with /',
-  )
+  throw new Error('HEADPANEL_BASE_PATH must start with / and must not end with /')
 }
 
 const nextConfig: NextConfig = {

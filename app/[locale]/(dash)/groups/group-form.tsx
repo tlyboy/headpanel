@@ -79,9 +79,7 @@ export function CreateGroup({
         if (!o) reset()
       }}
     >
-      {!hideTrigger && (
-        <DialogTrigger render={<Button />}>{t('trigger')}</DialogTrigger>
-      )}
+      {!hideTrigger && <DialogTrigger render={<Button />}>{t('trigger')}</DialogTrigger>}
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('title')}</DialogTitle>
@@ -131,11 +129,7 @@ export function CreateGroup({
         </div>
 
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => setOpen(false)}
-            disabled={pending}
-          >
+          <Button variant="outline" onClick={() => setOpen(false)} disabled={pending}>
             {common('cancel')}
           </Button>
           <Button onClick={submit} disabled={pending}>

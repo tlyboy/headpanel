@@ -5,11 +5,7 @@ import { useTranslations } from 'next-intl'
 import { Check, Copy } from 'lucide-react'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-} from '@/components/ui/hover-card'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 import { useCopy } from '@/lib/use-copy'
 
 // A machine often reports several LAN addresses (physical NICs + docker/WSL/VMware virtual NICs),
@@ -40,18 +36,14 @@ export function LanIpCell({ ips }: { ips: string[] }) {
         render={<button type="button" className="cursor-default font-mono" />}
       >
         {primary}
-        {rest.length > 0 && (
-          <span className="ml-1 text-muted-foreground">+{rest.length}</span>
-        )}
+        {rest.length > 0 && <span className="ml-1 text-muted-foreground">+{rest.length}</span>}
       </HoverCardTrigger>
       <HoverCardContent align="start" className="w-auto min-w-56">
         <div className="flex flex-col gap-1">
           {ips.map((ip, i) => (
             <div key={ip} className="flex items-center gap-2">
               <code className="flex-1 font-mono text-xs select-all">{ip}</code>
-              {i === 0 && ips.length > 1 && (
-                <Badge variant="secondary">{t('lanIpPrimary')}</Badge>
-              )}
+              {i === 0 && ips.length > 1 && <Badge variant="secondary">{t('lanIpPrimary')}</Badge>}
               <Button
                 size="icon"
                 variant="ghost"

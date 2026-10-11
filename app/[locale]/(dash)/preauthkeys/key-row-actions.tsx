@@ -70,19 +70,14 @@ export function KeyRowActions({
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger
-          render={<Button variant="ghost" size="icon" className="size-8" />}
-        >
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="size-8" />}>
           <MoreHorizontal className="size-4" />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setCmdOpen(true)}>
             {t('installCommands')}
           </DropdownMenuItem>
-          <DropdownMenuItem
-            variant="destructive"
-            onClick={() => setDelOpen(true)}
-          >
+          <DropdownMenuItem variant="destructive" onClick={() => setDelOpen(true)}>
             {t('deleteKey')}
           </DropdownMenuItem>
         </DropdownMenuContent>
@@ -115,9 +110,7 @@ export function KeyRowActions({
               />
             </div>
           ) : (
-            <p className="text-sm text-muted-foreground">
-              {t('missingPlaintext')}
-            </p>
+            <p className="text-sm text-muted-foreground">{t('missingPlaintext')}</p>
           )}
         </DialogContent>
       </Dialog>
@@ -126,14 +119,10 @@ export function KeyRowActions({
         <AlertDialogContent>
           <AlertDialogHeader>
             <AlertDialogTitle>{t('deleteTitle', { id })}</AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('deleteDescription')}
-            </AlertDialogDescription>
+            <AlertDialogDescription>{t('deleteDescription')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>
-              {common('cancel')}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
               onClick={(e) => {

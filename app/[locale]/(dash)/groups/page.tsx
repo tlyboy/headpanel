@@ -1,12 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { cookies } from 'next/headers'
 import { requireSuper } from '@/lib/auth'
-import {
-  listGroups,
-  groupOfNode,
-  keyBelongsToGroup,
-  isPanelManagedGroup,
-} from '@/lib/groups'
+import { listGroups, groupOfNode, keyBelongsToGroup, isPanelManagedGroup } from '@/lib/groups'
 import { listNodes, listPreAuthKeys } from '@/lib/headscale'
 import { db } from '@/lib/db'
 import { admins } from '@/lib/db/schema'
@@ -79,12 +74,7 @@ export default async function GroupsPage({
   // Search includes administrator account names: when looking for "who can manage this group," the account name is often what you have on hand
   const shown = q
     ? groups.filter((g) =>
-        [
-          g.name,
-          g.slug,
-          g.okTag,
-          ...(adminsByGroup.get(g.id) ?? []).map((a) => a.username),
-        ]
+        [g.name, g.slug, g.okTag, ...(adminsByGroup.get(g.id) ?? []).map((a) => a.username)]
           .join(' ')
           .toLowerCase()
           .includes(q),
@@ -109,9 +99,7 @@ export default async function GroupsPage({
       <ListFilters
         placeholder={t('searchPlaceholder')}
         actions={<CreateGroup />}
-        columns={
-          <ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />
-        }
+        columns={<ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />}
       />
 
       <div className="rounded-md border">
@@ -141,32 +129,16 @@ export default async function GroupsPage({
             ) : (
               shown.map((g) => (
                 <TableRow key={g.id}>
-                  {show('id') && (
-                    <TableCell className="text-muted-foreground">
-                      {g.id}
-                    </TableCell>
-                  )}
-                  {show('name') && (
-                    <TableCell className="font-medium">{g.name}</TableCell>
-                  )}
-                  {show('slug') && (
-                    <TableCell className="font-mono text-xs">
-                      {g.slug}
-                    </TableCell>
-                  )}
+                  {show('id') && <TableCell className="text-muted-foreground">{g.id}</TableCell>}
+                  {show('name') && <TableCell className="font-medium">{g.name}</TableCell>}
+                  {show('slug') && <TableCell className="font-mono text-xs">{g.slug}</TableCell>}
                   {show('accessTag') && (
-                    <TableCell className="font-mono text-xs">
-                      {g.okTag}
-                    </TableCell>
+                    <TableCell className="font-mono text-xs">{g.okTag}</TableCell>
                   )}
-                  {show('nodeCount') && (
-                    <TableCell>{nodeCount.get(g.id) ?? 0}</TableCell>
-                  )}
+                  {show('nodeCount') && <TableCell>{nodeCount.get(g.id) ?? 0}</TableCell>}
                   {show('admins') && (
                     <TableCell className="text-xs">
-                      {(adminsByGroup.get(g.id) ?? [])
-                        .map((a) => a.username)
-                        .join(', ') || '—'}
+                      {(adminsByGroup.get(g.id) ?? []).map((a) => a.username).join(', ') || '—'}
                     </TableCell>
                   )}
                   {show('createdAt') && (

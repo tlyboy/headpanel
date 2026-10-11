@@ -89,13 +89,10 @@ export function SidebarNav({
         <SidebarMenu>
           {items
             .filter(
-              (item) =>
-                (isSuper || !item.superOnly) &&
-                (hostControl || !item.hostControlOnly),
+              (item) => (isSuper || !item.superOnly) && (hostControl || !item.hostControlOnly),
             )
             .map(({ href, label, icon: Icon }) => {
-              const active =
-                pathname === href || pathname.startsWith(`${href}/`)
+              const active = pathname === href || pathname.startsWith(`${href}/`)
 
               return (
                 <SidebarMenuItem key={href}>

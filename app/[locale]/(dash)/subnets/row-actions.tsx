@@ -24,11 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
-import {
-  approveRouteAction,
-  makePrimaryAction,
-  revokeRouteAction,
-} from './actions'
+import { approveRouteAction, makePrimaryAction, revokeRouteAction } from './actions'
 
 export function RouteRowActions({
   nodeId,
@@ -70,9 +66,7 @@ export function RouteRowActions({
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger
-          render={<Button variant="ghost" size="icon" aria-label={t('menu')} />}
-        >
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t('menu')} />}>
           <MoreHorizontal />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -99,17 +93,11 @@ export function RouteRowActions({
       <AlertDialog open={primaryOpen} onOpenChange={setPrimaryOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>
-              {t('makePrimaryTitle', { route, node: nodeName })}
-            </AlertDialogTitle>
-            <AlertDialogDescription>
-              {t('makePrimaryDescription')}
-            </AlertDialogDescription>
+            <AlertDialogTitle>{t('makePrimaryTitle', { route, node: nodeName })}</AlertDialogTitle>
+            <AlertDialogDescription>{t('makePrimaryDescription')}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>
-              {common('cancel')}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
               onClick={(e) => {
@@ -144,18 +132,14 @@ export function RouteRowActions({
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={pending}>
-              {common('cancel')}
-            </AlertDialogCancel>
+            <AlertDialogCancel disabled={pending}>{common('cancel')}</AlertDialogCancel>
             <AlertDialogAction
               disabled={pending}
               onClick={(e) => {
                 e.preventDefault()
                 run(
                   () =>
-                    approved
-                      ? revokeRouteAction(nodeId, route)
-                      : approveRouteAction(nodeId, route),
+                    approved ? revokeRouteAction(nodeId, route) : approveRouteAction(nodeId, route),
                   approved ? t('revoked') : t('approved'),
                   () => setToggleOpen(false),
                 )

@@ -1,10 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { cookies } from 'next/headers'
-import {
-  getDefaultHeadscaleConnection,
-  listPreAuthKeys,
-  type HsPreAuthKey,
-} from '@/lib/headscale'
+import { getDefaultHeadscaleConnection, listPreAuthKeys, type HsPreAuthKey } from '@/lib/headscale'
 import { getPanelBasePath } from '@/lib/panel-base-path'
 import { requireSession } from '@/lib/auth'
 import { visibleGroups } from '@/lib/groups'
@@ -100,9 +96,7 @@ export default async function PreAuthKeysPage({
   }
   // Keys are masked in the list, but the prefix is enough to identify one; search by group name too
   const shown = q
-    ? keys.filter((e) =>
-        [e.key.id, e.key.key, e.groupName].join(' ').toLowerCase().includes(q),
-      )
+    ? keys.filter((e) => [e.key.id, e.key.key, e.groupName].join(' ').toLowerCase().includes(q))
     : keys
 
   // RSC + force-dynamic: render on the server for every request and use the current time to check whether keys have expired, as expected
@@ -112,8 +106,7 @@ export default async function PreAuthKeysPage({
   // Local plaintext backup: headscaleId -> plaintext key
   const plain = new Map<string, string>()
   try {
-    for (const r of db.select().from(preauthKeysTable).all())
-      plain.set(r.headscaleId, r.key)
+    for (const r of db.select().from(preauthKeysTable).all()) plain.set(r.headscaleId, r.key)
   } catch {
     /* Ignore cases such as a missing table */
   }
@@ -128,9 +121,7 @@ export default async function PreAuthKeysPage({
             canUseDefault={showUngrouped}
           />
         }
-        columns={
-          <ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />
-        }
+        columns={<ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />}
       />
 
       <div className="rounded-md border">
@@ -160,40 +151,22 @@ export default async function PreAuthKeysPage({
               </TableRow>
             ) : (
               shown.map(({ key: k, groupName }) => {
-                const expired =
-                  !isNever(k.expiration) &&
-                  new Date(k.expiration).getTime() < now
+                const expired = !isNever(k.expiration) && new Date(k.expiration).getTime() < now
                 const m = modeOf(k.aclTags ?? [])
                 return (
                   <TableRow key={k.id}>
-                    {show('id') && (
-                      <TableCell className="text-muted-foreground">
-                        {k.id}
-                      </TableCell>
-                    )}
-                    {show('group') && (
-                      <TableCell className="text-sm">{groupName}</TableCell>
-                    )}
-                    {show('key') && (
-                      <TableCell className="font-mono text-xs">
-                        {k.key}
-                      </TableCell>
-                    )}
+                    {show('id') && <TableCell className="text-muted-foreground">{k.id}</TableCell>}
+                    {show('group') && <TableCell className="text-sm">{groupName}</TableCell>}
+                    {show('key') && <TableCell className="font-mono text-xs">{k.key}</TableCell>}
                     {show('mode') && (
                       <TableCell>
                         <Badge variant={m.variant}>{t(m.key)}</Badge>
                       </TableCell>
                     )}
                     {show('reusable') && (
-                      <TableCell>
-                        {k.reusable ? common('yes') : common('no')}
-                      </TableCell>
+                      <TableCell>{k.reusable ? common('yes') : common('no')}</TableCell>
                     )}
-                    {show('used') && (
-                      <TableCell>
-                        {k.used ? common('yes') : common('no')}
-                      </TableCell>
-                    )}
+                    {show('used') && <TableCell>{k.used ? common('yes') : common('no')}</TableCell>}
                     {show('status') && (
                       <TableCell>
                         {expired ? (
@@ -205,9 +178,7 @@ export default async function PreAuthKeysPage({
                     )}
                     {show('expiration') && (
                       <TableCell className="text-xs text-muted-foreground">
-                        {isNever(k.expiration)
-                          ? t('permanent')
-                          : fmtTime(k.expiration)}
+                        {isNever(k.expiration) ? t('permanent') : fmtTime(k.expiration)}
                       </TableCell>
                     )}
                     <TableCell className={STICKY_ACTIONS}>

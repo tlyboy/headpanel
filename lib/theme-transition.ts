@@ -63,13 +63,9 @@ export function applyThemeWithTransition({
   const cx = (x / window.innerWidth) * 100
   const cy = (y / window.innerHeight) * 100
   // The percentage radius basis for circle() is sqrt(w² + h²) / sqrt(2)
-  const radiusRef =
-    Math.hypot(window.innerWidth, window.innerHeight) / Math.SQRT2
+  const radiusRef = Math.hypot(window.innerWidth, window.innerHeight) / Math.SQRT2
   const endPct =
-    (Math.hypot(
-      Math.max(x, window.innerWidth - x),
-      Math.max(y, window.innerHeight - y),
-    ) /
+    (Math.hypot(Math.max(x, window.innerWidth - x), Math.max(y, window.innerHeight - y)) /
       radiusRef) *
     100
 
@@ -82,10 +78,7 @@ export function applyThemeWithTransition({
 
   void transition.ready
     .then(() => {
-      const clipPath = [
-        `circle(0% at ${cx}% ${cy}%)`,
-        `circle(${endPct}% at ${cx}% ${cy}%)`,
-      ]
+      const clipPath = [`circle(0% at ${cx}% ${cy}%)`, `circle(${endPct}% at ${cx}% ${cy}%)`]
       const animation = document.documentElement.animate(
         {
           clipPath: next === 'dark' ? [...clipPath].reverse() : clipPath,
@@ -95,9 +88,7 @@ export function applyThemeWithTransition({
           easing: 'ease-out',
           fill: 'forwards',
           pseudoElement:
-            next === 'dark'
-              ? '::view-transition-old(root)'
-              : '::view-transition-new(root)',
+            next === 'dark' ? '::view-transition-old(root)' : '::view-transition-new(root)',
         },
       )
       // An animation with fill: 'forwards' doesn't disappear on its own when it ends; it stays attached to documentElement.

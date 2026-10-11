@@ -74,11 +74,7 @@ export function setNodeStatus(
     throw new Error('approved node status requires an actor')
   }
   const now = new Date().toISOString()
-  const existing = db
-    .select()
-    .from(nodeMeta)
-    .where(eq(nodeMeta.headscaleId, headscaleId))
-    .get()
+  const existing = db.select().from(nodeMeta).where(eq(nodeMeta.headscaleId, headscaleId)).get()
   if (existing) {
     db.update(nodeMeta)
       .set({
@@ -104,16 +100,9 @@ export function setNodeStatus(
 export function setNodeNote(headscaleId: string, note: string) {
   const trimmed = note.trim()
   const value = trimmed === '' ? null : trimmed
-  const existing = db
-    .select()
-    .from(nodeMeta)
-    .where(eq(nodeMeta.headscaleId, headscaleId))
-    .get()
+  const existing = db.select().from(nodeMeta).where(eq(nodeMeta.headscaleId, headscaleId)).get()
   if (existing) {
-    db.update(nodeMeta)
-      .set({ note: value })
-      .where(eq(nodeMeta.headscaleId, headscaleId))
-      .run()
+    db.update(nodeMeta).set({ note: value }).where(eq(nodeMeta.headscaleId, headscaleId)).run()
   } else {
     db.insert(nodeMeta).values({ headscaleId, note: value }).run()
   }

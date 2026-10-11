@@ -2,12 +2,7 @@
 
 import { useLocale, useTranslations } from 'next-intl'
 import { useTheme } from 'next-themes'
-import {
-  ChevronsUpDownIcon,
-  ContrastIcon,
-  LanguagesIcon,
-  LogOutIcon,
-} from 'lucide-react'
+import { ChevronsUpDownIcon, ContrastIcon, LanguagesIcon, LogOutIcon } from 'lucide-react'
 import { siGithub } from 'simple-icons'
 import { logout } from '@/app/[locale]/(dash)/actions'
 import { usePathname, useRouter } from '@/i18n/navigation'
@@ -76,9 +71,7 @@ export function SidebarUserMenu({
             </Avatar>
             <span className="grid min-w-0 flex-1 text-left leading-tight">
               <span className="truncate font-medium">{username}</span>
-              <span className="truncate text-xs text-muted-foreground">
-                {scopeLabel}
-              </span>
+              <span className="truncate text-xs text-muted-foreground">{scopeLabel}</span>
             </span>
             <ChevronsUpDownIcon className="ml-auto" />
           </DropdownMenuTrigger>
@@ -93,15 +86,11 @@ export function SidebarUserMenu({
               <DropdownMenuLabel className="font-normal">
                 <span className="flex items-center gap-2">
                   <Avatar className="rounded-lg">
-                    <AvatarFallback className="rounded-lg">
-                      {fallback}
-                    </AvatarFallback>
+                    <AvatarFallback className="rounded-lg">{fallback}</AvatarFallback>
                   </Avatar>
                   <span className="grid min-w-0 flex-1 leading-tight">
                     <span className="truncate font-medium">{username}</span>
-                    <span className="truncate text-xs text-muted-foreground">
-                      {scopeLabel}
-                    </span>
+                    <span className="truncate text-xs text-muted-foreground">{scopeLabel}</span>
                   </span>
                 </span>
               </DropdownMenuLabel>
@@ -116,9 +105,7 @@ export function SidebarUserMenu({
                 <DropdownMenuSubContent>
                   <DropdownMenuRadioGroup
                     value={locale}
-                    onValueChange={(value) =>
-                      switchLocale(value as (typeof locales)[number])
-                    }
+                    onValueChange={(value) => switchLocale(value as (typeof locales)[number])}
                   >
                     {locales.map((item) => (
                       <DropdownMenuRadioItem key={item} value={item}>
@@ -136,28 +123,17 @@ export function SidebarUserMenu({
                   so the screen will appear to jitter if the menu disappears midway through the animation */}
               <DropdownMenuItem
                 closeOnClick={false}
-                onClick={(e) =>
-                  toggleThemeWithTransition(e, resolvedTheme, setTheme)
-                }
+                onClick={(e) => toggleThemeWithTransition(e, resolvedTheme, setTheme)}
               >
                 <ContrastIcon />
                 {themeText('toggle')}
               </DropdownMenuItem>
               <DropdownMenuItem
                 render={
-                  <a
-                    href="https://github.com/tlyboy/headpanel"
-                    target="_blank"
-                    rel="noreferrer"
-                  />
+                  <a href="https://github.com/tlyboy/headpanel" target="_blank" rel="noreferrer" />
                 }
               >
-                <svg
-                  aria-hidden="true"
-                  fill="currentColor"
-                  role="img"
-                  viewBox="0 0 24 24"
-                >
+                <svg aria-hidden="true" fill="currentColor" role="img" viewBox="0 0 24 24">
                   <path d={siGithub.path} />
                 </svg>
                 GitHub

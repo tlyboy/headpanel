@@ -9,9 +9,7 @@ const DEFAULT_BASELINE_PATH = '/etc/headpanel/policy-baseline.json'
 // The panel's group isolation relies entirely on the deployed ACL. If the mode is wrong, group operations must abort completely rather than continue in a broken state.
 export class PolicyReadOnlyError extends Error {
   constructor() {
-    super(
-      "headscale rejects policy updates because policy.mode is not 'database'",
-    )
+    super("headscale rejects policy updates because policy.mode is not 'database'")
     this.name = 'PolicyReadOnlyError'
   }
 }
@@ -65,9 +63,7 @@ export function loadBaseline(): PolicyBaseline {
     )
   }
   if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
-    throw new PolicyBaselineError(
-      `Policy baseline ${path} must be a JSON object`,
-    )
+    throw new PolicyBaselineError(`Policy baseline ${path} must be a JSON object`)
   }
   return parsed as PolicyBaseline
 }
@@ -77,9 +73,7 @@ export function loadBaseline(): PolicyBaseline {
 //  - One ok_tag per group, owned by that group's headscale user name (must include @)
 //  - One accept rule per group: members with the same ok_tag can communicate; no cross-group rules → deny → groups cannot see each other
 //  - Nodes without an ok_tag (pending approval) are in no rules → invisible to everyone
-export function buildPolicy(
-  rows: { hsUserName: string; okTag: string }[],
-): string {
+export function buildPolicy(rows: { hsUserName: string; okTag: string }[]): string {
   const baseline = loadBaseline()
   const tagOwners: Record<string, string[]> = { ...(baseline.tagOwners ?? {}) }
   const acls: PolicyAcl[] = [...(baseline.acls ?? [])]
@@ -99,16 +93,11 @@ export function buildPolicy(
 // Deploy the policy corresponding to the group set that should exist after the operation. The caller must invoke this before changing any data:
 // if deployment fails, the whole operation fails, avoiding a partial state where "headscale has changed but the panel reports an error."
 // When rows is empty, only the baseline remains (all group rules disappear); deleteGroup has already ensured there are no nodes in the group.
-export async function applyPolicy(
-  rows: { hsUserName: string; okTag: string }[],
-): Promise<void> {
+export async function applyPolicy(rows: { hsUserName: string; okTag: string }[]): Promise<void> {
   try {
     await setPolicy(buildPolicy(rows))
   } catch (e) {
-    if (
-      e instanceof HeadscaleError &&
-      /modes other than|policy\.mode/i.test(e.message)
-    ) {
+    if (e instanceof HeadscaleError && /modes other than|policy\.mode/i.test(e.message)) {
       throw new PolicyReadOnlyError()
     }
     throw e
@@ -133,9 +122,7 @@ type Mutator = (b: PolicyBaseline) => boolean
 function firstAcceptRule(b: PolicyBaseline): PolicyAcl {
   const rule = (b.acls ?? []).find((a) => a.action === 'accept')
   if (!rule) {
-    throw new BaselineNotWritableError(
-      'the baseline has no accept rule to attach the subnet to',
-    )
+    throw new BaselineNotWritableError('the baseline has no accept rule to attach the subnet to')
   }
   return rule
 }
@@ -174,11 +161,9 @@ export async function updateBaselineAndApply(
   const baseline = loadBaseline()
   if (!mutate(baseline)) return false
 
-  writeFileSync(
-    /* turbopackIgnore: true */ path,
-    `${JSON.stringify(baseline, null, 2)}\n`,
-    { mode: 0o600 },
-  )
+  writeFileSync(/* turbopackIgnore: true */ path, `${JSON.stringify(baseline, null, 2)}\n`, {
+    mode: 0o600,
+  })
   try {
     await applyPolicy(rows)
     return true

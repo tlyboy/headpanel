@@ -37,14 +37,8 @@ async function assertNode(
   return { node, group: groupForNode(session, node) }
 }
 
-export async function renameNodeAction(
-  id: string,
-  newName: string,
-): Promise<ActionResult> {
-  const [session, t] = await Promise.all([
-    requireSession(),
-    getTranslations('actionErrors'),
-  ])
+export async function renameNodeAction(id: string, newName: string): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   const name = newName.trim()
   if (!name) return { ok: false, error: t('nodeNameRequired') }
   // headscale node name rules: alphanumeric characters and hyphens
@@ -66,10 +60,7 @@ export async function renameNodeAction(
 }
 
 export async function expireNodeAction(id: string): Promise<ActionResult> {
-  const [session, t] = await Promise.all([
-    requireSession(),
-    getTranslations('actionErrors'),
-  ])
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   try {
     const { node, group } = await assertNode(session, id)
     await expireNode(id)
@@ -85,10 +76,7 @@ export async function expireNodeAction(id: string): Promise<ActionResult> {
 }
 
 export async function deleteNodeAction(id: string): Promise<ActionResult> {
-  const [session, t] = await Promise.all([
-    requireSession(),
-    getTranslations('actionErrors'),
-  ])
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   try {
     const { node, group } = await assertNode(session, id)
     await deleteNode(id)
@@ -103,14 +91,8 @@ export async function deleteNodeAction(id: string): Promise<ActionResult> {
   }
 }
 
-export async function saveNoteAction(
-  id: string,
-  note: string,
-): Promise<ActionResult> {
-  const [session, t] = await Promise.all([
-    requireSession(),
-    getTranslations('actionErrors'),
-  ])
+export async function saveNoteAction(id: string, note: string): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   if (note.length > 200) return { ok: false, error: t('noteTooLong') }
   try {
     const { node, group } = await assertNode(session, id)

@@ -8,7 +8,5 @@ export const PER_PAGE_OPTIONS = [20, 50, 100] as const
 /** Normalize the URL's per parameter to one of the allowed options, preventing manual edits to 999999 from bogging down the query */
 export function resolvePerPage(raw: string | undefined): number {
   const n = Number(raw)
-  return (PER_PAGE_OPTIONS as readonly number[]).includes(n)
-    ? n
-    : PER_PAGE_OPTIONS[0]
+  return (PER_PAGE_OPTIONS as readonly number[]).includes(n) ? n : PER_PAGE_OPTIONS[0]
 }

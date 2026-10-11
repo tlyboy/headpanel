@@ -10,20 +10,9 @@ export function GitHubLink() {
       title="GitHub"
       aria-label="GitHub"
       nativeButton={false}
-      render={
-        <a
-          href="https://github.com/tlyboy/headpanel"
-          target="_blank"
-          rel="noreferrer"
-        />
-      }
+      render={<a href="https://github.com/tlyboy/headpanel" target="_blank" rel="noreferrer" />}
     >
-      <svg
-        aria-hidden="true"
-        className="size-4 fill-current"
-        role="img"
-        viewBox="0 0 24 24"
-      >
+      <svg aria-hidden="true" className="size-4 fill-current" role="img" viewBox="0 0 24 24">
         <path d={siGithub.path} />
       </svg>
     </Button>
