@@ -75,7 +75,7 @@ export function loadBaseline(): PolicyBaseline {
 //  - Nodes without an ok_tag (pending approval) are in no rules → invisible to everyone
 export function buildPolicy(rows: { hsUserName: string; okTag: string }[]): string {
   const baseline = loadBaseline()
-  const tagOwners: Record<string, string[]> = { ...(baseline.tagOwners ?? {}) }
+  const tagOwners: Record<string, string[]> = { ...baseline.tagOwners }
   const acls: PolicyAcl[] = [...(baseline.acls ?? [])]
   for (const g of rows) {
     // On a name collision, report an error instead of overwriting: baseline tags are maintained manually, and the panel has no right to replace them
