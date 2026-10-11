@@ -2,7 +2,7 @@
   "[dockerfile]": {
     "editor.defaultFormatter": "ms-azuretools.vscode-containers"
   },
-  "editor.defaultFormatter": "esbenp.prettier-vscode",
+  "editor.defaultFormatter": "oxc.oxc-vscode",
   "editor.formatOnSave": true,
   "editor.quickSuggestions": {
     "strings": "on"
@@ -10,6 +10,7 @@
   "files.associations": {
     "*.css": "tailwindcss"
   },
-  "i18n-ally.localesPaths": ["messages"],
-  "prettier.enable": true
+  "i18n-ally.localesPaths": [
+    "messages"
+  ]
 }

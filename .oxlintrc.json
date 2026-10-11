@@ -1,0 +1,21 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "plugins": ["nextjs", "react", "typescript", "oxc"],
+  "categories": { "correctness": "error" },
+  "rules": {
+    "react/rules-of-hooks": "error",
+    // An underscore prefix is the existing "intentionally discarded" convention in these projects,
+    // for example fields destructured from props that are not passed down. The default rule does
+    // not recognize the convention and reports all of them as unused.
+    "no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_",
+        "destructuredArrayIgnorePattern": "^_"
+      }
+    ]
+  },
+  "ignorePatterns": [".next", "out", "build", "next-env.d.ts"]
+}
