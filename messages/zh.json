@@ -349,7 +349,7 @@
   },
   "tags": {
     "tagsTitle": "标签",
-    "tagsDescription": "标签就是一个组：同一个标签里的设备可以互相访问。一台设备可以加入多个标签。",
+    "tagsDescription": "标签就是一个组。同一个标签里的设备可以互相访问，一台设备可以加入多个标签。",
     "tag": "标签",
     "devices": "设备",
     "default": "审批默认",
@@ -362,11 +362,21 @@
     "membersTitle": "{tag} 里的设备",
     "membersDescription": "勾选的设备之间可以互相访问。保存后立即生效。",
     "searchDevices": "搜索设备名或 IP",
-    "onlyTag": "（仅此一个标签，不能移出）",
+    "onlyTag": "仅此标签，不能移出",
     "membersSaved": "设备已更新",
-    "noMembers": "还没有设备",
-    "alsoSubnets": "这些设备还能访问内网：",
+    "noMembers": "还没有设备，点“管理设备”添加",
+    "alsoSubnets": "还能访问内网",
     "deleteTagTitle": "删除标签 {tag}？",
-    "deleteTagDescription": "只有没有设备的标签才能删除。"
+    "deleteTagDescription": "只有没有设备的标签才能删除。",
+    "tagNamePlaceholder": "新标签名，如 shengchuang",
+    "memberCount": "{count} 台设备 · {online} 台在线",
+    "online": "在线",
+    "offline": "离线",
+    "pickedCount": "已选 {picked} / {total}",
+    "selectAll": "全选",
+    "selectShown": "全选搜索结果",
+    "clearAll": "清空",
+    "noMatch": "没有匹配的设备",
+    "deleteDisabled": "标签里还有设备，先移出再删除"
   }
 }

@@ -1,4 +1,5 @@
 import { getTranslations } from 'next-intl/server'
+import { Route, Tag } from 'lucide-react'
 import { requireSession } from '@/lib/auth'
 import { approvedTag } from '@/lib/default-zone'
 import { listNodes } from '@/lib/headscale'
@@ -6,14 +7,6 @@ import { declaredTags, loadBaseline } from '@/lib/policy'
 import { Badge } from '@/components/ui/badge'
 import { tagLabel } from '@/lib/format'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
 import { DeleteTag, EditMembers, TagForm } from './forms'
 
 export const dynamic = 'force-dynamic'
@@ -21,85 +14,104 @@ export const dynamic = 'force-dynamic'
 export default async function TagsPage() {
   const [, t] = await Promise.all([requireSession(), getTranslations('tags')])
   const baseline = loadBaseline()
-  const tags = declaredTags(baseline)
   const nodes = (await listNodes()).toSorted((a, b) => a.givenName.localeCompare(b.givenName))
+  // Default tag first, the rest alphabetical
+  const tags = declaredTags(baseline).toSorted(
+    (a, b) => Number(b === approvedTag()) - Number(a === approvedTag()),
+  )
   const options = nodes.map((n) => ({
     id: n.id,
     name: n.givenName,
     ip: n.ipAddresses.find((ip) => ip.includes('.')) ?? '',
+    online: n.online,
     tags: n.tags,
   }))
 
-  // Approved subnets ride on the first accept rule; show them under the tags that rule starts from
+  // Approved subnets ride on the first accept rule; show them on the tags that rule starts from
   const routers = new Map<string, string>()
   for (const n of nodes) for (const r of n.subnetRoutes ?? []) routers.set(r, n.givenName)
   const subnetRule = (baseline.acls ?? []).find((a) => a.action === 'accept')
   const subnets = (subnetRule?.dst ?? [])
     .map((d) => d.replace(/:\*$/, ''))
     .filter((d) => !d.startsWith('tag:'))
-  const reachesSubnets = (tag: string) => subnets.length > 0 && !!subnetRule?.src.includes(tag)
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('tagsTitle')}</CardTitle>
-        <CardDescription>{t('tagsDescription')}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-4">
-        <TagForm />
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-40">{t('tag')}</TableHead>
-                <TableHead>{t('devices')}</TableHead>
-                <TableHead />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {tags.map((tag) => {
-                const members = nodes.filter((n) => n.tags.includes(tag))
-                return (
-                  <TableRow key={tag}>
-                    <TableCell className="align-top text-sm font-medium">
-                      {tagLabel(tag)}
-                      {tag === approvedTag() && (
-                        <Badge variant="secondary" className="ml-2">
-                          {t('default')}
-                        </Badge>
-                      )}
-                    </TableCell>
-                    <TableCell className="whitespace-normal">
-                      <div className="flex flex-wrap gap-1">
-                        {members.length === 0 && (
-                          <span className="text-sm text-muted-foreground">{t('noMembers')}</span>
-                        )}
-                        {members.map((n) => (
-                          <Badge key={n.id} variant="outline">
-                            {n.givenName}
-                          </Badge>
-                        ))}
-                      </div>
-                      {reachesSubnets(tag) && (
-                        <p className="mt-2 text-xs text-muted-foreground">
-                          {t('alsoSubnets')}{' '}
-                          {subnets
-                            .map((s) => (routers.has(s) ? `${s} (${routers.get(s)})` : s))
-                            .join(', ')}
-                        </p>
-                      )}
-                    </TableCell>
-                    <TableCell className="text-right align-top whitespace-nowrap">
-                      <EditMembers tag={tag} nodes={options} />
-                      <DeleteTag tag={tag} disabled={tag === approvedTag() || members.length > 0} />
-                    </TableCell>
-                  </TableRow>
-                )
-              })}
-            </TableBody>
-          </Table>
+    <div className="flex flex-col gap-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-lg font-semibold">{t('tagsTitle')}</h1>
+          <p className="text-sm text-muted-foreground">{t('tagsDescription')}</p>
         </div>
-      </CardContent>
-    </Card>
+        <TagForm />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {tags.map((tag) => {
+          const members = nodes.filter((n) => n.tags.includes(tag))
+          const online = members.filter((n) => n.online).length
+          const isDefault = tag === approvedTag()
+          return (
+            <Card key={tag} className={isDefault ? 'lg:col-span-2' : undefined}>
+              <CardHeader className="flex flex-row items-start justify-between gap-4 space-y-0">
+                <div className="flex min-w-0 flex-col gap-1">
+                  <CardTitle className="flex items-center gap-2 text-base">
+                    <Tag className="size-4 text-muted-foreground" aria-hidden />
+                    {tagLabel(tag)}
+                    {isDefault && <Badge variant="secondary">{t('default')}</Badge>}
+                  </CardTitle>
+                  <CardDescription>
+                    {t('memberCount', { count: members.length, online })}
+                  </CardDescription>
+                </div>
+                <div className="flex shrink-0 items-center gap-1">
+                  <EditMembers tag={tag} nodes={options} />
+                  {!isDefault && <DeleteTag tag={tag} disabled={members.length > 0} />}
+                </div>
+              </CardHeader>
+              <CardContent className="flex flex-col gap-4">
+                {members.length === 0 ? (
+                  <p className="rounded-md border border-dashed px-4 py-6 text-center text-sm text-muted-foreground">
+                    {t('noMembers')}
+                  </p>
+                ) : (
+                  <ul className="flex flex-wrap gap-2">
+                    {members.map((n) => (
+                      <li
+                        key={n.id}
+                        className="flex items-center gap-2 rounded-md border bg-muted/40 px-2.5 py-1 text-sm"
+                      >
+                        <span
+                          className={`size-2 rounded-full ${n.online ? 'bg-success' : 'bg-muted-foreground/40'}`}
+                          aria-label={n.online ? t('online') : t('offline')}
+                        />
+                        {n.givenName}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {subnets.length > 0 && subnetRule?.src.includes(tag) && (
+                  <div className="flex flex-wrap items-center gap-2 border-t pt-4 text-sm">
+                    <span className="flex items-center gap-1.5 text-muted-foreground">
+                      <Route className="size-4" aria-hidden />
+                      {t('alsoSubnets')}
+                    </span>
+                    {subnets.map((s) => (
+                      <Badge key={s} variant="outline" className="font-mono">
+                        {s}
+                        {routers.has(s) && (
+                          <span className="ml-1 font-sans text-muted-foreground">
+                            {routers.get(s)}
+                          </span>
+                        )}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )
+        })}
+      </div>
+    </div>
   )
 }

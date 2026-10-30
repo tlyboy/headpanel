@@ -349,7 +349,7 @@
   },
   "tags": {
     "tagsTitle": "Tags",
-    "tagsDescription": "A tag is a group: devices with the same tag can reach each other. A device can join several tags.",
+    "tagsDescription": "A tag is a group. Devices with the same tag can reach each other, and a device can join several tags.",
     "tag": "Tag",
     "devices": "Devices",
     "default": "Approval default",
@@ -362,11 +362,21 @@
     "membersTitle": "Devices in {tag}",
     "membersDescription": "Checked devices can reach each other. Takes effect on save.",
     "searchDevices": "Search name or IP",
-    "onlyTag": "(its only tag, cannot be removed)",
+    "onlyTag": "Only tag, cannot be removed",
     "membersSaved": "Devices updated",
-    "noMembers": "No devices yet",
-    "alsoSubnets": "These devices can also reach:",
+    "noMembers": "No devices yet. Use Devices to add some.",
+    "alsoSubnets": "Also reaches",
     "deleteTagTitle": "Delete tag {tag}?",
-    "deleteTagDescription": "Only a tag with no devices can be deleted."
+    "deleteTagDescription": "Only a tag with no devices can be deleted.",
+    "tagNamePlaceholder": "New tag, e.g. shengchuang",
+    "memberCount": "{count} devices · {online} online",
+    "online": "Online",
+    "offline": "Offline",
+    "pickedCount": "{picked} of {total} selected",
+    "selectAll": "Select all",
+    "selectShown": "Select results",
+    "clearAll": "Clear",
+    "noMatch": "No matching devices",
+    "deleteDisabled": "Remove its devices before deleting"
   }
 }
