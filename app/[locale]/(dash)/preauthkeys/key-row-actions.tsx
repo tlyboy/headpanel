@@ -6,6 +6,7 @@ import { MoreHorizontal } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
+import { psDownloadAndRun } from '@/lib/ps-command'
 import { CmdBlock } from '@/components/cmd-block'
 import {
   DropdownMenu,
@@ -102,7 +103,11 @@ export function KeyRowActions({
               />
               <CmdBlock
                 label={t('windowsInstall')}
-                cmd={`iwr ${panel}/api/scripts/install-tailscale.ps1 -OutFile $env:TEMP\\ts.ps1; & $env:TEMP\\ts.ps1 -AuthKey "${plaintext}" -HeadscaleUrl "${headscaleUrl}"`}
+                cmd={psDownloadAndRun(
+                  `${panel}/api/scripts/install-tailscale.ps1`,
+                  'ts.ps1',
+                  `-AuthKey "${plaintext}" -HeadscaleUrl "${headscaleUrl}"`,
+                )}
               />
               <CmdBlock
                 label={t('directUp')}

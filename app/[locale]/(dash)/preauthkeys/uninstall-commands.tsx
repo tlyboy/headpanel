@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { CmdBlock } from '@/components/cmd-block'
+import { psDownloadAndRun } from '@/lib/ps-command'
 import { useCurrentOrigin } from '@/lib/use-current-origin'
 
 type CommandLabelKey =
@@ -25,11 +26,11 @@ export function UninstallCommands({ basePath }: { basePath: string }) {
     },
     {
       labelKey: 'windowsUninstallTailscaleCommand',
-      cmd: `iwr ${panel}/api/scripts/uninstall-tailscale.ps1 -OutFile $env:TEMP\\u.ps1; & $env:TEMP\\u.ps1`,
+      cmd: psDownloadAndRun(`${panel}/api/scripts/uninstall-tailscale.ps1`, 'u.ps1'),
     },
     {
       labelKey: 'windowsUninstallZerotierCommand',
-      cmd: `iwr ${panel}/api/scripts/uninstall-zerotier.ps1 -OutFile $env:TEMP\\u.ps1; & $env:TEMP\\u.ps1`,
+      cmd: psDownloadAndRun(`${panel}/api/scripts/uninstall-zerotier.ps1`, 'u.ps1'),
     },
   ]
 

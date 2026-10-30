@@ -35,6 +35,9 @@ param(
 
 $ErrorActionPreference = "Stop"
 
+# Older Windows PowerShell only offers TLS 1.0/1.1, which Headscale and pkgs.tailscale.com refuse; 3072 is TLS 1.2
+[Net.ServicePointManager]::SecurityProtocol = [Net.ServicePointManager]::SecurityProtocol -bor 3072
+
 # ============================================================
 # Helpers
 # ============================================================
@@ -78,8 +81,12 @@ if (-not $currentPrincipal.IsInRole([Security.Principal.WindowsBuiltInRole]::Adm
 Log "Administrator privileges OK"
 
 # 2. OS version
-$os = Get-CimInstance Win32_OperatingSystem
-Log "System: $($os.Caption) ($($os.OSArchitecture))"
+# Get-CimInstance needs PowerShell 3; WMI works everywhere
+$os = Get-WmiObject Win32_OperatingSystem
+Log "System: $($os.Caption) ($($os.OSArchitecture)), PowerShell $($PSVersionTable.PSVersion)"
+if ([Environment]::OSVersion.Version.Major -lt 10) {
+    Warn "Current Tailscale releases support Windows 10 / Server 2016 and later; installation may fail on this system"
+}
 
 # 3. Check Headscale health
 Log "Checking Headscale health: $HeadscaleUrl/health"
@@ -108,10 +115,17 @@ if ($tsExe) {
     $msiPath = "$env:TEMP\tailscale-setup.msi"
     Log "Downloading MSI: $MsiUrl"
     try {
-        # Use BitsTransfer when available; otherwise fall back to Invoke-WebRequest
+        # BITS goes through WinHTTP, which on older Windows may lack TLS 1.2 even after the line above; fall back to Invoke-WebRequest
+        $done = $false
         if (Get-Command Start-BitsTransfer -ErrorAction SilentlyContinue) {
-            Start-BitsTransfer -Source $MsiUrl -Destination $msiPath -ErrorAction Stop
-        } else {
+            try {
+                Start-BitsTransfer -Source $MsiUrl -Destination $msiPath -ErrorAction Stop
+                $done = $true
+            } catch {
+                Warn "BITS download failed, retrying with Invoke-WebRequest: $_"
+            }
+        }
+        if (-not $done) {
             Invoke-WebRequest -Uri $MsiUrl -OutFile $msiPath -UseBasicParsing
         }
     } catch {
