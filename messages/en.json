@@ -44,17 +44,15 @@
     "invalid": "Invalid username or password"
   },
   "nav": {
-    "menu": "Open menu",
-    "platform": "Platform",
+    "daily": "Daily",
+    "system": "System",
     "dashboard": "Overview",
-    "nodes": "Nodes",
-    "pending": "Pending",
-    "preauthKeys": "PreAuthKeys",
-    "network": "Network",
-    "scripts": "Scripts",
-    "audit": "Audit log",
+    "nodes": "Devices",
+    "preauthKeys": "Join",
+    "tags": "Access",
     "subnets": "Subnet routes",
-    "tags": "Tags & access"
+    "audit": "Activity log",
+    "network": "Settings"
   },
   "theme": {
     "toggle": "Toggle theme"
@@ -67,7 +65,7 @@
   },
   "dashboard": {
     "pendingNodes": "Pending",
-    "validPreAuthKeys": "Valid PreAuthKeys",
+    "validPreAuthKeys": "Valid auth key",
     "online": "{count} online",
     "offline": "{count} offline",
     "hasPending": "Nodes waiting for approval",
@@ -120,23 +118,28 @@
     "allStatus": "All statuses"
   },
   "pending": {
-    "title": "Pending approvals",
-    "alias": "Alias",
-    "tags": "Tags",
-    "createdAt": "Joined at",
-    "approval": "Approval",
-    "empty": "No pending nodes",
-    "searchPlaceholder": "Search name / IP / tag"
+    "title": "{count} device(s) waiting for approval",
+    "description": "Pick tags when approving and the device gets access right away. Rejecting removes the device from the network.",
+    "approve": "Approve",
+    "reject": "Reject",
+    "approved": "Approved {name}",
+    "rejected": "Rejected {name}",
+    "approveTitle": "Approve {name}",
+    "approveDescription": "Choose tags for this device. Tags decide what it can reach and who can reach it; you can change them later from the device list.",
+    "rejectTitle": "Reject and delete {name}?",
+    "rejectDescription": "The device is deleted from headscale and its IP reclaimed. It has to join again and wait for approval.",
+    "confirmReject": "Reject",
+    "joinedAt": "joined {time}"
   },
   "preAuthKeys": {
-    "title": "PreAuthKeys",
+    "title": "Auth key",
     "mode": "Access mode",
     "reusable": "Reusable",
     "used": "Used",
     "status": "Status",
     "expiration": "Expiration",
     "actions": "Actions",
-    "empty": "No PreAuthKeys",
+    "empty": "No auth key",
     "direct": "Direct",
     "review": "Review required",
     "expired": "Expired",
@@ -145,10 +148,10 @@
     "searchPlaceholder": "Search keys"
   },
   "createKey": {
-    "trigger": "Generate PreAuthKey",
-    "title": "Generate PreAuthKey",
+    "trigger": "Generate auth key",
+    "title": "Generate auth key",
     "description": "Use this for client tailscale up --authkey onboarding. Copy it immediately; lists only show a masked key.",
-    "resultLabel": "PreAuthKey (shown once)",
+    "resultLabel": "Auth key (shown once)",
     "reusable": "Reusable",
     "ephemeral": "Ephemeral node (removed automatically when offline)",
     "mode": "Access mode",
@@ -177,20 +180,10 @@
     "directUp": "Direct tailscale up",
     "missingPlaintext": "This key has no local plaintext backup. headscale only returns plaintext once when the key is created, so it cannot be recovered later. Generate a new key.",
     "deleted": "Deleted; the key was removed from the list",
-    "deleteTitle": "Delete PreAuthKey #{id}?",
+    "deleteTitle": "Delete auth key #{id}?",
     "deleteDescription": "This key will be physically deleted from headscale and removed from the list immediately. Nodes that already used it are not affected. This cannot be undone.",
     "deleting": "Deleting...",
     "confirmDelete": "Delete"
-  },
-  "pendingActions": {
-    "approve": "Approve",
-    "reject": "Reject",
-    "menu": "More actions",
-    "approved": "Approved {name}",
-    "rejected": "Rejected {name}",
-    "rejectTitle": "Reject and delete {name}?",
-    "rejectDescription": "This node will be removed from headscale and its IP will be released. The client must join again and wait for approval. This cannot be undone.",
-    "confirmReject": "Reject"
   },
   "nodeActions": {
     "rename": "Rename",
@@ -257,7 +250,9 @@
     "linuxUninstallTailscaleCommand": "Linux uninstall Tailscale (remove leftovers + verify)",
     "linuxUninstallZerotierCommand": "Linux uninstall ZeroTier (leave networks + remove leftovers)",
     "windowsUninstallTailscaleCommand": "Windows uninstall Tailscale (admin PowerShell)",
-    "windowsUninstallZerotierCommand": "Windows uninstall ZeroTier (admin PowerShell)"
+    "windowsUninstallZerotierCommand": "Windows uninstall ZeroTier (admin PowerShell)",
+    "title": "Scripts and uninstall",
+    "summary": "Install scripts, remote deploy and uninstall commands"
   },
   "actionErrors": {
     "unknown": "Unknown error",
@@ -362,7 +357,7 @@
     "addTag": "Add tag",
     "tagCreated": "Tag created",
     "tagDeleted": "Tag deleted",
-    "rulesTitle": "Access rules",
+    "rulesTitle": "Who can reach whom",
     "rulesDescription": "Read each rule as \"devices with the tags on the left can reach devices with the tags on the right\". It is one-way: replies flow back, the reverse stays closed. To open up a single device, give it a tag of its own (such as tag:ttxs-share) and put that tag on the right.",
     "from": "Who can reach",
     "to": "Can reach",
@@ -374,6 +369,10 @@
     "noRules": "No cross-tag rules yet.",
     "defaultRule": "Default rule (with subnet routes)",
     "mutualOn": "Members now reach each other",
-    "mutualOff": "Members no longer reach each other"
+    "mutualOff": "Members no longer reach each other",
+    "deleteTagTitle": "Delete tag {tag}?",
+    "deleteTagDescription": "Only a tag no device carries and no rule names can be deleted.",
+    "deleteRuleTitle": "Delete this rule?",
+    "deleteRuleDescription": "{rule}. It takes effect immediately and those devices lose access at once."
   }
 }

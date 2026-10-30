@@ -28,6 +28,7 @@ import {
 import { STICKY_ACTIONS } from '@/lib/table'
 import { CreateKey } from './create-key'
 import { KeyRowActions } from './key-row-actions'
+import { Scripts } from './scripts'
 
 export const dynamic = 'force-dynamic'
 
@@ -167,6 +168,7 @@ export default async function PreAuthKeysPage({
           </TableBody>
         </Table>
       </div>
+      <Scripts />
     </div>
   )
 }

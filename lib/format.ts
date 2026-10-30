@@ -19,3 +19,8 @@ export function pickIpv4(ips?: string[]): string | undefined {
 export function onlyIpv4(ips?: string[]): string[] {
   return ips?.filter((ip) => ip.includes('.')) ?? []
 }
+
+// headscale requires the tag: prefix; people don't need to read it
+export function tagLabel(tag: string): string {
+  return tag.replace(/^tag:/, '')
+}

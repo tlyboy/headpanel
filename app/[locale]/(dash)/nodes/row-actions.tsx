@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Checkbox } from '@/components/ui/checkbox'
+import { TagChecklist } from '@/components/tag-checklist'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -174,19 +174,11 @@ export function NodeRowActions({
             <DialogTitle>{t('tagsTitle')}</DialogTitle>
             <DialogDescription>{t('tagsDescription')}</DialogDescription>
           </DialogHeader>
-          <div className="flex flex-col gap-2">
-            {[...new Set([...tagOptions, ...tags])].map((tag) => (
-              <Label key={tag} className="flex items-center gap-2 font-mono text-sm font-normal">
-                <Checkbox
-                  checked={picked.includes(tag)}
-                  onCheckedChange={(on) =>
-                    setPicked((p) => (on ? [...p, tag] : p.filter((x) => x !== tag)))
-                  }
-                />
-                {tag}
-              </Label>
-            ))}
-          </div>
+          <TagChecklist
+            options={[...new Set([...tagOptions, ...tags])]}
+            picked={picked}
+            onChange={setPicked}
+          />
           <DialogFooter>
             <Button variant="outline" onClick={() => setTagsOpen(false)} disabled={pending}>
               {common('cancel')}

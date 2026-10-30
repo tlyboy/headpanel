@@ -9,7 +9,7 @@ import { LanIpCell } from '@/components/lan-ip-cell'
 import { CmdBlock } from '@/components/cmd-block'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Fold } from '@/components/fold'
 import {
   Table,
   TableBody,
@@ -212,47 +212,41 @@ export default async function SubnetsPage({
         </Table>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>{t('howto.title')}</CardTitle>
-          <CardDescription>{t('howto.summary')}</CardDescription>
-        </CardHeader>
-        <CardContent className="flex flex-col gap-6">
-          <div className="grid gap-6 lg:grid-cols-2">
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <h3 className="text-sm font-medium">{t('howto.step1Title')}</h3>
-              </div>
-              {ADVERTISE_CMDS.map((c) => (
-                <CmdBlock key={c.key} label={t(c.key)} cmd={c.cmd} />
-              ))}
+      <Fold title={t('howto.title')} summary={t('howto.summary')}>
+        <div className="grid gap-6 lg:grid-cols-2">
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <h3 className="text-sm font-medium">{t('howto.step1Title')}</h3>
             </div>
-
-            <div className="flex flex-col gap-3">
-              <div className="flex flex-col gap-1">
-                <h3 className="text-sm font-medium">{t('howto.step2Title')}</h3>
-                <p className="text-sm text-muted-foreground">{t('howto.step2Desc')}</p>
-              </div>
-              {FORWARD_CMDS.map((c) => (
-                <CmdBlock key={c.key} label={t(c.key)} cmd={c.cmd} />
-              ))}
-            </div>
+            {ADVERTISE_CMDS.map((c) => (
+              <CmdBlock key={c.key} label={t(c.key)} cmd={c.cmd} />
+            ))}
           </div>
 
-          <div className="flex flex-col gap-2 text-sm">
-            <p>
-              <span className="font-medium">{t('howto.accessTitle')}</span>{' '}
-              <span className="text-muted-foreground">{t('howto.accessDesc')}</span>
-            </p>
+          <div className="flex flex-col gap-3">
+            <div className="flex flex-col gap-1">
+              <h3 className="text-sm font-medium">{t('howto.step2Title')}</h3>
+              <p className="text-sm text-muted-foreground">{t('howto.step2Desc')}</p>
+            </div>
+            {FORWARD_CMDS.map((c) => (
+              <CmdBlock key={c.key} label={t(c.key)} cmd={c.cmd} />
+            ))}
           </div>
+        </div>
 
-          <Alert>
-            <TriangleAlert />
-            <AlertTitle>{t('howto.warnTitle')}</AlertTitle>
-            <AlertDescription>{t('howto.warnDesc')}</AlertDescription>
-          </Alert>
-        </CardContent>
-      </Card>
+        <div className="flex flex-col gap-2 text-sm">
+          <p>
+            <span className="font-medium">{t('howto.accessTitle')}</span>{' '}
+            <span className="text-muted-foreground">{t('howto.accessDesc')}</span>
+          </p>
+        </div>
+
+        <Alert>
+          <TriangleAlert />
+          <AlertTitle>{t('howto.warnTitle')}</AlertTitle>
+          <AlertDescription>{t('howto.warnDesc')}</AlertDescription>
+        </Alert>
+      </Fold>
     </div>
   )
 }

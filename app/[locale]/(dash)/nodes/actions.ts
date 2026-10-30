@@ -6,7 +6,7 @@ import { requireSession } from '@/lib/auth'
 import { nodeTarget } from '@/lib/audit'
 import { auditAfter } from '@/lib/db'
 import { declaredTags } from '@/lib/policy'
-import { setNodeNote } from '@/lib/nodes-sync'
+import { setNodeNote, setNodeStatus } from '@/lib/nodes-sync'
 import {
   deleteNode,
   expireNode,
@@ -103,6 +103,40 @@ export async function setTagsAction(id: string, tags: string[]): Promise<ActionR
     })
     revalidatePath('/nodes')
     revalidatePath('/tags')
+    return { ok: true }
+  } catch (e) {
+    return fail(e, t('unknown'))
+  }
+}
+
+// Approve with the tags picked in the dialog, so a new device lands in the right place in one step
+export async function approveNodeAction(id: string, tags: string[]): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
+  const known = new Set(declaredTags())
+  const next = [...new Set(tags)].sort()
+  if (!next.length) return { ok: false, error: t('tagsRequired') }
+  if (next.some((tag) => !known.has(tag))) return { ok: false, error: t('tagUnknown') }
+  try {
+    const node = await getNode(id)
+    await setNodeTags(id, next)
+    setNodeStatus(id, 'approved', session.sub)
+    auditAfter('node.approve', nodeTarget(node), `tags=[${next.join(',')}]`, { actor: session.sub })
+    revalidatePath('/nodes')
+    return { ok: true }
+  } catch (e) {
+    return fail(e, t('unknown'))
+  }
+}
+
+// Reject: delete the node so its IP is reclaimed; the client has to join again
+export async function rejectNodeAction(id: string): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
+  try {
+    const node = await getNode(id)
+    setNodeStatus(id, 'rejected', session.sub)
+    await deleteNode(id)
+    auditAfter('node.reject', nodeTarget(node), 'deleted', { actor: session.sub })
+    revalidatePath('/nodes')
     return { ok: true }
   } catch (e) {
     return fail(e, t('unknown'))

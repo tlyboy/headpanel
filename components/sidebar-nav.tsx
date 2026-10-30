@@ -4,13 +4,11 @@ import { useTranslations } from 'next-intl'
 import {
   LayoutDashboard,
   Server,
-  ClockAlert,
   KeyRound,
-  Download,
   type LucideIcon,
   ScrollText,
-  Network,
   Route,
+  Settings,
   Tags,
 } from 'lucide-react'
 import { Link, usePathname } from '@/i18n/navigation'
@@ -23,27 +21,16 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
-type NavLabel =
-  | 'dashboard'
-  | 'nodes'
-  | 'pending'
-  | 'preauthKeys'
-  | 'subnets'
-  | 'tags'
-  | 'network'
-  | 'scripts'
-  | 'audit'
+type NavLabel = 'dashboard' | 'nodes' | 'preauthKeys' | 'tags' | 'subnets' | 'audit' | 'network'
 
 type NavHref =
   | '/dashboard'
   | '/nodes'
-  | '/pending'
   | '/preauthkeys'
-  | '/subnets'
   | '/tags'
-  | '/network'
-  | '/scripts'
+  | '/subnets'
   | '/audit'
+  | '/network'
 
 interface NavItem {
   href: NavHref
@@ -52,33 +39,37 @@ interface NavItem {
   hostControlOnly?: boolean
 }
 
-const items: NavItem[] = [
-  { href: '/dashboard', label: 'dashboard', icon: LayoutDashboard },
-  { href: '/nodes', label: 'nodes', icon: Server },
-  { href: '/pending', label: 'pending', icon: ClockAlert },
-  { href: '/preauthkeys', label: 'preauthKeys', icon: KeyRound },
-  { href: '/tags', label: 'tags', icon: Tags },
-  { href: '/subnets', label: 'subnets', icon: Route },
+// Daily work first; the rarely touched network and system pages sit in their own group below
+const sections: { label: 'daily' | 'system'; items: NavItem[] }[] = [
   {
-    href: '/network',
-    label: 'network',
-    icon: Network,
-    hostControlOnly: true,
+    label: 'daily',
+    items: [
+      { href: '/dashboard', label: 'dashboard', icon: LayoutDashboard },
+      { href: '/nodes', label: 'nodes', icon: Server },
+      { href: '/preauthkeys', label: 'preauthKeys', icon: KeyRound },
+      { href: '/tags', label: 'tags', icon: Tags },
+    ],
   },
-  { href: '/scripts', label: 'scripts', icon: Download },
-  { href: '/audit', label: 'audit', icon: ScrollText },
+  {
+    label: 'system',
+    items: [
+      { href: '/subnets', label: 'subnets', icon: Route },
+      { href: '/audit', label: 'audit', icon: ScrollText },
+      { href: '/network', label: 'network', icon: Settings, hostControlOnly: true },
+    ],
+  },
 ]
 
 export function SidebarNav({ hostControl = false }: { hostControl?: boolean }) {
   const pathname = usePathname()
   const t = useTranslations('nav')
 
-  return (
-    <SidebarGroup>
-      <SidebarGroupLabel>{t('platform')}</SidebarGroupLabel>
+  return sections.map((section) => (
+    <SidebarGroup key={section.label}>
+      <SidebarGroupLabel>{t(section.label)}</SidebarGroupLabel>
       <SidebarGroupContent>
         <SidebarMenu>
-          {items
+          {section.items
             .filter((item) => hostControl || !item.hostControlOnly)
             .map(({ href, label, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(`${href}/`)
@@ -99,5 +90,5 @@ export function SidebarNav({ hostControl = false }: { hostControl?: boolean }) {
         </SidebarMenu>
       </SidebarGroupContent>
     </SidebarGroup>
-  )
+  ))
 }

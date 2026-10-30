@@ -18,10 +18,8 @@ import { SidebarTrigger } from '@/components/ui/sidebar'
 const routeKeys = {
   dashboard: 'dashboard',
   nodes: 'nodes',
-  pending: 'pending',
   preauthkeys: 'preauthKeys',
   network: 'network',
-  scripts: 'scripts',
   audit: 'audit',
   subnets: 'subnets',
   tags: 'tags',

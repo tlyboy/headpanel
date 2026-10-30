@@ -1,7 +1,6 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { CmdBlock } from '@/components/cmd-block'
 import { useCurrentOrigin } from '@/lib/use-current-origin'
 
@@ -35,16 +34,14 @@ export function UninstallCommands({ basePath }: { basePath: string }) {
   ]
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>{t('remoteUninstall')}</CardTitle>
-        <CardDescription>{t('remoteUninstallDescription')}</CardDescription>
-      </CardHeader>
-      <CardContent className="flex flex-col gap-3">
-        {cmds.map((c) => (
-          <CmdBlock key={c.labelKey} label={t(c.labelKey)} cmd={c.cmd} />
-        ))}
-      </CardContent>
-    </Card>
+    <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-1">
+        <h3 className="text-sm font-medium">{t('remoteUninstall')}</h3>
+        <p className="text-sm text-muted-foreground">{t('remoteUninstallDescription')}</p>
+      </div>
+      {cmds.map((c) => (
+        <CmdBlock key={c.labelKey} label={t(c.labelKey)} cmd={c.cmd} />
+      ))}
+    </div>
   )
 }

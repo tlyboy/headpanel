@@ -7,6 +7,18 @@ import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { TagChecklist } from '@/components/tag-checklist'
+import { tagLabel } from '@/lib/format'
 import { noAutofill } from '@/lib/no-autofill'
 import {
   createRuleAction,
@@ -49,7 +61,7 @@ export function TagForm() {
           className="w-56 font-mono"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="tag:shengchuang"
+          placeholder="shengchuang"
         />
       </div>
       <Label className="flex h-9 items-center gap-2 font-normal">
@@ -86,17 +98,7 @@ function TagPicker({
   return (
     <div className="flex flex-col gap-2">
       <span className="text-sm font-medium">{label}</span>
-      {tags.map((tag) => (
-        <Label key={tag} className="flex items-center gap-2 font-mono text-sm font-normal">
-          <Checkbox
-            checked={picked.includes(tag)}
-            onCheckedChange={(on) =>
-              onChange(on ? [...picked, tag] : picked.filter((x) => x !== tag))
-            }
-          />
-          {tag}
-        </Label>
-      ))}
+      <TagChecklist options={tags} picked={picked} onChange={onChange} />
     </div>
   )
 }
@@ -134,33 +136,72 @@ export function RuleForm({ tags }: { tags: string[] }) {
   )
 }
 
+// Deleting a tag or a rule changes who can reach whom at once, so ask first
+function ConfirmDelete({
+  title,
+  description,
+  disabled,
+  onConfirm,
+}: {
+  title: string
+  description: string
+  disabled?: boolean
+  onConfirm: (close: () => void) => void
+}) {
+  const t = useTranslations('tags')
+  const common = useTranslations('common')
+  const [open, setOpen] = useState(false)
+  return (
+    <>
+      <Button variant="ghost" size="sm" disabled={disabled} onClick={() => setOpen(true)}>
+        {t('delete')}
+      </Button>
+      <AlertDialog open={open} onOpenChange={setOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{title}</AlertDialogTitle>
+            <AlertDialogDescription>{description}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>{common('cancel')}</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault()
+                onConfirm(() => setOpen(false))
+              }}
+            >
+              {t('delete')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
+  )
+}
+
 export function DeleteTag({ tag, disabled }: { tag: string; disabled?: boolean }) {
   const t = useTranslations('tags')
   const { pending, run } = useRun()
   return (
-    <Button
-      variant="ghost"
-      size="sm"
+    <ConfirmDelete
+      title={t('deleteTagTitle', { tag: tagLabel(tag) })}
+      description={t('deleteTagDescription')}
       disabled={pending || disabled}
-      onClick={() => run(() => deleteTagAction(tag), t('tagDeleted'))}
-    >
-      {t('delete')}
-    </Button>
+      onConfirm={(close) => run(() => deleteTagAction(tag), t('tagDeleted'), close)}
+    />
   )
 }
 
-export function DeleteRule({ ruleKey, disabled }: { ruleKey: string; disabled?: boolean }) {
+export function DeleteRule({ ruleKey, summary }: { ruleKey: string; summary: string }) {
   const t = useTranslations('tags')
   const { pending, run } = useRun()
   return (
-    <Button
-      variant="ghost"
-      size="sm"
-      disabled={pending || disabled}
-      onClick={() => run(() => deleteRuleAction(ruleKey), t('ruleDeleted'))}
-    >
-      {t('delete')}
-    </Button>
+    <ConfirmDelete
+      title={t('deleteRuleTitle')}
+      description={t('deleteRuleDescription', { rule: summary })}
+      disabled={pending}
+      onConfirm={(close) => run(() => deleteRuleAction(ruleKey), t('ruleDeleted'), close)}
+    />
   )
 }
 

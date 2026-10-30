@@ -10,6 +10,7 @@ import { ActivityChart } from './activity-chart'
 import { auditKind, type AuditKind } from '@/lib/audit'
 import { ACTIVITY_TOP_N, type ActivityPoint } from './activity'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Link } from '@/i18n/navigation'
 
 export const dynamic = 'force-dynamic'
 
@@ -113,12 +114,14 @@ export default async function DashboardPage() {
     value: string | number
     desc: string
     warn?: boolean
+    href?: '/nodes' | '/subnets' | '/preauthkeys'
   }[] = [
     {
       title: t('nodesOnline'),
       value: `${online}/${nodes.length}`,
       desc: t('offline', { count: nodes.length - online }),
       warn: nodes.length > 0 && online === 0,
+      href: '/nodes',
     },
     {
       title: t('subnetServing'),
@@ -132,18 +135,21 @@ export default async function DashboardPage() {
               })
             : t('subnetAllUp'),
       warn: servingRoutes.size < approvedRoutes.size,
+      href: '/subnets',
     },
     {
       title: t('pendingNodes'),
       value: pending,
       desc: pending > 0 ? t('hasPending') : t('noPending'),
       warn: pending > 0,
+      href: '/nodes',
     },
     {
       title: t('validPreAuthKeys'),
       value: validKeys,
       desc: validKeys === 0 ? t('noValidKey') : t('total', { count: keyCount }),
       warn: validKeys === 0,
+      href: '/preauthkeys',
     },
     // Put the version number last: it's background information and doesn't require anyone to do anything
     {
@@ -156,19 +162,28 @@ export default async function DashboardPage() {
   return (
     <div className="flex h-full min-h-0 flex-col gap-4">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
-        {stats.map((s) => (
-          <Card key={s.title}>
-            <CardHeader className="pb-2">
-              <CardDescription>{s.title}</CardDescription>
-              <CardTitle className="text-3xl">{s.value}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className={s.warn ? 'text-xs text-warning' : 'text-xs text-muted-foreground'}>
-                {s.desc}
-              </p>
-            </CardContent>
-          </Card>
-        ))}
+        {stats.map((s) => {
+          const card = (
+            <Card className={s.href ? 'h-full transition-colors hover:bg-muted/50' : 'h-full'}>
+              <CardHeader className="pb-2">
+                <CardDescription>{s.title}</CardDescription>
+                <CardTitle className="text-3xl">{s.value}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className={s.warn ? 'text-xs text-warning' : 'text-xs text-muted-foreground'}>
+                  {s.desc}
+                </p>
+              </CardContent>
+            </Card>
+          )
+          return s.href ? (
+            <Link key={s.title} href={s.href}>
+              {card}
+            </Link>
+          ) : (
+            <div key={s.title}>{card}</div>
+          )
+        })}
       </div>
 
       <Card className="flex min-h-72 flex-1 flex-col">

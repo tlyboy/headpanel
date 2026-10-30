@@ -4,6 +4,7 @@ import { approvedTag } from '@/lib/default-zone'
 import { listNodes } from '@/lib/headscale'
 import { declaredTags, loadBaseline, ruleKey } from '@/lib/policy'
 import { Badge } from '@/components/ui/badge'
+import { tagLabel } from '@/lib/format'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
@@ -17,16 +18,26 @@ import { DeleteRule, DeleteTag, MutualToggle, RuleForm, TagForm } from './forms'
 
 export const dynamic = 'force-dynamic'
 
-function Endpoints({ items }: { items: string[] }) {
+// Policy entries look like "tag:x:*" or "192.168.1.0/24:*"; show the tag name, or the subnet with the node that routes it
+function Endpoints({ items, routers }: { items: string[]; routers: Map<string, string> }) {
   return (
     <div className="flex flex-wrap gap-1">
-      {items.map((x) => (
-        <Badge key={x} variant="outline" className="font-mono">
-          {x.replace(/:\*$/, '')}
-        </Badge>
-      ))}
+      {items.map((raw) => {
+        const x = raw.replace(/:\*$/, '')
+        const via = routers.get(x)
+        return (
+          <Badge key={raw} variant="outline" className={x.startsWith('tag:') ? '' : 'font-mono'}>
+            {tagLabel(x)}
+            {via && <span className="ml-1 font-sans text-muted-foreground">({via})</span>}
+          </Badge>
+        )
+      })}
     </div>
   )
+}
+
+function ruleText(items: string[]): string {
+  return items.map((x) => tagLabel(x.replace(/:\*$/, ''))).join(', ')
 }
 
 export default async function TagsPage() {
@@ -43,6 +54,10 @@ export default async function TagsPage() {
     acls.some((r) => r.src.includes(tag) && r.dst.includes(`${tag}:*`))
   const crossRules = acls.filter((r) => r !== defaultRule && !isSelf(r))
   const nodes = await listNodes()
+  const routers = new Map<string, string>()
+  for (const n of nodes) {
+    for (const route of n.subnetRoutes ?? []) routers.set(route, n.givenName)
+  }
   const members = (tag: string) => nodes.filter((n) => n.tags.includes(tag))
 
   return (
@@ -69,8 +84,8 @@ export default async function TagsPage() {
                   const m = members(tag)
                   return (
                     <TableRow key={tag}>
-                      <TableCell className="font-mono text-sm">
-                        {tag}
+                      <TableCell className="text-sm font-medium">
+                        {tagLabel(tag)}
                         {tag === approvedTag() && (
                           <Badge variant="secondary" className="ml-2">
                             {t('default')}
@@ -112,19 +127,22 @@ export default async function TagsPage() {
             )}
             {crossRules.map((rule) => (
               <div key={ruleKey(rule)} className="flex items-center gap-3 px-4 py-3 text-sm">
-                <Endpoints items={rule.src} />
+                <Endpoints items={rule.src} routers={routers} />
                 <span className="shrink-0 text-muted-foreground">{t('canReach')}</span>
-                <Endpoints items={rule.dst} />
+                <Endpoints items={rule.dst} routers={routers} />
                 <div className="ml-auto">
-                  <DeleteRule ruleKey={ruleKey(rule)} />
+                  <DeleteRule
+                    ruleKey={ruleKey(rule)}
+                    summary={`${ruleText(rule.src)} → ${ruleText(rule.dst)}`}
+                  />
                 </div>
               </div>
             ))}
             {defaultRule && (
               <div className="flex items-center gap-3 px-4 py-3 text-sm text-muted-foreground">
-                <Endpoints items={defaultRule.src} />
+                <Endpoints items={defaultRule.src} routers={routers} />
                 <span className="shrink-0">{t('canReach')}</span>
-                <Endpoints items={defaultRule.dst} />
+                <Endpoints items={defaultRule.dst} routers={routers} />
                 <Badge variant="secondary" className="ml-auto shrink-0">
                   {t('defaultRule')}
                 </Badge>

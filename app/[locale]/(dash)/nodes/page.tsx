@@ -4,7 +4,8 @@ import { syncAndListNodes } from '@/lib/nodes-sync'
 import { requireSession } from '@/lib/auth'
 import { declaredTags } from '@/lib/policy'
 import { readNodeNetInfo } from '@/lib/headscale-db'
-import { fmtTime, pickIpv4 } from '@/lib/format'
+import { fmtTime, pickIpv4, tagLabel } from '@/lib/format'
+import { approvedTag } from '@/lib/default-zone'
 import { Badge } from '@/components/ui/badge'
 import {
   Table,
@@ -26,6 +27,7 @@ import {
 } from '@/components/columns'
 import { STICKY_ACTIONS } from '@/lib/table'
 import { NodeRowActions } from './row-actions'
+import { PendingCard } from './pending-card'
 
 const PAGE = 'nodes'
 
@@ -68,7 +70,8 @@ export default async function NodesPage({
   const netInfo = readNodeNetInfo()
   const tagOptions = declaredTags()
 
-  // Pending nodes live on the pending page; rejected ones are deleted from headscale.
+  // Pending nodes get their own card above the list; rejected ones are deleted from headscale.
+  const pending = all.filter((n) => n.status === 'pending')
   // Search includes LAN IPs: when locating a machine, the address you have on hand is often that one
   const nodes = all.filter((n) => {
     if (n.status === 'pending') return false
@@ -89,6 +92,18 @@ export default async function NodesPage({
 
   return (
     <div className="flex flex-col gap-4">
+      {pending.length > 0 && (
+        <PendingCard
+          nodes={pending.map((n) => ({
+            id: n.id,
+            name: n.givenName,
+            ip: pickIpv4(n.ipAddresses) ?? '—',
+            createdAt: n.createdAt,
+          }))}
+          tagOptions={tagOptions}
+          defaultTag={approvedTag()}
+        />
+      )}
       <ListFilters
         placeholder={t('searchPlaceholder')}
         columns={<ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />}
@@ -168,7 +183,7 @@ export default async function NodesPage({
                           <span className="flex flex-wrap gap-1">
                             {n.tags.map((t) => (
                               <Badge key={t} variant="outline">
-                                {t}
+                                {tagLabel(t)}
                               </Badge>
                             ))}
                           </span>
