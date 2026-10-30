@@ -99,7 +99,11 @@ export function EditMembers({ tag, nodes }: { tag: string; nodes: MemberOption[]
   const [picked, setPicked] = useState<string[]>(current)
   const [query, setQuery] = useState('')
   const q = query.trim().toLowerCase()
-  const shown = nodes.filter((n) => !q || n.name.toLowerCase().includes(q) || n.ip.includes(q))
+  // Current members first, so you see who is in before scrolling through everyone else
+  const ordered = nodes.toSorted(
+    (a, b) => Number(b.tags.includes(tag)) - Number(a.tags.includes(tag)),
+  )
+  const shown = ordered.filter((n) => !q || n.name.toLowerCase().includes(q) || n.ip.includes(q))
   // headscale can't take the last tag off a node
   const locked = (n: MemberOption) => n.tags.length === 1 && n.tags[0] === tag
   const pickedSet = new Set(picked)
