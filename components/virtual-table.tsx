@@ -21,6 +21,7 @@ export function VirtualTable({
   className,
   footer,
   onEndReached,
+  fixed,
 }: {
   head: ReactNode
   rows: VirtualRow[]
@@ -31,6 +32,9 @@ export function VirtualTable({
   footer?: ReactNode
   // Called when the rendered window gets near the last row, to load the next batch
   onEndReached?: () => void
+  // Take column widths from the header cells only. Use it when rows load in batches,
+  // since auto widths follow whichever rows are on screen and jump while scrolling.
+  fixed?: boolean
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const headBox = useRef<HTMLDivElement>(null)
@@ -102,7 +106,7 @@ export function VirtualTable({
         }}
         className="min-h-0 shrink [scrollbar-gutter:stable] overflow-auto"
       >
-        <table ref={bodyTable} className="w-full text-sm">
+        <table ref={bodyTable} className={cn('w-full text-sm', fixed && 'table-fixed')}>
           <thead aria-hidden className="[visibility:collapse]">
             <tr ref={ghost} inert>
               {head}

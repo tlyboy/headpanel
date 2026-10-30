@@ -50,6 +50,7 @@ export function AuditList({
       colSpan={visible.length}
       empty={t('empty')}
       onEndReached={loadMore}
+      fixed
       footer={
         rows.length > 0 && (
           <p className="flex items-center justify-center gap-2 border-t py-3 text-xs text-muted-foreground">
@@ -63,9 +64,9 @@ export function AuditList({
       head={
         <>
           {show('time') && <TableHead className="w-44">{t('time')}</TableHead>}
-          {show('actor') && <TableHead>{t('actor')}</TableHead>}
-          {show('action') && <TableHead>{t('action')}</TableHead>}
-          {show('target') && <TableHead>{t('target')}</TableHead>}
+          {show('actor') && <TableHead className="w-28">{t('actor')}</TableHead>}
+          {show('action') && <TableHead className="w-40">{t('action')}</TableHead>}
+          {show('target') && <TableHead className="w-80">{t('target')}</TableHead>}
           {show('detail') && <TableHead>{t('detail')}</TableHead>}
         </>
       }
@@ -76,15 +77,21 @@ export function AuditList({
             {show('time') && (
               <TableCell className="text-xs text-muted-foreground">{r.time}</TableCell>
             )}
-            {show('actor') && <TableCell className="text-xs">{r.actor}</TableCell>}
+            {show('actor') && <TableCell className="truncate text-xs">{r.actor}</TableCell>}
             {show('action') && (
               <TableCell>
                 <Badge variant={r.variant}>{r.action}</Badge>
               </TableCell>
             )}
-            {show('target') && <TableCell className="text-xs">{r.target}</TableCell>}
+            {show('target') && (
+              <TableCell className="truncate text-xs" title={r.target}>
+                {r.target}
+              </TableCell>
+            )}
             {show('detail') && (
-              <TableCell className="text-xs text-muted-foreground">{r.detail}</TableCell>
+              <TableCell className="truncate text-xs text-muted-foreground" title={r.detail}>
+                {r.detail}
+              </TableCell>
             )}
           </>
         ),
