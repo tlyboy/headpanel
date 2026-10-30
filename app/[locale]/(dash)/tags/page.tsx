@@ -69,7 +69,7 @@ export default async function TagsPage() {
                           </Badge>
                         )}
                       </TableCell>
-                      <TableCell className="max-w-xl text-sm text-muted-foreground">
+                      <TableCell className="max-w-xl truncate text-sm text-muted-foreground">
                         {m.length} · {m.map((n) => n.givenName).join(', ')}
                       </TableCell>
                       <TableCell className="text-right">
