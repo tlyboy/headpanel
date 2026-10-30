@@ -84,8 +84,11 @@ Log "Administrator privileges OK"
 # Get-CimInstance needs PowerShell 3; WMI works everywhere
 $os = Get-WmiObject Win32_OperatingSystem
 Log "System: $($os.Caption) ($($os.OSArchitecture)), PowerShell $($PSVersionTable.PSVersion)"
+# Tailscale 1.44.3 is the last release for Windows 7/8/8.1 and Server 2008/2012 (R2), and Headscale 0.28 needs 1.74 or newer
 if ([Environment]::OSVersion.Version.Major -lt 10) {
-    Warn "Current Tailscale releases support Windows 10 / Server 2016 and later; installation may fail on this system"
+    Err "Tailscale no longer supports this Windows version; it needs Windows 10 / Server 2016 or later"
+    Err "Reach this machine through a subnet router on its LAN instead, or upgrade the OS"
+    exit 1
 }
 
 # 3. Check Headscale health
