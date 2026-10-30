@@ -100,7 +100,9 @@
     "allTime": "全部时间",
     "today": "今天",
     "last7d": "近 7 天",
-    "last30d": "近 30 天"
+    "last30d": "近 30 天",
+    "allLoaded": "已全部加载，共 {count} 条",
+    "loadedOf": "已加载 {loaded} / {total} 条，继续下滑加载更多"
   },
   "nodes": {
     "title": "设备",

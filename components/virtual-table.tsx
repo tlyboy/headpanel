@@ -1,6 +1,6 @@
 'use client'
 
-import { useLayoutEffect, useRef, useState, type ReactNode } from 'react'
+import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react'
 import { useVirtualizer } from '@tanstack/react-virtual'
 import { TableCell, TableRow } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
@@ -19,12 +19,18 @@ export function VirtualTable({
   colSpan,
   empty,
   className,
+  footer,
+  onEndReached,
 }: {
   head: ReactNode
   rows: VirtualRow[]
   colSpan: number
   empty: ReactNode
   className?: string
+  // Shown under the last row, e.g. a loading or "all loaded" line
+  footer?: ReactNode
+  // Called when the rendered window gets near the last row, to load the next batch
+  onEndReached?: () => void
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const headBox = useRef<HTMLDivElement>(null)
@@ -59,6 +65,11 @@ export function VirtualTable({
   const items = virtualizer.getVirtualItems()
   const padTop = items[0]?.start ?? 0
   const padBottom = virtualizer.getTotalSize() - (items.at(-1)?.end ?? 0)
+  const lastIndex = items.at(-1)?.index ?? -1
+
+  useEffect(() => {
+    if (onEndReached && rows.length > 0 && lastIndex >= rows.length - 20) onEndReached()
+  }, [lastIndex, rows.length, onEndReached])
 
   return (
     <div
@@ -122,6 +133,7 @@ export function VirtualTable({
             )}
           </tbody>
         </table>
+        {footer}
       </div>
     </div>
   )

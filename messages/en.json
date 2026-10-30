@@ -100,7 +100,9 @@
     "allTime": "All time",
     "today": "Today",
     "last7d": "Last 7 days",
-    "last30d": "Last 30 days"
+    "last30d": "Last 30 days",
+    "allLoaded": "All {count} records loaded",
+    "loadedOf": "{loaded} of {total} loaded, scroll for more"
   },
   "nodes": {
     "title": "Nodes",
