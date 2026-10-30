@@ -6,7 +6,6 @@ import { nodeMeta } from '@/lib/db/schema'
 import { listNodes, type HsNode } from '@/lib/headscale'
 import { approvedTag } from '@/lib/default-zone'
 import { listGroups } from '@/lib/groups'
-import { dropNodeGrants } from '@/lib/grants'
 
 export interface MergedNode extends HsNode {
   status: 'pending' | 'approved' | 'rejected'
@@ -18,7 +17,7 @@ export interface MergedNode extends HsNode {
 //  - Newly seen nodes that already have an approval tag (the group's ok_tag or the default area's approvedTag) → approved (direct key access)
 //  - Newly seen nodes without an approval tag → pending (awaiting approval; without a ticket tag, they are isolated by the ACL)
 //  - Existing records: preserve their status (status is changed only by approval actions, not overwritten by sync)
-//  - Nodes deleted from headscale: clean up orphaned metadata and the grants that pin them
+//  - Nodes deleted from headscale: clean up orphaned metadata
 export async function syncAndListNodes(): Promise<MergedNode[]> {
   const nodes = await listNodes()
   const liveIds = new Set(nodes.map((n) => n.id))
@@ -38,13 +37,6 @@ export async function syncAndListNodes(): Promise<MergedNode[]> {
   }
   if (orphanIds.length) {
     db.delete(nodeMeta).where(inArray(nodeMeta.headscaleId, orphanIds)).run()
-  }
-  // Nodes can also vanish outside the panel (CLI, expiry cleanup). Their grants still pin IP literals that headscale
-  // may reassign to a new device, so drop them here. Best effort: a failed deploy must not break the page; the next sync retries.
-  try {
-    await dropNodeGrants((id) => !liveIds.has(id), { reason: 'node-gone' })
-  } catch (e) {
-    console.error('Failed to drop grants for deleted nodes', e)
   }
 
   const merged: MergedNode[] = []

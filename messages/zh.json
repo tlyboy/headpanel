@@ -52,7 +52,6 @@
     "pending": "待审批",
     "preauthKeys": "PreAuthKey",
     "groups": "组管理",
-    "access": "访问授权",
     "network": "网段设置",
     "scripts": "脚本下载",
     "audit": "审计日志",
@@ -182,48 +181,6 @@
     "newPassword": "新密码（至少 6 位）",
     "newPasswordFor": "{username} 的新密码（至少 6 位）",
     "passwordReset": "密码已重置"
-  },
-  "access": {
-    "source": "源",
-    "destination": "目标",
-    "ports": "端口",
-    "note": "备注",
-    "createdAt": "创建时间",
-    "actions": "操作",
-    "defaultZone": "默认区",
-    "gone": "已失效",
-    "empty": "暂无访问授权，各组之间完全隔离。",
-    "searchPlaceholder": "搜索源 / 目标 / 备注"
-  },
-  "grantForm": {
-    "trigger": "新建授权",
-    "title": "新建访问授权",
-    "description": "源可以主动连接目标，回包自动放行；反方向不授权。",
-    "source": "源",
-    "destination": "目标",
-    "kind": {
-      "zone": "默认区",
-      "group": "组",
-      "node": "节点"
-    },
-    "selectGroup": "选择组",
-    "selectNode": "选择节点",
-    "ports": "目标端口",
-    "portsHint": "* 表示全部端口，或如 22,443,8000-8100",
-    "note": "备注",
-    "notePlaceholder": "可选，如开通原因",
-    "created": "访问授权已创建",
-    "createFailed": "创建访问授权失败",
-    "creating": "创建中...",
-    "create": "创建"
-  },
-  "grantActions": {
-    "menu": "更多操作",
-    "deleted": "访问授权已删除",
-    "deleteTitle": "删除授权 {src} → {dst}？",
-    "deleteDescription": "ACL 会立即重新计算，源将无法再访问目标。",
-    "deleting": "删除中...",
-    "confirmDelete": "删除"
   },
   "preAuthKeys": {
     "title": "PreAuthKey",
@@ -430,8 +387,6 @@
   },
   "auditActions": {
     "accesskey.gen": "生成 API Key",
-    "grant.create": "创建访问授权",
-    "grant.delete": "删除访问授权",
     "group.create": "创建组",
     "group.delete": "删除组",
     "group.rename": "重命名组",

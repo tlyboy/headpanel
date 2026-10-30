@@ -2,7 +2,6 @@
 
 import { useTranslations } from 'next-intl'
 import {
-  ArrowRightLeft,
   LayoutDashboard,
   Server,
   ClockAlert,
@@ -31,7 +30,6 @@ type NavLabel =
   | 'pending'
   | 'preauthKeys'
   | 'groups'
-  | 'access'
   | 'subnets'
   | 'network'
   | 'scripts'
@@ -43,7 +41,6 @@ type NavHref =
   | '/pending'
   | '/preauthkeys'
   | '/groups'
-  | '/access'
   | '/subnets'
   | '/network'
   | '/scripts'
@@ -63,7 +60,6 @@ const items: NavItem[] = [
   { href: '/pending', label: 'pending', icon: ClockAlert },
   { href: '/preauthkeys', label: 'preauthKeys', icon: KeyRound },
   { href: '/groups', label: 'groups', icon: Boxes, superOnly: true },
-  { href: '/access', label: 'access', icon: ArrowRightLeft, superOnly: true },
   { href: '/subnets', label: 'subnets', icon: Route, superOnly: true },
   {
     href: '/network',

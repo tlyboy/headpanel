@@ -70,24 +70,8 @@ export const preauthKeys = sqliteTable('preauth_keys', {
     .default(sql`(current_timestamp)`),
 })
 
-// One-way access grant between isolation units: src may open connections to dst (see lib/grants.ts).
-// ref is null for the default zone, the group id for a group, and the headscale node id for a node.
-export const grants = sqliteTable('grants', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
-  srcKind: text('src_kind', { enum: ['zone', 'group', 'node'] }).notNull(),
-  srcRef: text('src_ref'),
-  dstKind: text('dst_kind', { enum: ['zone', 'group', 'node'] }).notNull(),
-  dstRef: text('dst_ref'),
-  ports: text('ports').notNull().default('*'),
-  note: text('note'),
-  createdAt: text('created_at')
-    .notNull()
-    .default(sql`(current_timestamp)`),
-})
-
 export type Group = typeof groups.$inferSelect
 export type Admin = typeof admins.$inferSelect
 export type NodeMeta = typeof nodeMeta.$inferSelect
 export type AuditLog = typeof auditLog.$inferSelect
 export type PreauthKey = typeof preauthKeys.$inferSelect
-export type GrantRow = typeof grants.$inferSelect

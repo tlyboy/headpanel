@@ -8,7 +8,6 @@ import { auditAfter } from '@/lib/db'
 import { approvedTag } from '@/lib/default-zone'
 import { groupForNode } from '@/lib/groups'
 import { setNodeStatus } from '@/lib/nodes-sync'
-import { dropNodeGrants } from '@/lib/grants'
 import { deleteNode, getNode, setNodeTags, HeadscaleError } from '@/lib/headscale'
 
 export interface ActionResult {
@@ -55,11 +54,6 @@ export async function rejectNodeAction(id: string): Promise<ActionResult> {
   try {
     const node = await getNode(id)
     const group = groupForNode(session, node)
-    // Before deleting: the node's IP may be reassigned, so its grants must not survive it
-    await dropNodeGrants((n) => n === id, {
-      reason: `node-deleted ${nodeTarget(node)}`,
-      actor: session.sub,
-    })
     setNodeStatus(id, 'rejected', session.sub)
     await deleteNode(id)
     auditAfter('node.reject', nodeTarget(node), `group=${group?.slug ?? 'default'} deleted`, {
