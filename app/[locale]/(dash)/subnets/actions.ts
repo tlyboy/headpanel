@@ -46,7 +46,7 @@ export async function approveRouteAction(nodeId: string, route: string): Promise
     // Approving a route only tells headscale to recognize it; if the ACL's dst doesn't include that subnet, packets will still be dropped,
     // so allow it at the same time — otherwise users would have to SSH into the server and edit the baseline file.
     try {
-      if (await updateBaselineAndApply(addSubnetDst(route))) {
+      if (await updateBaselineAndApply(addSubnetDst(route, node.tags ?? []))) {
         auditAfter('policy.allowSubnet', route, undefined, {
           actor: session.sub,
         })

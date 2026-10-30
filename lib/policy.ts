@@ -102,24 +102,37 @@ function firstAcceptRule(b: PolicyBaseline): PolicyAcl {
   return rule
 }
 
-export function addSubnetDst(cidr: string): Mutator {
+// A LAN behind a subnet router belongs to the router's groups: whoever can reach the router can reach the LAN.
+// The subnet goes into the rule of each tag the router carries; an untagged router falls back to the default rule.
+export function addSubnetDst(cidr: string, routerTags: string[]): Mutator {
   return (b) => {
     const want = `${cidr}:*`
-    const rule = firstAcceptRule(b)
-    if (rule.dst.includes(want)) return false
-    rule.dst.push(want)
-    return true
+    const acls = b.acls ?? []
+    const owned = acls.filter(
+      (a) => a.action === 'accept' && a.src.length === 1 && routerTags.includes(a.src[0]),
+    )
+    const rules = owned.length ? owned : [firstAcceptRule(b)]
+    let changed = false
+    for (const rule of rules) {
+      if (rule.dst.includes(want)) continue
+      rule.dst.push(want)
+      changed = true
+    }
+    return changed
   }
 }
 
 export function removeSubnetDst(cidr: string): Mutator {
   return (b) => {
     const want = `${cidr}:*`
-    const rule = firstAcceptRule(b)
-    const next = rule.dst.filter((d) => d !== want)
-    if (next.length === rule.dst.length) return false
-    rule.dst = next
-    return true
+    let changed = false
+    for (const rule of b.acls ?? []) {
+      const next = rule.dst.filter((d) => d !== want)
+      if (next.length === rule.dst.length) continue
+      rule.dst = next
+      changed = true
+    }
+    return changed
   }
 }
 
