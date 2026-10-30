@@ -1,7 +1,7 @@
 import { getTranslations } from 'next-intl/server'
 import { cookies } from 'next/headers'
 import { TriangleAlert } from 'lucide-react'
-import { requireSuper } from '@/lib/auth'
+import { requireSession } from '@/lib/auth'
 import { pickIpv4 } from '@/lib/format'
 import { readNodeNetInfo } from '@/lib/headscale-db'
 import { listNodes, type HsNode } from '@/lib/headscale'
@@ -72,9 +72,8 @@ export default async function SubnetsPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  // requireSuper: after switching to a group, this page will be blocked, just as it is for group admins
   const [, t, common, sp, cookieStore] = await Promise.all([
-    requireSuper(),
+    requireSession(),
     getTranslations('subnets'),
     getTranslations('common'),
     searchParams,

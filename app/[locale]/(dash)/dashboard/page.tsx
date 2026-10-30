@@ -1,10 +1,9 @@
 import { getMessages, getTranslations } from 'next-intl/server'
 import { getHeadscaleVersion, listPreAuthKeys } from '@/lib/headscale'
 import { requireSession } from '@/lib/auth'
-import { visibleGroups, scopeNodes } from '@/lib/groups'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { isNever } from '@/lib/format'
-import { and, eq, gte, sql } from 'drizzle-orm'
+import { gte, sql } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { auditLog } from '@/lib/db/schema'
 import { ActivityChart } from './activity-chart'
@@ -15,19 +14,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 export const dynamic = 'force-dynamic'
 
 export default async function DashboardPage() {
-  const [session, t] = await Promise.all([requireSession(), getTranslations('dashboard')])
-  const groups = visibleGroups(session)
-  const hsUserIds = new Set(groups.map((g) => g.hsUserId))
-  // Same as the preauthkeys page: super counts all keys, including those in the default section (not assigned to any group).
-  // Otherwise, with no groups, this card would always show 0, making it look like all the keys are gone.
-  const countUngrouped = session.role === 'super'
-  const [allNodes, allKeys, version] = await Promise.all([
+  const [, t] = await Promise.all([requireSession(), getTranslations('dashboard')])
+  const [nodes, allKeys, version] = await Promise.all([
     syncAndListNodes(),
-    countUngrouped || groups.length > 0 ? listPreAuthKeys() : [],
+    listPreAuthKeys(),
     getHeadscaleVersion(),
   ])
-  const nodes = scopeNodes(session, allNodes)
-  // ?user= filtering is broken; fetch them all, then filter by key.user.id (to avoid double-counting across groups)
   let online = 0
   let pending = 0
   for (const node of nodes) {
@@ -40,7 +32,6 @@ export default async function DashboardPage() {
   let keyCount = 0
   let validKeys = 0
   for (const key of allKeys) {
-    if (!countUngrouped && !hsUserIds.has(key.user?.id ?? '')) continue
     keyCount += 1
     if (isNever(key.expiration) || new Date(key.expiration).getTime() > now) {
       validKeys += 1
@@ -61,14 +52,7 @@ export default async function DashboardPage() {
       n: sql<number>`count(*)`,
     })
     .from(auditLog)
-    .where(
-      session.role === 'super'
-        ? gte(sql`date(${auditLog.ts})`, sinceStr)
-        : and(
-            gte(sql`date(${auditLog.ts})`, sinceStr),
-            eq(auditLog.groupId, session.gid as number),
-          ),
-    )
+    .where(gte(sql`date(${auditLog.ts})`, sinceStr))
     .groupBy(sql`date(${auditLog.ts})`, auditLog.action)
     .all()
 

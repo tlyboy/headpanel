@@ -2,7 +2,6 @@ import { getTranslations } from 'next-intl/server'
 import { cookies } from 'next/headers'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { requireSession } from '@/lib/auth'
-import { listGroups, scopeNodes } from '@/lib/groups'
 import { declaredTags } from '@/lib/policy'
 import { readNodeNetInfo } from '@/lib/headscale-db'
 import { fmtTime, pickIpv4 } from '@/lib/format'
@@ -46,7 +45,7 @@ export default async function NodesPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const [session, t, common, sp, cookieStore] = await Promise.all([
+  const [, t, common, sp, cookieStore] = await Promise.all([
     requireSession(),
     getTranslations('nodes'),
     getTranslations('common'),
@@ -74,13 +73,10 @@ export default async function NodesPage({
   const q = one('q').toLowerCase()
   const status = one('status')
 
-  const all = scopeNodes(session, await syncAndListNodes())
+  const all = await syncAndListNodes()
   // LAN addresses can only be read from the headscale database; for deployments on separate hosts, return an empty table, and display — in this column
   const netInfo = readNodeNetInfo()
-  const tagOptions =
-    session.role === 'super'
-      ? [...new Set([...declaredTags(), ...listGroups().map((g) => g.okTag)])]
-      : undefined
+  const tagOptions = declaredTags()
 
   // Search includes LAN IPs: when locating a machine, the address you have on hand is often that one
   const nodes = all.filter((n) => {

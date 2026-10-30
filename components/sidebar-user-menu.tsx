@@ -32,13 +32,7 @@ import {
 // English on top, Chinese below
 const locales = ['en', 'zh'] as const
 
-export function SidebarUserMenu({
-  username,
-  scopeLabel,
-}: {
-  username: string
-  scopeLabel: string
-}) {
+export function SidebarUserMenu({ username }: { username: string }) {
   const { isMobile } = useSidebar()
   const { resolvedTheme, setTheme } = useTheme()
   const locale = useLocale()
@@ -71,7 +65,6 @@ export function SidebarUserMenu({
             </Avatar>
             <span className="grid min-w-0 flex-1 text-left leading-tight">
               <span className="truncate font-medium">{username}</span>
-              <span className="truncate text-xs text-muted-foreground">{scopeLabel}</span>
             </span>
             <ChevronsUpDownIcon className="ml-auto" />
           </DropdownMenuTrigger>
@@ -90,7 +83,6 @@ export function SidebarUserMenu({
                   </Avatar>
                   <span className="grid min-w-0 flex-1 leading-tight">
                     <span className="truncate font-medium">{username}</span>
-                    <span className="truncate text-xs text-muted-foreground">{scopeLabel}</span>
                   </span>
                 </span>
               </DropdownMenuLabel>

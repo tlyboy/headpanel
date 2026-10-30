@@ -2,7 +2,7 @@
 
 import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
-import { requireSuper } from '@/lib/auth'
+import { requireSession } from '@/lib/auth'
 import { onlyIpv4 } from '@/lib/format'
 import { auditAfter } from '@/lib/db'
 import { requireHeadscaleHostControl, updateHeadscaleIpv4Prefix } from '@/lib/headscale-config'
@@ -19,7 +19,7 @@ function fail(e: unknown, unknownMessage: string): ActionResult {
 }
 
 export async function updateIpv4PrefixAction(ipv4Prefix: string): Promise<ActionResult> {
-  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   requireHeadscaleHostControl()
   try {
     const nodes = await listNodes()
@@ -29,7 +29,7 @@ export async function updateIpv4PrefixAction(ipv4Prefix: string): Promise<Action
       'network.prefix.v4.update',
       ipv4Prefix.trim(),
       `backup=${result.backupPath}; used_ipv4=${[...used].join(',') || 'none'}`,
-      { groupId: null, actor: session.sub },
+      { actor: session.sub },
     )
     revalidatePath('/network')
     revalidatePath('/nodes')

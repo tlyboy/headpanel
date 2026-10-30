@@ -2,7 +2,6 @@ import { getTranslations } from 'next-intl/server'
 import { cookies } from 'next/headers'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { requireSession } from '@/lib/auth'
-import { scopeNodes } from '@/lib/groups'
 import { fmtTime, pickIpv4 } from '@/lib/format'
 import {
   Table,
@@ -33,7 +32,7 @@ export default async function PendingPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const [session, t, sp, cookieStore] = await Promise.all([
+  const [, t, sp, cookieStore] = await Promise.all([
     requireSession(),
     getTranslations('pending'),
     searchParams,
@@ -45,7 +44,7 @@ export default async function PendingPage({
   }
   const q = one('q').toLowerCase()
 
-  const all = scopeNodes(session, await syncAndListNodes())
+  const all = await syncAndListNodes()
   const pending = all
     .filter((n) => n.status === 'pending')
     .filter((n) => {

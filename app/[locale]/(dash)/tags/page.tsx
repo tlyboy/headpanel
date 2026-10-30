@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server'
-import { requireSuper } from '@/lib/auth'
+import { requireSession } from '@/lib/auth'
 import { approvedTag } from '@/lib/default-zone'
 import { listNodes } from '@/lib/headscale'
 import { declaredTags, loadBaseline, ruleKey } from '@/lib/policy'
@@ -30,7 +30,7 @@ function Endpoints({ items }: { items: string[] }) {
 }
 
 export default async function TagsPage() {
-  const [, t] = await Promise.all([requireSuper(), getTranslations('tags')])
+  const [, t] = await Promise.all([requireSession(), getTranslations('tags')])
   const baseline = loadBaseline()
   const tags = declaredTags(baseline)
   const acls = baseline.acls ?? []

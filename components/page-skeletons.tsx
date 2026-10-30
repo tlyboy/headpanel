@@ -69,7 +69,7 @@ export function TablePageSkeleton({
   filters = false,
 }: {
   columns: number
-  /** The toolbar contains page-level action buttons (such as Create Group and Generate Key) */
+  /** The toolbar contains page-level action buttons (such as Generate Key) */
   action?: boolean
   /** The toolbar contains search and filters */
   filters?: boolean

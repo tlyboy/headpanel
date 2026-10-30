@@ -36,21 +36,10 @@ function createDb() {
 
   // Lightweight table creation (no drizzle-kit migration; create tables at startup)
   sqlite.exec(`
-CREATE TABLE IF NOT EXISTS groups (
-  id          INTEGER PRIMARY KEY AUTOINCREMENT,
-  slug        TEXT NOT NULL UNIQUE,
-  name        TEXT NOT NULL,
-  hs_user_id  TEXT NOT NULL,
-  hs_user_name TEXT NOT NULL,
-  ok_tag      TEXT NOT NULL,
-  created_at  TEXT NOT NULL DEFAULT (current_timestamp)
-);
 CREATE TABLE IF NOT EXISTS admins (
   id            INTEGER PRIMARY KEY AUTOINCREMENT,
   username      TEXT NOT NULL UNIQUE,
   password_hash TEXT NOT NULL,
-  role          TEXT NOT NULL DEFAULT 'group',
-  group_id      INTEGER,
   created_at    TEXT NOT NULL DEFAULT (current_timestamp)
 );
 CREATE TABLE IF NOT EXISTS node_meta (
@@ -77,20 +66,34 @@ CREATE TABLE IF NOT EXISTS preauth_keys (
 `)
 
   // Idempotently add missing columns to existing databases (SQLite has no ADD COLUMN IF NOT EXISTS, so check table_info first)
-  function addColumnIfMissing(table: string, column: string, ddl: string) {
+  function hasColumn(table: string, column: string) {
     const cols = sqlite.prepare(`PRAGMA table_info(${table})`).all() as {
       name: string
     }[]
-    if (!cols.some((c) => c.name === column)) {
-      sqlite.exec(`ALTER TABLE ${table} ADD COLUMN ${ddl}`)
-    }
+    return cols.some((c) => c.name === column)
   }
 
-  addColumnIfMissing('preauth_keys', 'group_id', 'group_id INTEGER')
-  addColumnIfMissing('audit_log', 'group_id', 'group_id INTEGER')
-  addColumnIfMissing('audit_log', 'actor', 'actor TEXT')
-  addColumnIfMissing('groups', 'hs_user_name', 'hs_user_name TEXT')
-  sqlite.exec('UPDATE groups SET hs_user_name = slug WHERE hs_user_name IS NULL')
+  if (!hasColumn('audit_log', 'actor')) sqlite.exec('ALTER TABLE audit_log ADD COLUMN actor TEXT')
+
+  // Groups were removed in favor of tags. A database that still holds groups has nodes tagged tag:ok-<slug>
+  // whose tags would vanish from the policy, so refuse to start rather than cut those nodes off.
+  const hasGroups = sqlite
+    .prepare("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'groups'")
+    .get()
+  if (hasGroups && sqlite.prepare('SELECT 1 FROM groups LIMIT 1').get()) {
+    throw new Error('The groups table is not empty; delete every group with an older release first')
+  }
+  sqlite.exec('DROP TABLE IF EXISTS groups; DROP TABLE IF EXISTS grants')
+  // Group admins would otherwise log in with full access
+  if (hasColumn('admins', 'role')) sqlite.exec("DELETE FROM admins WHERE role <> 'super'")
+  for (const [table, column] of [
+    ['admins', 'role'],
+    ['admins', 'group_id'],
+    ['audit_log', 'group_id'],
+    ['preauth_keys', 'group_id'],
+  ]) {
+    if (hasColumn(table, column)) sqlite.exec(`ALTER TABLE ${table} DROP COLUMN ${column}`)
+  }
 
   return instance
 }
@@ -116,7 +119,7 @@ export async function audit(
   action: string,
   target?: string,
   detail?: string,
-  opts?: { groupId?: number | null; actor?: string | null },
+  opts?: { actor?: string | null },
 ) {
   try {
     db.insert(auditLog)
@@ -124,7 +127,6 @@ export async function audit(
         action,
         target,
         detail,
-        groupId: opts?.groupId ?? null,
         actor: opts?.actor ?? null,
       })
       .run()
@@ -137,7 +139,7 @@ export function auditAfter(
   action: string,
   target?: string,
   detail?: string,
-  opts?: { groupId?: number | null; actor?: string | null },
+  opts?: { actor?: string | null },
 ) {
   after(() => audit(action, target, detail, opts))
 }

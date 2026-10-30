@@ -6,7 +6,6 @@ import {
   Server,
   ClockAlert,
   KeyRound,
-  Boxes,
   Download,
   type LucideIcon,
   ScrollText,
@@ -24,13 +23,11 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
-// Items marked superOnly are visible only to superadmins.
 type NavLabel =
   | 'dashboard'
   | 'nodes'
   | 'pending'
   | 'preauthKeys'
-  | 'groups'
   | 'subnets'
   | 'tags'
   | 'network'
@@ -42,7 +39,6 @@ type NavHref =
   | '/nodes'
   | '/pending'
   | '/preauthkeys'
-  | '/groups'
   | '/subnets'
   | '/tags'
   | '/network'
@@ -53,7 +49,6 @@ interface NavItem {
   href: NavHref
   label: NavLabel
   icon: LucideIcon
-  superOnly?: boolean
   hostControlOnly?: boolean
 }
 
@@ -62,27 +57,19 @@ const items: NavItem[] = [
   { href: '/nodes', label: 'nodes', icon: Server },
   { href: '/pending', label: 'pending', icon: ClockAlert },
   { href: '/preauthkeys', label: 'preauthKeys', icon: KeyRound },
-  { href: '/groups', label: 'groups', icon: Boxes, superOnly: true },
-  { href: '/tags', label: 'tags', icon: Tags, superOnly: true },
-  { href: '/subnets', label: 'subnets', icon: Route, superOnly: true },
+  { href: '/tags', label: 'tags', icon: Tags },
+  { href: '/subnets', label: 'subnets', icon: Route },
   {
     href: '/network',
     label: 'network',
     icon: Network,
-    superOnly: true,
     hostControlOnly: true,
   },
   { href: '/scripts', label: 'scripts', icon: Download },
   { href: '/audit', label: 'audit', icon: ScrollText },
 ]
 
-export function SidebarNav({
-  isSuper = false,
-  hostControl = false,
-}: {
-  isSuper?: boolean
-  hostControl?: boolean
-}) {
+export function SidebarNav({ hostControl = false }: { hostControl?: boolean }) {
   const pathname = usePathname()
   const t = useTranslations('nav')
 
@@ -92,9 +79,7 @@ export function SidebarNav({
       <SidebarGroupContent>
         <SidebarMenu>
           {items
-            .filter(
-              (item) => (isSuper || !item.superOnly) && (hostControl || !item.hostControlOnly),
-            )
+            .filter((item) => hostControl || !item.hostControlOnly)
             .map(({ href, label, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(`${href}/`)
 

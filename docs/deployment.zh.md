@@ -356,12 +356,11 @@ sudo headscale nodes list
 
 ### ACL 策略基线
 
-增删组时 Headpanel 会重写 Headscale 的 ACL policy：每个组贡献一条 `tagOwners` 和一条
-`acls` 规则，使组内节点互通、且仅限组内。policy 里**其余**的内容 —— `tag:approved` 的
-归属、子网路由器所服务的网段、你手写的任何规则 —— 都来自一个基线文件，面板把自己的规则
-合并在它之上。
+Headpanel 从一个基线文件下发 Headscale 的 ACL policy。文件里有所有标签（`tagOwners`）、
+标签之间的规则，以及子网路由器服务的网段。「标签与访问」页面和子网审批会修改它，每次修改
+都整份下发；你手写的规则保持原样。
 
-创建第一个组之前先建好它：
+审批第一个节点之前先建好它：
 
 ```bash
 sudo install -d -m 755 /etc/headpanel
@@ -385,21 +384,19 @@ JSON
 `dst`。已批准但没写进 `dst` 的路由会进入路由表、再被 policy 丢弃 —— 表现为面板里显示
 已批准，网段里却什么都连不通。
 
-没有该文件时基线为空：组功能照常可用，但第一次增删组就会把线上 policy 替换成只剩面板
-管理的那部分。文件存在却读不出或解析失败时，组操作会直接报错，而不是下发一份丢了基线的
-policy。
+没有该文件时，第一次修改 policy 会下发一份空 policy。文件存在却读不出或解析失败时，
+修改会直接报错，而不是下发一份坏掉的 policy。
 
 用 `HEADPANEL_POLICY_BASELINE` 可以改变该文件位置。
 
-### 默认区
+### 默认用户和标签
 
-组是可选的：不建组时，节点和 key 都归「默认区」。基线里那个 `admin@` 和
-`tag:approved` 正是默认区的两个值 —— 面板发组外的 key 时把它挂在这个 user 名下，
-审批组外的节点时给它打这个 tag。两者分别由 `HEADPANEL_DEFAULT_HS_USER` 和
-`HEADPANEL_APPROVED_TAG` 指定，默认就是 `admin` 和 `tag:approved`。
+面板把 key 挂在上面的 `admin@` 名下，审批节点时给它打 `tag:approved`。两者分别由
+`HEADPANEL_DEFAULT_HS_USER` 和 `HEADPANEL_APPROVED_TAG` 指定，默认就是 `admin` 和
+`tag:approved`。其他标签在节点页面逐台设置。
 
 改动其中任何一个，都要同步改基线：user 必须在 Headscale 里真实存在，tag 必须在基线的
-`tagOwners` 里由该 user 拥有，否则组外的节点接入后会被 ACL 隔离。
+`tagOwners` 里由该 user 拥有，否则审批后的节点会被 ACL 隔离。
 
 ## 7. 更新与备份
 
@@ -482,11 +479,6 @@ CDN 代理：
 ```bash
 sudo journalctl -u caddy -n 100 --no-pager
 ```
-
-### 组管理列表为空
-
-Headpanel 的“组”是面板本地的权限映射，不会自动把所有 Headscale 用户导入为组。
-先在 Headscale 创建用户，再在 Headpanel 的组管理页面创建对应组。
 
 ## 9. 官方参考
 

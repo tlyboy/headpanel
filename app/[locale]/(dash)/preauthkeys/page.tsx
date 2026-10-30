@@ -1,9 +1,8 @@
 import { getTranslations } from 'next-intl/server'
 import { cookies } from 'next/headers'
-import { getDefaultHeadscaleConnection, listPreAuthKeys, type HsPreAuthKey } from '@/lib/headscale'
+import { getDefaultHeadscaleConnection, listPreAuthKeys } from '@/lib/headscale'
 import { getPanelBasePath } from '@/lib/panel-base-path'
 import { requireSession } from '@/lib/auth'
-import { visibleGroups } from '@/lib/groups'
 import { pruneOrphanKeys } from '@/lib/keys-sync'
 import { db } from '@/lib/db'
 import { preauthKeys as preauthKeysTable } from '@/lib/db/schema'
@@ -34,7 +33,7 @@ export const dynamic = 'force-dynamic'
 
 const PAGE = 'preauthkeys'
 
-// A ticket with a group ok_tag is approved directly; without a tag, it needs review (after onboarding, it goes to pending approval)
+// A key carrying a tag is approved directly; without a tag, it needs review (after onboarding, it goes to pending approval)
 function modeOf(aclTags: string[]): {
   key: 'direct' | 'review'
   variant: 'success' | 'warning'
@@ -48,7 +47,7 @@ export default async function PreAuthKeysPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const [session, t, common, sp, cookieStore] = await Promise.all([
+  const [, t, common, sp, cookieStore] = await Promise.all([
     requireSession(),
     getTranslations('preAuthKeys'),
     getTranslations('common'),
@@ -59,7 +58,6 @@ export default async function PreAuthKeysPage({
   const q = ((Array.isArray(rawQ) ? rawQ[0] : rawQ) ?? '').trim().toLowerCase()
   const columns: ColumnDef[] = [
     { key: 'id', label: 'ID' },
-    { key: 'group', label: t('group') },
     { key: 'key', label: 'Key' },
     { key: 'mode', label: t('mode') },
     { key: 'reusable', label: t('reusable') },
@@ -70,34 +68,13 @@ export default async function PreAuthKeysPage({
   ]
   const hidden = parseHidden(cookieStore.get(columnCookieName(PAGE))?.value)
   const show = makeIsVisible(columns, hidden)
-  const groups = visibleGroups(session)
   const headscaleUrl = getDefaultHeadscaleConnection().serverUrl
   const panelBasePath = getPanelBasePath()
-  const nameByHsUser = new Map(groups.map((g) => [g.hsUserId, g.name]))
-
-  // headscale's ?user= filter is broken (it always returns all keys), so fetch once and filter by key.user.id to determine ownership,
-  // which prevents the same key from appearing in every group and enforces group isolation.
-  // super must see all keys (including headscale users like admin who don't belong to any panel group),
-  // so fetch keys even if it has no groups — otherwise, deleting all groups leaves the whole page blank, making it look as if the keys were deleted.
-  // After demotion to a group role, the role is no longer super, so keys outside the group are naturally hidden
-  const showUngrouped = session.role === 'super'
-  const all = showUngrouped || groups.length > 0 ? await listPreAuthKeys() : []
-  // Also delete local plaintext backups for keys that no longer exist on the headscale side (deleting a group also destroys its keys)
-  pruneOrphanKeys(all)
-  const keys: { key: HsPreAuthKey; groupName: string }[] = []
-  for (const key of all) {
-    const groupName = nameByHsUser.get(key.user?.id ?? '')
-    if (groupName) {
-      keys.push({ key, groupName })
-    } else if (showUngrouped) {
-      // For keys that don't belong to any panel group, fall back to showing their user name on the headscale side
-      keys.push({ key, groupName: key.user?.name ?? '—' })
-    }
-  }
-  // Keys are masked in the list, but the prefix is enough to identify one; search by group name too
-  const shown = q
-    ? keys.filter((e) => [e.key.id, e.key.key, e.groupName].join(' ').toLowerCase().includes(q))
-    : keys
+  const keys = await listPreAuthKeys()
+  // Also delete local plaintext backups for keys that no longer exist on the headscale side
+  pruneOrphanKeys(keys)
+  // Keys are masked in the list, but the prefix is enough to identify one
+  const shown = q ? keys.filter((k) => [k.id, k.key].join(' ').toLowerCase().includes(q)) : keys
 
   // RSC + force-dynamic: render on the server for every request and use the current time to check whether keys have expired, as expected
   // eslint-disable-next-line react-hooks/purity
@@ -115,12 +92,7 @@ export default async function PreAuthKeysPage({
     <div className="flex flex-col gap-4">
       <ListFilters
         placeholder={t('searchPlaceholder')}
-        actions={
-          <CreateKey
-            groups={groups.map((g) => ({ id: g.id, name: g.name }))}
-            canUseDefault={showUngrouped}
-          />
-        }
+        actions={<CreateKey />}
         columns={<ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />}
       />
 
@@ -129,7 +101,6 @@ export default async function PreAuthKeysPage({
           <TableHeader>
             <TableRow>
               {show('id') && <TableHead className="w-12">ID</TableHead>}
-              {show('group') && <TableHead>{t('group')}</TableHead>}
               {show('key') && <TableHead>Key</TableHead>}
               {show('mode') && <TableHead>{t('mode')}</TableHead>}
               {show('reusable') && <TableHead>{t('reusable')}</TableHead>}
@@ -150,13 +121,12 @@ export default async function PreAuthKeysPage({
                 </TableCell>
               </TableRow>
             ) : (
-              shown.map(({ key: k, groupName }) => {
+              shown.map((k) => {
                 const expired = !isNever(k.expiration) && new Date(k.expiration).getTime() < now
                 const m = modeOf(k.aclTags ?? [])
                 return (
                   <TableRow key={k.id}>
                     {show('id') && <TableCell className="text-muted-foreground">{k.id}</TableCell>}
-                    {show('group') && <TableCell className="text-sm">{groupName}</TableCell>}
                     {show('key') && <TableCell className="font-mono text-xs">{k.key}</TableCell>}
                     {show('mode') && (
                       <TableCell>

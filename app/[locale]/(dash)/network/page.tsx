@@ -1,6 +1,6 @@
 import { getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
-import { requireSuper } from '@/lib/auth'
+import { requireSession } from '@/lib/auth'
 import { onlyIpv4 } from '@/lib/format'
 import { listNodes } from '@/lib/headscale'
 import { isHeadscaleHostControlEnabled, readHeadscaleNetworkConfig } from '@/lib/headscale-config'
@@ -10,7 +10,7 @@ import { NetworkForm } from './network-form'
 export const dynamic = 'force-dynamic'
 
 export default async function NetworkPage() {
-  const [, t] = await Promise.all([requireSuper(), getTranslations('network')])
+  const [, t] = await Promise.all([requireSession(), getTranslations('network')])
   if (!isHeadscaleHostControlEnabled()) notFound()
   const [config, nodes] = await Promise.all([readHeadscaleNetworkConfig(), listNodes()])
   const usedIpv4 = nodes

@@ -315,13 +315,12 @@ command.
 
 ### ACL policy baseline
 
-Headpanel rewrites Headscale's ACL policy whenever a group is created or deleted:
-each group contributes one `tagOwners` entry and one `acls` rule, so its nodes
-reach each other and nothing else. Everything _else_ in the policy — the owner of
-`tag:approved`, the subnets your routers serve, any rule you wrote by hand —
-comes from a baseline file that the panel merges its own rules on top of.
+Headpanel deploys Headscale's ACL policy from a baseline file. The file holds
+every tag (`tagOwners`), every rule between tags, and the subnets your routers
+serve. The Tags & access page and subnet approval edit it, and each change
+deploys the whole file; rules you write by hand stay as they are.
 
-Create it before adding the first group:
+Create it before approving the first node:
 
 ```bash
 sudo install -d -m 755 /etc/headpanel
@@ -346,23 +345,21 @@ every subnet your routers advertise in `dst`. A route that is approved but absen
 from `dst` sits in the routing table and is dropped by the policy — the symptom is
 a subnet that looks approved in the panel while nothing on it answers.
 
-Without the file the baseline is empty: groups still work, but the first group
-change replaces the live policy with only the rules the panel manages. If the file
-exists but cannot be read or parsed, group operations fail loudly rather than
-shipping a policy with the baseline silently dropped.
+Without the file the first policy change deploys an empty policy. If the file
+exists but cannot be read or parsed, policy changes fail loudly rather than
+shipping a broken policy.
 
 `HEADPANEL_POLICY_BASELINE` overrides the location.
 
-### The default zone
+### Default user and tag
 
-Groups are optional. With no groups, nodes and keys belong to the default zone —
-and the `admin@` and `tag:approved` in the baseline above are exactly what that
-zone is made of: the panel issues ungrouped keys under that user, and stamps that
-tag on ungrouped nodes when you approve them. `HEADPANEL_DEFAULT_HS_USER` and
+The panel issues keys under the `admin@` user above, and stamps `tag:approved`
+on nodes when you approve them. `HEADPANEL_DEFAULT_HS_USER` and
 `HEADPANEL_APPROVED_TAG` name them, defaulting to `admin` and `tag:approved`.
+Further tags are set per node from the nodes page.
 
 Change either one and the baseline has to follow: the user must exist in
-Headscale, and the tag must be owned by that user under `tagOwners`, or ungrouped
+Headscale, and the tag must be owned by that user under `tagOwners`, or approved
 nodes stay isolated by ACL after they join.
 
 ## 7. Updates and backups
@@ -435,12 +432,6 @@ incompatible CDN proxy sits in front of Headscale.
 ```bash
 sudo journalctl -u caddy -n 100 --no-pager
 ```
-
-### The group list is empty
-
-Headpanel groups are local permission mappings; Headscale users are not imported
-as groups automatically. Create the Headscale user first, then create its group
-mapping in Headpanel.
 
 ## 9. Official references
 

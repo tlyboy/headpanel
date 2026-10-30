@@ -53,8 +53,7 @@ export function NodeRowActions({
   name: string
   note?: string
   tags: string[]
-  // Present only for super, who alone may edit tags
-  tagOptions?: string[]
+  tagOptions: string[]
 }) {
   const t = useTranslations('nodeActions')
   const common = useTranslations('common')
@@ -89,16 +88,14 @@ export function NodeRowActions({
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setRenameOpen(true)}>{t('rename')}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => setNoteOpen(true)}>{t('editNote')}</DropdownMenuItem>
-          {tagOptions && (
-            <DropdownMenuItem
-              onClick={() => {
-                setPicked(tags)
-                setTagsOpen(true)
-              }}
-            >
-              {t('editTags')}
-            </DropdownMenuItem>
-          )}
+          <DropdownMenuItem
+            onClick={() => {
+              setPicked(tags)
+              setTagsOpen(true)
+            }}
+          >
+            {t('editTags')}
+          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setExpireOpen(true)}>{t('expire')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
             {t('deleteNode')}
@@ -171,42 +168,40 @@ export function NodeRowActions({
         </DialogContent>
       </Dialog>
 
-      {tagOptions && (
-        <Dialog open={tagsOpen} onOpenChange={setTagsOpen}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>{t('tagsTitle')}</DialogTitle>
-              <DialogDescription>{t('tagsDescription')}</DialogDescription>
-            </DialogHeader>
-            <div className="flex flex-col gap-2">
-              {[...new Set([...tagOptions, ...tags])].map((tag) => (
-                <Label key={tag} className="flex items-center gap-2 font-mono text-sm font-normal">
-                  <Checkbox
-                    checked={picked.includes(tag)}
-                    onCheckedChange={(on) =>
-                      setPicked((p) => (on ? [...p, tag] : p.filter((x) => x !== tag)))
-                    }
-                  />
-                  {tag}
-                </Label>
-              ))}
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setTagsOpen(false)} disabled={pending}>
-                {common('cancel')}
-              </Button>
-              <Button
-                disabled={pending || !picked.length}
-                onClick={() =>
-                  run(setTagsAction(id, picked), t('tagsSaved'), () => setTagsOpen(false))
-                }
-              >
-                {pending ? common('saving') : common('save')}
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
+      <Dialog open={tagsOpen} onOpenChange={setTagsOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{t('tagsTitle')}</DialogTitle>
+            <DialogDescription>{t('tagsDescription')}</DialogDescription>
+          </DialogHeader>
+          <div className="flex flex-col gap-2">
+            {[...new Set([...tagOptions, ...tags])].map((tag) => (
+              <Label key={tag} className="flex items-center gap-2 font-mono text-sm font-normal">
+                <Checkbox
+                  checked={picked.includes(tag)}
+                  onCheckedChange={(on) =>
+                    setPicked((p) => (on ? [...p, tag] : p.filter((x) => x !== tag)))
+                  }
+                />
+                {tag}
+              </Label>
+            ))}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setTagsOpen(false)} disabled={pending}>
+              {common('cancel')}
+            </Button>
+            <Button
+              disabled={pending || !picked.length}
+              onClick={() =>
+                run(setTagsAction(id, picked), t('tagsSaved'), () => setTagsOpen(false))
+              }
+            >
+              {pending ? common('saving') : common('save')}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={expireOpen} onOpenChange={setExpireOpen}>
         <AlertDialogContent>

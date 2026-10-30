@@ -37,7 +37,7 @@ export default async function AuditPage({
 }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>
 }) {
-  const [session, t, messages, sp, cookieStore] = await Promise.all([
+  const [, t, messages, sp, cookieStore] = await Promise.all([
     requireSession(),
     getTranslations('audit'),
     getMessages(),
@@ -62,12 +62,8 @@ export default async function AuditPage({
   const range = one('range')
   const isDay = /^\d{4}-\d{2}-\d{2}$/.test(range)
 
-  // Group admins only see their group's audit logs; super sees everything. All filters are included in the SQL,
-  // whereas before we fetched 200 rows and then truncated — there are already 200+ audit records, so the oldest ones were never visible.
+  // All filters are included in the SQL, whereas before we fetched 200 rows and then truncated — there are already 200+ audit records, so the oldest ones were never visible.
   const conds: SQL[] = []
-  if (session.role !== 'super') {
-    conds.push(eq(auditLog.groupId, session.gid as number))
-  }
   if (action) conds.push(eq(auditLog.action, action))
   if (isDay) {
     conds.push(eq(sql`date(${auditLog.ts})`, range))
@@ -124,7 +120,6 @@ export default async function AuditPage({
   const actions = db
     .selectDistinct({ a: auditLog.action })
     .from(auditLog)
-    .where(session.role === 'super' ? undefined : eq(auditLog.groupId, session.gid as number))
     .all()
     .map((r) => r.a)
     .sort()

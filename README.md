@@ -16,11 +16,9 @@
   serves a prefix when several advertise the same one.
 - **Pre-auth keys** — issue, expire and delete keys; each comes with a
   ready-to-paste install command for the target machine.
-- **Groups** — a group maps to one Headscale user and one ACL tag, so its nodes
-  only reach each other. A super admin can switch into any group's view to see
-  exactly what that group's operator sees.
-- **ACL policy** — creating or deleting a group edits the policy through a
-  baseline file rather than replacing it, so rules you wrote by hand survive.
+- **Tags and access** — a node can carry several tags. Rules say which tags reach
+  which, and a tag can let its own members reach each other. Tags and rules live
+  in a policy baseline file, so rules you write by hand sit next to them.
 - **Audit log** — every panel action, searchable, filterable and banded by what
   the action does.
 - **Overview** — online nodes, subnet coverage, pending approvals and valid keys,
@@ -54,12 +52,9 @@ restart its service; then also set `HEADSCALE_CONFIG_PATH`, `HEADSCALE_BIN`, and
 `SYSTEMCTL_BIN`. For compatibility, an unset switch is treated as enabled when
 all three host paths are configured.
 
-`HEADPANEL_POLICY_BASELINE` points at the ACL policy the panel merges group
-rules into, `/etc/headpanel/policy-baseline.json` by default. Whatever it holds —
-`tagOwners` for tags the panel doesn't manage, subnet CIDRs in `dst` — is
-re-applied every time a group is created or deleted. Without the file the panel
-still runs, but the first group change rewrites the policy with only the rules
-the panel manages, dropping hand-written ones. See
+`HEADPANEL_POLICY_BASELINE` points at the ACL policy file the panel deploys,
+`/etc/headpanel/policy-baseline.json` by default. The panel edits it when you
+change tags, rules or subnet routes, and deploys the whole file each time. See
 [the deployment guide](docs/deployment.md#acl-policy-baseline).
 
 `HEADSCALE_DB_PATH` is optional and only useful when the panel runs on the

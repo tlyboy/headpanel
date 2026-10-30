@@ -2,10 +2,9 @@
 
 import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
-import { requireSuper } from '@/lib/auth'
+import { requireSession } from '@/lib/auth'
 import { auditAfter } from '@/lib/db'
 import { approvedTag, defaultHsUserName } from '@/lib/default-zone'
-import { listGroups } from '@/lib/groups'
 import { listNodes, HeadscaleError } from '@/lib/headscale'
 import { addRule, addTag, removeRule, removeTag, updateBaselineAndApply } from '@/lib/policy'
 
@@ -26,13 +25,11 @@ function done(): ActionResult {
 }
 
 export async function createTagAction(name: string, mutual: boolean): Promise<ActionResult> {
-  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   const bare = name.trim().toLowerCase().replace(/^tag:/, '')
   const tag = `tag:${bare}`
   try {
-    if (
-      !(await updateBaselineAndApply(addTag(tag, `${defaultHsUserName()}@`, mutual), listGroups()))
-    ) {
+    if (!(await updateBaselineAndApply(addTag(tag, `${defaultHsUserName()}@`, mutual)))) {
       return { ok: false, error: t('tagExists') }
     }
     auditAfter('tag.create', tag, mutual ? 'mutual' : undefined, { actor: session.sub })
@@ -43,7 +40,7 @@ export async function createTagAction(name: string, mutual: boolean): Promise<Ac
 }
 
 export async function deleteTagAction(tag: string): Promise<ActionResult> {
-  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   // Approval puts this tag on every new node; without it approval would fail
   if (tag === approvedTag()) return { ok: false, error: t('tagIsDefault') }
   try {
@@ -51,7 +48,7 @@ export async function deleteTagAction(tag: string): Promise<ActionResult> {
     if (used.length) {
       return { ok: false, error: t('tagInUse', { count: used.length }) }
     }
-    if (await updateBaselineAndApply(removeTag(tag), listGroups())) {
+    if (await updateBaselineAndApply(removeTag(tag))) {
       auditAfter('tag.delete', tag, undefined, { actor: session.sub })
     }
     return done()
@@ -61,9 +58,9 @@ export async function deleteTagAction(tag: string): Promise<ActionResult> {
 }
 
 export async function createRuleAction(src: string[], dst: string[]): Promise<ActionResult> {
-  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   try {
-    if (await updateBaselineAndApply(addRule(src, dst), listGroups())) {
+    if (await updateBaselineAndApply(addRule(src, dst))) {
       auditAfter('rule.create', `${src.join(',')} → ${dst.join(',')}`, undefined, {
         actor: session.sub,
       })
@@ -75,9 +72,9 @@ export async function createRuleAction(src: string[], dst: string[]): Promise<Ac
 }
 
 export async function deleteRuleAction(key: string): Promise<ActionResult> {
-  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   try {
-    if (await updateBaselineAndApply(removeRule(key), listGroups())) {
+    if (await updateBaselineAndApply(removeRule(key))) {
       auditAfter('rule.delete', key, undefined, { actor: session.sub })
     }
     return done()

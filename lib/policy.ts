@@ -6,7 +6,7 @@ import { HeadscaleError, setPolicy } from '@/lib/headscale'
 const DEFAULT_BASELINE_PATH = '/etc/headpanel/policy-baseline.json'
 
 // headscale only accepts PUT /policy when policy.mode=database; file mode always returns 500.
-// The panel's group isolation relies entirely on the deployed ACL. If the mode is wrong, group operations must abort completely rather than continue in a broken state.
+// Tag isolation relies entirely on the deployed ACL. If the mode is wrong, tag operations must abort completely rather than continue in a broken state.
 export class PolicyReadOnlyError extends Error {
   constructor() {
     super("headscale rejects policy updates because policy.mode is not 'database'")
@@ -14,9 +14,8 @@ export class PolicyReadOnlyError extends Error {
   }
 }
 
-// If the baseline is unavailable (unreadable, unparsable, or colliding with a group tag), fail completely.
-// Never fall back to an empty baseline and continue deploying: that is exactly what causes "creating/deleting a group overwrites tag:approved and subnet rules,
-// zeroing out the ACL for the entire network."
+// If the baseline is unavailable (unreadable or unparsable), fail completely.
+// Never fall back to an empty baseline and continue deploying: that would zero out the ACL for the entire network.
 export class PolicyBaselineError extends Error {
   constructor(message: string) {
     super(message)
@@ -35,10 +34,9 @@ type PolicyBaseline = Record<string, unknown> & {
   acls?: PolicyAcl[]
 }
 
-// The parts of the policy not managed by the groups table but that must persist: the owner of tag:approved,
-// subnet routes (such as 192.168.1.0/24) in dst, etc. Keep these in a file rather than hard-coding them, so adding a subnet
-// only requires changing the file, with no code changes or rebuild. A missing file means no baseline (for compatibility with older deployments);
-// if the file exists but cannot be read or parsed, throw an error. Better for group operations to fail than to deploy a policy missing the baseline.
+// The baseline file is the whole policy: tag owners, tag rules and subnet routes (such as 192.168.1.0/24) in dst.
+// Keeping it in a file means it can also be edited by hand, with no code changes or rebuild. A missing file means an empty policy;
+// if the file exists but cannot be read or parsed, throw an error. Better for a policy change to fail than to deploy a broken policy.
 export function baselinePath(): string {
   return process.env.HEADPANEL_POLICY_BASELINE || DEFAULT_BASELINE_PATH
 }
@@ -68,34 +66,11 @@ export function loadBaseline(): PolicyBaseline {
   return parsed as PolicyBaseline
 }
 
-// Generate the headscale v2 policy from the baseline and groups table:
-//  - Preserve the baseline as-is (including top-level fields this function doesn't recognize, such as hosts / autoApprovers)
-//  - One ok_tag per group, owned by that group's headscale user name (must include @)
-//  - One accept rule per group: members with the same ok_tag can communicate; no cross-group rules → deny → groups cannot see each other
-//  - Nodes without an ok_tag (pending approval) are in no rules → invisible to everyone
-export function buildPolicy(rows: { hsUserName: string; okTag: string }[]): string {
-  const baseline = loadBaseline()
-  const tagOwners: Record<string, string[]> = { ...baseline.tagOwners }
-  const acls: PolicyAcl[] = [...(baseline.acls ?? [])]
-  for (const g of rows) {
-    // On a name collision, report an error instead of overwriting: baseline tags are maintained manually, and the panel has no right to replace them
-    if (g.okTag in tagOwners) {
-      throw new PolicyBaselineError(
-        `Group tag ${g.okTag} collides with a tag already defined in the policy baseline`,
-      )
-    }
-    tagOwners[g.okTag] = [`${g.hsUserName}@`]
-    acls.push({ action: 'accept', src: [g.okTag], dst: [`${g.okTag}:*`] })
-  }
-  return JSON.stringify({ ...baseline, tagOwners, acls }, null, 2)
-}
-
-// Deploy the policy corresponding to the group set that should exist after the operation. The caller must invoke this before changing any data:
-// if deployment fails, the whole operation fails, avoiding a partial state where "headscale has changed but the panel reports an error."
-// When rows is empty, only the baseline remains (all group rules disappear); deleteGroup has already ensured there are no nodes in the group.
-export async function applyPolicy(rows: { hsUserName: string; okTag: string }[]): Promise<void> {
+// Deploy the baseline. Callers deploy before changing any panel data: if deployment fails, the whole operation fails,
+// avoiding a partial state where "headscale has changed but the panel reports an error."
+export async function applyPolicy(): Promise<void> {
   try {
-    await setPolicy(buildPolicy(rows))
+    await setPolicy(JSON.stringify(loadBaseline(), null, 2))
   } catch (e) {
     if (e instanceof HeadscaleError && /modes other than|policy\.mode/i.test(e.message)) {
       throw new PolicyReadOnlyError()
@@ -224,11 +199,8 @@ export function removeRule(key: string): Mutator {
 }
 
 // Update the baseline → deploy → roll back the file on failure. If writing the baseline succeeds but headscale rejects the new policy,
-// keeping the modified file would cause every subsequent group operation to redeploy this bad rule, so it must be restored.
-export async function updateBaselineAndApply(
-  mutate: Mutator,
-  rows: { hsUserName: string; okTag: string }[],
-): Promise<boolean> {
+// keeping the modified file would cause every later policy change to redeploy this bad rule, so it must be restored.
+export async function updateBaselineAndApply(mutate: Mutator): Promise<boolean> {
   const path = baselinePath()
   const original = existsSync(/* turbopackIgnore: true */ path)
     ? readFileSync(/* turbopackIgnore: true */ path, 'utf8')
@@ -240,7 +212,7 @@ export async function updateBaselineAndApply(
     mode: 0o600,
   })
   try {
-    await applyPolicy(rows)
+    await applyPolicy()
     return true
   } catch (e) {
     if (original == null) {

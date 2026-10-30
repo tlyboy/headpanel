@@ -19,15 +19,8 @@ export async function login(_prev: LoginState, formData: FormData): Promise<Logi
     auditAfter('login.fail', username)
     return { error: t('invalid') }
   }
-  await createSession({
-    sub: admin.username,
-    role: admin.role,
-    gid: admin.groupId,
-  })
-  auditAfter('login.success', admin.username, undefined, {
-    groupId: admin.groupId,
-    actor: admin.username,
-  })
+  await createSession({ sub: admin.username })
+  auditAfter('login.success', admin.username, undefined, { actor: admin.username })
   redirect({ href: '/dashboard', locale })
   return {}
 }

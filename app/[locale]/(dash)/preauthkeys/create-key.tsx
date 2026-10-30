@@ -34,25 +34,11 @@ const DAY_OPTIONS = [
   { labelKey: 'permanent', value: 36500 },
 ] as const
 
-// The value in the group dropdown representing the "default zone" (not belonging to any group). Select doesn't accept an empty string as an item value,
-// and null needs to remain reserved for "not selected yet," so use a sentinel string.
-const DEFAULT_ZONE = 'default'
-
-export function CreateKey({
-  groups,
-  canUseDefault,
-}: {
-  groups: { id: number; name: string }[]
-  /** Only super can issue keys for the default zone; group identities can issue keys only for their own group. */
-  canUseDefault: boolean
-}) {
+export function CreateKey() {
   const t = useTranslations('createKey')
   const common = useTranslations('common')
   const [open, setOpen] = useState(false)
   const [pending, start] = useTransition()
-  const [groupId, setGroupId] = useState<number | null>(
-    canUseDefault ? null : (groups[0]?.id ?? null),
-  )
   const [reusable, setReusable] = useState(true)
   const [ephemeral, setEphemeral] = useState(false)
   const [days, setDays] = useState(30)
@@ -61,13 +47,8 @@ export function CreateKey({
   const { copied, copy } = useCopy()
 
   function submit() {
-    if (groupId == null && !canUseDefault) {
-      toast.error(t('selectGroupRequired'))
-      return
-    }
     start(async () => {
       const r = await createKeyAction({
-        groupId,
         reusable,
         ephemeral,
         days,
@@ -112,38 +93,6 @@ export function CreateKey({
           </div>
         ) : (
           <div className="flex flex-col gap-4">
-            {canUseDefault || groups.length > 0 ? (
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="group">{t('group')}</Label>
-                <Select
-                  items={[
-                    ...(canUseDefault ? [{ value: DEFAULT_ZONE, label: t('defaultZone') }] : []),
-                    ...groups.map((g) => ({
-                      value: String(g.id),
-                      label: g.name,
-                    })),
-                  ]}
-                  value={groupId == null ? DEFAULT_ZONE : String(groupId)}
-                  onValueChange={(v) => v && setGroupId(v === DEFAULT_ZONE ? null : Number(v))}
-                >
-                  <SelectTrigger id="group">
-                    <SelectValue placeholder={t('selectGroup')} />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {canUseDefault && (
-                      <SelectItem value={DEFAULT_ZONE}>{t('defaultZone')}</SelectItem>
-                    )}
-                    {groups.map((g) => (
-                      <SelectItem key={g.id} value={String(g.id)}>
-                        {g.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">{t('noGroups')}</p>
-            )}
             <div className="flex items-center gap-2">
               <Checkbox
                 id="reusable"
@@ -216,7 +165,7 @@ export function CreateKey({
               <Button variant="outline" onClick={() => close(false)} disabled={pending}>
                 {common('cancel')}
               </Button>
-              <Button onClick={submit} disabled={pending || (groupId == null && !canUseDefault)}>
+              <Button onClick={submit} disabled={pending}>
                 {pending ? t('generating') : t('generate')}
               </Button>
             </>
