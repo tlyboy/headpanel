@@ -3,10 +3,11 @@
 import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
 import { requireSession } from '@/lib/auth'
+import { nodeTarget } from '@/lib/audit'
 import { auditAfter } from '@/lib/db'
 import { approvedTag, defaultHsUserName } from '@/lib/default-zone'
-import { listNodes, HeadscaleError } from '@/lib/headscale'
-import { addRule, addTag, removeRule, removeTag, updateBaselineAndApply } from '@/lib/policy'
+import { listNodes, setNodeTags, HeadscaleError } from '@/lib/headscale'
+import { addTag, declaredTags, removeTag, updateBaselineAndApply } from '@/lib/policy'
 
 export interface ActionResult {
   ok: boolean
@@ -24,15 +25,15 @@ function done(): ActionResult {
   return { ok: true }
 }
 
-export async function createTagAction(name: string, mutual: boolean): Promise<ActionResult> {
+export async function createTagAction(name: string): Promise<ActionResult> {
   const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   const bare = name.trim().toLowerCase().replace(/^tag:/, '')
   const tag = `tag:${bare}`
   try {
-    if (!(await updateBaselineAndApply(addTag(tag, `${defaultHsUserName()}@`, mutual)))) {
+    if (!(await updateBaselineAndApply(addTag(tag, `${defaultHsUserName()}@`)))) {
       return { ok: false, error: t('tagExists') }
     }
-    auditAfter('tag.create', tag, mutual ? 'mutual' : undefined, { actor: session.sub })
+    auditAfter('tag.create', tag, undefined, { actor: session.sub })
     return done()
   } catch (e) {
     return fail(e, t('unknown'))
@@ -57,25 +58,31 @@ export async function deleteTagAction(tag: string): Promise<ActionResult> {
   }
 }
 
-export async function createRuleAction(src: string[], dst: string[]): Promise<ActionResult> {
+// Put exactly these devices in the tag: add it where missing, take it off the rest
+export async function setMembersAction(tag: string, ids: string[]): Promise<ActionResult> {
   const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
+  if (!declaredTags().includes(tag)) return { ok: false, error: t('tagUnknown') }
   try {
-    if (await updateBaselineAndApply(addRule(src, dst))) {
-      auditAfter('rule.create', `${src.join(',')} → ${dst.join(',')}`, undefined, {
+    const want = new Set(ids)
+    const changes = (await listNodes())
+      .filter((n) => want.has(n.id) !== n.tags.includes(tag))
+      .map((n) => ({
+        node: n,
+        next: want.has(n.id) ? [...n.tags, tag].sort() : n.tags.filter((x) => x !== tag),
+      }))
+    // headscale can't take the last tag off a node, so refuse before changing anything
+    const stuck = changes.filter((c) => !c.next.length)
+    if (stuck.length) {
+      return {
+        ok: false,
+        error: t('lastTag', { names: stuck.map((c) => c.node.givenName).join(', ') }),
+      }
+    }
+    for (const { node, next } of changes) {
+      await setNodeTags(node.id, next)
+      auditAfter('node.setTags', nodeTarget(node), `${node.tags.join(',')} → ${next.join(',')}`, {
         actor: session.sub,
       })
-    }
-    return done()
-  } catch (e) {
-    return fail(e, t('unknown'))
-  }
-}
-
-export async function deleteRuleAction(key: string): Promise<ActionResult> {
-  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
-  try {
-    if (await updateBaselineAndApply(removeRule(key))) {
-      auditAfter('rule.delete', key, undefined, { actor: session.sub })
     }
     return done()
   } catch (e) {

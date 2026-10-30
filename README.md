@@ -16,9 +16,9 @@
   serves a prefix when several advertise the same one.
 - **Pre-auth keys** — issue, expire and delete keys; each comes with a
   ready-to-paste install command for the target machine.
-- **Tags and access** — a node can carry several tags. Rules say which tags reach
-  which, and a tag can let its own members reach each other. Tags and rules live
-  in a policy baseline file, so rules you write by hand sit next to them.
+- **Access** — a tag is a group: devices with the same tag reach each other, and
+  a device can join several tags. Tags live in a policy baseline file, so rules
+  you write by hand sit next to them.
 - **Audit log** — every panel action, searchable, filterable and banded by what
   the action does.
 - **Overview** — online nodes, subnet coverage, pending approvals and valid keys,
@@ -54,7 +54,7 @@ all three host paths are configured.
 
 `HEADPANEL_POLICY_BASELINE` points at the ACL policy file the panel deploys,
 `/etc/headpanel/policy-baseline.json` by default. The panel edits it when you
-change tags, rules or subnet routes, and deploys the whole file each time. See
+change tags or subnet routes, and deploys the whole file each time. See
 [the deployment guide](docs/deployment.md#acl-policy-baseline).
 
 `HEADSCALE_DB_PATH` is optional and only useful when the panel runs on the

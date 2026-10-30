@@ -316,8 +316,8 @@ command.
 ### ACL policy baseline
 
 Headpanel deploys Headscale's ACL policy from a baseline file. The file holds
-every tag (`tagOwners`), every rule between tags, and the subnets your routers
-serve. The Tags & access page and subnet approval edit it, and each change
+every tag (`tagOwners`), each tag's rule letting its members reach each other,
+and the subnets your routers serve. The Access page and subnet approval edit it, and each change
 deploys the whole file; rules you write by hand stay as they are.
 
 Create it before approving the first node:
