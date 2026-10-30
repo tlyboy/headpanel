@@ -10,14 +10,8 @@ import { CmdBlock } from '@/components/cmd-block'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Badge } from '@/components/ui/badge'
 import { Fold } from '@/components/fold'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { TableHead, TableCell } from '@/components/ui/table'
+import { VirtualTable } from '@/components/virtual-table'
 import { ListFilters } from '@/components/list-filters'
 import { ColumnFilter } from '@/components/column-filter'
 import {
@@ -130,87 +124,77 @@ export default async function SubnetsPage({
         columns={<ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />}
       />
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {show('route') && <TableHead>{t('route')}</TableHead>}
-              {show('node') && <TableHead>{t('node')}</TableHead>}
-              {show('lanIp') && <TableHead>{t('lanIp')}</TableHead>}
-              {show('status') && <TableHead>{t('status')}</TableHead>}
-              {show('advertising') && <TableHead>{t('advertising')}</TableHead>}
-              <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {routes.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={visibleCount(columns, hidden)}
-                  className="py-8 text-center text-muted-foreground"
-                >
-                  {t('empty')}
+      <VirtualTable
+        colSpan={visibleCount(columns, hidden)}
+        empty={t('empty')}
+        head={
+          <>
+            {show('route') && <TableHead>{t('route')}</TableHead>}
+            {show('node') && <TableHead>{t('node')}</TableHead>}
+            {show('lanIp') && <TableHead>{t('lanIp')}</TableHead>}
+            {show('status') && <TableHead>{t('status')}</TableHead>}
+            {show('advertising') && <TableHead>{t('advertising')}</TableHead>}
+            <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />
+          </>
+        }
+        rows={routes.flatMap(([route, list]) =>
+          list.map((e, i) => ({
+            key: String(`${route}:${e.node.id}`),
+            cells: (
+              <>
+                {show('route') && (
+                  <TableCell className="font-mono text-xs">
+                    {/* When multiple rows share a subnet, show the subnet only on the first row to visually group them */}
+                    {i === 0 ? route : ''}
+                  </TableCell>
+                )}
+                {show('node') && (
+                  <TableCell className="text-sm">
+                    {e.node.givenName}
+                    <span className="ml-2 font-mono text-xs text-muted-foreground">
+                      {pickIpv4(e.node.ipAddresses) ?? '—'}
+                    </span>
+                  </TableCell>
+                )}
+                {show('lanIp') && (
+                  <TableCell className="text-xs">
+                    <LanIpCell ips={netInfo.get(e.node.id)?.lanIps ?? []} />
+                  </TableCell>
+                )}
+                {show('status') && (
+                  <TableCell>
+                    {e.serving ? (
+                      <Badge variant="success">{t('serving')}</Badge>
+                    ) : e.approved ? (
+                      <Badge variant="secondary">{t('standby')}</Badge>
+                    ) : (
+                      <Badge variant="warning">{t('pending')}</Badge>
+                    )}
+                  </TableCell>
+                )}
+                {show('advertising') && (
+                  <TableCell>
+                    {e.available ? (
+                      common('yes')
+                    ) : (
+                      <span className="text-muted-foreground">{common('no')}</span>
+                    )}
+                  </TableCell>
+                )}
+                <TableCell className={STICKY_ACTIONS}>
+                  <RouteRowActions
+                    nodeId={e.node.id}
+                    nodeName={e.node.givenName}
+                    route={route}
+                    approved={e.approved}
+                    isPrimary={e.serving}
+                  />
                 </TableCell>
-              </TableRow>
-            ) : (
-              routes.flatMap(([route, list]) =>
-                list.map((e, i) => (
-                  <TableRow key={`${route}:${e.node.id}`}>
-                    {show('route') && (
-                      <TableCell className="font-mono text-xs">
-                        {/* When multiple rows share a subnet, show the subnet only on the first row to visually group them */}
-                        {i === 0 ? route : ''}
-                      </TableCell>
-                    )}
-                    {show('node') && (
-                      <TableCell className="text-sm">
-                        {e.node.givenName}
-                        <span className="ml-2 font-mono text-xs text-muted-foreground">
-                          {pickIpv4(e.node.ipAddresses) ?? '—'}
-                        </span>
-                      </TableCell>
-                    )}
-                    {show('lanIp') && (
-                      <TableCell className="text-xs">
-                        <LanIpCell ips={netInfo.get(e.node.id)?.lanIps ?? []} />
-                      </TableCell>
-                    )}
-                    {show('status') && (
-                      <TableCell>
-                        {e.serving ? (
-                          <Badge variant="success">{t('serving')}</Badge>
-                        ) : e.approved ? (
-                          <Badge variant="secondary">{t('standby')}</Badge>
-                        ) : (
-                          <Badge variant="warning">{t('pending')}</Badge>
-                        )}
-                      </TableCell>
-                    )}
-                    {show('advertising') && (
-                      <TableCell>
-                        {e.available ? (
-                          common('yes')
-                        ) : (
-                          <span className="text-muted-foreground">{common('no')}</span>
-                        )}
-                      </TableCell>
-                    )}
-                    <TableCell className={STICKY_ACTIONS}>
-                      <RouteRowActions
-                        nodeId={e.node.id}
-                        nodeName={e.node.givenName}
-                        route={route}
-                        approved={e.approved}
-                        isPrimary={e.serving}
-                      />
-                    </TableCell>
-                  </TableRow>
-                )),
-              )
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </>
+            ),
+          })),
+        )}
+      />
 
       <Fold title={t('howto.title')} summary={t('howto.summary')}>
         <div className="grid gap-6 lg:grid-cols-2">

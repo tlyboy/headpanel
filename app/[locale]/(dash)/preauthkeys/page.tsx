@@ -8,14 +8,8 @@ import { db } from '@/lib/db'
 import { preauthKeys as preauthKeysTable } from '@/lib/db/schema'
 import { fmtTime, isNever } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { TableHead, TableCell } from '@/components/ui/table'
+import { VirtualTable } from '@/components/virtual-table'
 import { ListFilters } from '@/components/list-filters'
 import { ColumnFilter } from '@/components/column-filter'
 import {
@@ -97,77 +91,67 @@ export default async function PreAuthKeysPage({
         columns={<ColumnFilter page={PAGE} columns={columns} hidden={[...hidden]} />}
       />
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {show('id') && <TableHead className="w-12">ID</TableHead>}
-              {show('key') && <TableHead>Key</TableHead>}
-              {show('mode') && <TableHead>{t('mode')}</TableHead>}
-              {show('reusable') && <TableHead>{t('reusable')}</TableHead>}
-              {show('used') && <TableHead>{t('used')}</TableHead>}
-              {show('status') && <TableHead>{t('status')}</TableHead>}
-              {show('expiration') && <TableHead>{t('expiration')}</TableHead>}
-              <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {shown.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={visibleCount(columns, hidden)}
-                  className="py-8 text-center text-muted-foreground"
-                >
-                  {t('empty')}
+      <VirtualTable
+        colSpan={visibleCount(columns, hidden)}
+        empty={t('empty')}
+        head={
+          <>
+            {show('id') && <TableHead className="w-12">ID</TableHead>}
+            {show('key') && <TableHead>Key</TableHead>}
+            {show('mode') && <TableHead>{t('mode')}</TableHead>}
+            {show('reusable') && <TableHead>{t('reusable')}</TableHead>}
+            {show('used') && <TableHead>{t('used')}</TableHead>}
+            {show('status') && <TableHead>{t('status')}</TableHead>}
+            {show('expiration') && <TableHead>{t('expiration')}</TableHead>}
+            <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />
+          </>
+        }
+        rows={shown.map((k) => {
+          const expired = !isNever(k.expiration) && new Date(k.expiration).getTime() < now
+          const m = modeOf(k.aclTags ?? [])
+          return {
+            key: String(k.id),
+            cells: (
+              <>
+                {show('id') && <TableCell className="text-muted-foreground">{k.id}</TableCell>}
+                {show('key') && <TableCell className="font-mono text-xs">{k.key}</TableCell>}
+                {show('mode') && (
+                  <TableCell>
+                    <Badge variant={m.variant}>{t(m.key)}</Badge>
+                  </TableCell>
+                )}
+                {show('reusable') && (
+                  <TableCell>{k.reusable ? common('yes') : common('no')}</TableCell>
+                )}
+                {show('used') && <TableCell>{k.used ? common('yes') : common('no')}</TableCell>}
+                {show('status') && (
+                  <TableCell>
+                    {expired ? (
+                      <Badge variant="secondary">{t('expired')}</Badge>
+                    ) : (
+                      <Badge variant="success">{t('valid')}</Badge>
+                    )}
+                  </TableCell>
+                )}
+                {show('expiration') && (
+                  <TableCell className="text-xs text-muted-foreground">
+                    {isNever(k.expiration) ? t('permanent') : fmtTime(k.expiration)}
+                  </TableCell>
+                )}
+                <TableCell className={STICKY_ACTIONS}>
+                  <KeyRowActions
+                    id={k.id}
+                    plaintext={plain.get(k.id)}
+                    modeLabel={t(m.key)}
+                    headscaleUrl={headscaleUrl}
+                    panelBasePath={panelBasePath}
+                  />
                 </TableCell>
-              </TableRow>
-            ) : (
-              shown.map((k) => {
-                const expired = !isNever(k.expiration) && new Date(k.expiration).getTime() < now
-                const m = modeOf(k.aclTags ?? [])
-                return (
-                  <TableRow key={k.id}>
-                    {show('id') && <TableCell className="text-muted-foreground">{k.id}</TableCell>}
-                    {show('key') && <TableCell className="font-mono text-xs">{k.key}</TableCell>}
-                    {show('mode') && (
-                      <TableCell>
-                        <Badge variant={m.variant}>{t(m.key)}</Badge>
-                      </TableCell>
-                    )}
-                    {show('reusable') && (
-                      <TableCell>{k.reusable ? common('yes') : common('no')}</TableCell>
-                    )}
-                    {show('used') && <TableCell>{k.used ? common('yes') : common('no')}</TableCell>}
-                    {show('status') && (
-                      <TableCell>
-                        {expired ? (
-                          <Badge variant="secondary">{t('expired')}</Badge>
-                        ) : (
-                          <Badge variant="success">{t('valid')}</Badge>
-                        )}
-                      </TableCell>
-                    )}
-                    {show('expiration') && (
-                      <TableCell className="text-xs text-muted-foreground">
-                        {isNever(k.expiration) ? t('permanent') : fmtTime(k.expiration)}
-                      </TableCell>
-                    )}
-                    <TableCell className={STICKY_ACTIONS}>
-                      <KeyRowActions
-                        id={k.id}
-                        plaintext={plain.get(k.id)}
-                        modeLabel={t(m.key)}
-                        headscaleUrl={headscaleUrl}
-                        panelBasePath={panelBasePath}
-                      />
-                    </TableCell>
-                  </TableRow>
-                )
-              })
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              </>
+            ),
+          }
+        })}
+      />
       <Scripts />
     </div>
   )

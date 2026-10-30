@@ -19,14 +19,8 @@ import { resolvePerPage } from '@/components/pager'
 import { auditKind, AUDIT_KIND_VARIANT, displayTarget, legacyNodeId } from '@/lib/audit'
 import { listNodes } from '@/lib/headscale'
 import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+import { TableHead, TableCell } from '@/components/ui/table'
+import { VirtualTable } from '@/components/virtual-table'
 
 export const dynamic = 'force-dynamic'
 
@@ -152,62 +146,48 @@ export default async function AuditPage({
         ]}
       />
 
-      <div className="rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              {show('time') && <TableHead className="w-44">{t('time')}</TableHead>}
-              {show('actor') && <TableHead>{t('actor')}</TableHead>}
-              {show('action') && <TableHead>{t('action')}</TableHead>}
-              {show('target') && <TableHead>{t('target')}</TableHead>}
-              {show('detail') && <TableHead>{t('detail')}</TableHead>}
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {rows.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={visibleCount(columns, hidden)}
-                  className="py-8 text-center text-muted-foreground"
-                >
-                  {t('empty')}
+      <VirtualTable
+        colSpan={visibleCount(columns, hidden)}
+        empty={t('empty')}
+        className="max-h-[calc(100svh-13rem)]"
+        head={
+          <>
+            {show('time') && <TableHead className="w-44">{t('time')}</TableHead>}
+            {show('actor') && <TableHead>{t('actor')}</TableHead>}
+            {show('action') && <TableHead>{t('action')}</TableHead>}
+            {show('target') && <TableHead>{t('target')}</TableHead>}
+            {show('detail') && <TableHead>{t('detail')}</TableHead>}
+          </>
+        }
+        rows={rows.map((r) => ({
+          key: String(r.id),
+          cells: (
+            <>
+              {show('time') && (
+                <TableCell className="text-xs text-muted-foreground">
+                  {fmtTime(r.ts.replace(' ', 'T') + 'Z')}
                 </TableCell>
-              </TableRow>
-            ) : (
-              rows.map((r) => (
-                <TableRow
-                  key={r.id}
-                  className="[contain-intrinsic-size:0_49px] [content-visibility:auto]"
-                >
-                  {show('time') && (
-                    <TableCell className="text-xs text-muted-foreground">
-                      {fmtTime(r.ts.replace(' ', 'T') + 'Z')}
-                    </TableCell>
-                  )}
-                  {show('actor') && <TableCell className="text-xs">{r.actor ?? '—'}</TableCell>}
-                  {show('action') && (
-                    <TableCell>
-                      <Badge variant={AUDIT_KIND_VARIANT[auditKind(r.action)]}>
-                        {actionLabel(r.action)}
-                      </Badge>
-                    </TableCell>
-                  )}
-                  {show('target') && (
-                    <TableCell className="text-xs">
-                      {displayTarget(r.action, r.target, nodeNames) ?? '—'}
-                    </TableCell>
-                  )}
-                  {show('detail') && (
-                    <TableCell className="text-xs text-muted-foreground">
-                      {r.detail ?? '—'}
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+              )}
+              {show('actor') && <TableCell className="text-xs">{r.actor ?? '—'}</TableCell>}
+              {show('action') && (
+                <TableCell>
+                  <Badge variant={AUDIT_KIND_VARIANT[auditKind(r.action)]}>
+                    {actionLabel(r.action)}
+                  </Badge>
+                </TableCell>
+              )}
+              {show('target') && (
+                <TableCell className="text-xs">
+                  {displayTarget(r.action, r.target, nodeNames) ?? '—'}
+                </TableCell>
+              )}
+              {show('detail') && (
+                <TableCell className="text-xs text-muted-foreground">{r.detail ?? '—'}</TableCell>
+              )}
+            </>
+          ),
+        }))}
+      />
 
       <ListPager page={current} pageCount={pageCount} total={total} perPage={perPage} />
     </div>

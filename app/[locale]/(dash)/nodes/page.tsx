@@ -8,10 +8,21 @@ import { fmtTime, pickIpv4, tagLabel } from '@/lib/format'
 import { approvedTag } from '@/lib/default-zone'
 import { ListFilters } from '@/components/list-filters'
 import { ColumnFilter } from '@/components/column-filter'
-import { columnCookieName, makeIsVisible, parseHidden, type ColumnDef } from '@/components/columns'
+import {
+  columnCookieName,
+  makeIsVisible,
+  parseHidden,
+  visibleCount,
+  type ColumnDef,
+} from '@/components/columns'
 import { PendingCard } from './pending-card'
-import { NodeSelection } from './selection'
-import { NodesTable, type NodeCol } from './nodes-table'
+import { NodeSelection, RowSelect, SelectAll, TagCell } from './selection'
+import { NodeRowActions } from './row-actions'
+import { Badge } from '@/components/ui/badge'
+import { TableCell, TableHead } from '@/components/ui/table'
+import { LanIpCell } from '@/components/lan-ip-cell'
+import { VirtualTable } from '@/components/virtual-table'
+import { STICKY_ACTIONS } from '@/lib/table'
 
 const PAGE = 'nodes'
 
@@ -77,7 +88,7 @@ export default async function NodesPage({
   })
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
+    <div className="flex flex-col gap-4">
       {pending.length > 0 && (
         <PendingCard
           nodes={pending.map((n) => ({
@@ -117,19 +128,75 @@ export default async function NodesPage({
         )}
         defaultTag={approvedTag()}
       >
-        <NodesTable
-          visible={columns
-            .map((c) => c.key)
-            .filter((k): k is NodeCol => k !== 'actions' && show(k))}
+        <VirtualTable
+          colSpan={visibleCount(columns, hidden) + 1}
+          empty={t('empty')}
+          head={
+            <>
+              <TableHead className="w-10">
+                <SelectAll />
+              </TableHead>
+              {show('id') && <TableHead className="w-12">ID</TableHead>}
+              {show('alias') && <TableHead>{t('alias')}</TableHead>}
+              {show('ip') && <TableHead>IP</TableHead>}
+              {show('lanIp') && <TableHead>{t('lanIp')}</TableHead>}
+              {show('online') && <TableHead>{common('online')}</TableHead>}
+              {show('note') && <TableHead>{t('note')}</TableHead>}
+              {show('tags') && <TableHead>{t('tags')}</TableHead>}
+              {show('lastSeen') && <TableHead>{t('lastSeen')}</TableHead>}
+              {/* Leave the header blank: a column of ... menus needs no title, and the saved width goes to the data */}
+              <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />
+            </>
+          }
           rows={nodes.map((n) => ({
-            id: n.id,
-            name: n.givenName,
-            ip: pickIpv4(n.ipAddresses) ?? '—',
-            // The first one has the highest score (within a subnet it announced, not the .1 gateway, and not a docker range)
-            lanIps: netInfo.get(n.id)?.lanIps ?? [],
-            online: n.online,
-            note: n.note ?? null,
-            lastSeen: fmtTime(n.lastSeen),
+            key: n.id,
+            cells: (
+              <>
+                <TableCell>
+                  <RowSelect id={n.id} name={n.givenName} />
+                </TableCell>
+                {show('id') && <TableCell className="text-muted-foreground">{n.id}</TableCell>}
+                {show('alias') && <TableCell className="font-medium">{n.givenName}</TableCell>}
+                {show('ip') && (
+                  <TableCell className="font-mono text-xs">
+                    {pickIpv4(n.ipAddresses) ?? '—'}
+                  </TableCell>
+                )}
+                {show('lanIp') && (
+                  <TableCell className="text-xs">
+                    {/* The first one has the highest score (within a subnet it announced, not the .1 gateway, and not a docker range) */}
+                    <LanIpCell ips={netInfo.get(n.id)?.lanIps ?? []} />
+                  </TableCell>
+                )}
+                {show('online') && (
+                  <TableCell>
+                    {n.online ? (
+                      <Badge variant="success">{common('online')}</Badge>
+                    ) : (
+                      <Badge variant="secondary">{common('offline')}</Badge>
+                    )}
+                  </TableCell>
+                )}
+                {show('note') && (
+                  <TableCell className="max-w-[14rem] truncate text-sm">
+                    {n.note ? n.note : <span className="text-muted-foreground">—</span>}
+                  </TableCell>
+                )}
+                {show('tags') && (
+                  <TableCell className="py-1 whitespace-normal">
+                    <TagCell id={n.id} />
+                  </TableCell>
+                )}
+                {show('lastSeen') && (
+                  <TableCell className="text-xs text-muted-foreground">
+                    {fmtTime(n.lastSeen)}
+                  </TableCell>
+                )}
+                <TableCell className={STICKY_ACTIONS}>
+                  <NodeRowActions id={n.id} name={n.givenName} note={n.note ?? undefined} />
+                </TableCell>
+              </>
+            ),
           }))}
         />
       </NodeSelection>
