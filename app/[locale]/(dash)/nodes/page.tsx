@@ -31,15 +31,6 @@ const PAGE = 'nodes'
 
 export const dynamic = 'force-dynamic'
 
-const APPROVAL_VARIANT: Record<
-  'approved' | 'pending' | 'rejected',
-  'success' | 'warning' | 'destructive'
-> = {
-  approved: 'success',
-  pending: 'warning',
-  rejected: 'destructive',
-}
-
 export default async function NodesPage({
   searchParams,
 }: {
@@ -58,7 +49,6 @@ export default async function NodesPage({
     { key: 'ip', label: 'IP' },
     { key: 'lanIp', label: t('lanIp') },
     { key: 'online', label: common('online') },
-    { key: 'approval', label: t('approval') },
     { key: 'note', label: t('note') },
     { key: 'tags', label: t('tags') },
     { key: 'lastSeen', label: t('lastSeen') },
@@ -78,13 +68,12 @@ export default async function NodesPage({
   const netInfo = readNodeNetInfo()
   const tagOptions = declaredTags()
 
+  // Pending nodes live on the pending page; rejected ones are deleted from headscale.
   // Search includes LAN IPs: when locating a machine, the address you have on hand is often that one
   const nodes = all.filter((n) => {
+    if (n.status === 'pending') return false
     if (status === 'online' && !n.online) return false
     if (status === 'offline' && n.online) return false
-    if (status && status !== 'online' && status !== 'offline') {
-      if (n.status !== status) return false
-    }
     if (!q) return true
     const hay = [
       n.givenName,
@@ -110,9 +99,6 @@ export default async function NodesPage({
             options: [
               { value: 'online', label: common('online') },
               { value: 'offline', label: common('offline') },
-              { value: 'pending', label: t('pending') },
-              { value: 'approved', label: t('approved') },
-              { value: 'rejected', label: t('rejected') },
             ],
           },
         ]}
@@ -127,7 +113,6 @@ export default async function NodesPage({
               {show('ip') && <TableHead>IP</TableHead>}
               {show('lanIp') && <TableHead>{t('lanIp')}</TableHead>}
               {show('online') && <TableHead>{common('online')}</TableHead>}
-              {show('approval') && <TableHead>{t('approval')}</TableHead>}
               {show('note') && <TableHead>{t('note')}</TableHead>}
               {show('tags') && <TableHead>{t('tags')}</TableHead>}
               {show('lastSeen') && <TableHead>{t('lastSeen')}</TableHead>}
@@ -170,11 +155,6 @@ export default async function NodesPage({
                         ) : (
                           <Badge variant="secondary">{common('offline')}</Badge>
                         )}
-                      </TableCell>
-                    )}
-                    {show('approval') && (
-                      <TableCell>
-                        <Badge variant={APPROVAL_VARIANT[n.status]}>{t(n.status)}</Badge>
                       </TableCell>
                     )}
                     {show('note') && (

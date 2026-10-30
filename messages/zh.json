@@ -108,15 +108,11 @@
   "nodes": {
     "title": "节点",
     "alias": "别名",
-    "approval": "审批",
     "note": "备注",
     "tags": "标签",
     "lastSeen": "最后在线",
     "actions": "操作",
     "empty": "暂无节点",
-    "approved": "已审批",
-    "pending": "待审批",
-    "rejected": "已拒绝",
     "lanIp": "局域网 IP",
     "lanIpPrimary": "主",
     "copyLanIp": "复制",
@@ -357,7 +353,7 @@
   },
   "tags": {
     "tagsTitle": "标签",
-    "tagsDescription": "一台设备可以有多个标签。勾选“成员互通”的标签，带它的设备之间可以互相访问。",
+    "tagsDescription": "一台设备可以带多个标签。勾选“成员互通”后，带这个标签的设备之间可以互相访问。",
     "tag": "标签",
     "devices": "设备",
     "default": "审批默认",
@@ -367,12 +363,17 @@
     "tagCreated": "标签已创建",
     "tagDeleted": "标签已删除",
     "rulesTitle": "访问规则",
-    "rulesDescription": "带“来源”标签的设备可以访问带“目标”标签的设备，回包自动放行，反方向不通。第一条规则承载子网路由，不能删除。",
-    "from": "来源",
-    "to": "目标",
+    "rulesDescription": "每条规则读作“带左边标签的设备，可以访问带右边标签的设备”。单向生效，回包自动放行，反方向不通。想只开放某一台设备，就给它单独打一个标签（如 tag:ttxs-share），再把这个标签放在右边。",
+    "from": "谁可以访问",
+    "to": "可以访问到",
     "addRule": "添加规则",
     "ruleCreated": "规则已添加",
     "ruleDeleted": "规则已删除",
-    "delete": "删除"
+    "delete": "删除",
+    "canReach": "→ 可以访问 →",
+    "noRules": "还没有跨标签的规则。",
+    "defaultRule": "默认规则（含子网路由）",
+    "mutualOn": "已设为成员互通",
+    "mutualOff": "已取消成员互通"
   }
 }

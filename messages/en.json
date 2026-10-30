@@ -108,15 +108,11 @@
   "nodes": {
     "title": "Nodes",
     "alias": "Alias",
-    "approval": "Approval",
     "note": "Note",
     "tags": "Tags",
     "lastSeen": "Last seen",
     "actions": "Actions",
     "empty": "No nodes",
-    "approved": "Approved",
-    "pending": "Pending",
-    "rejected": "Rejected",
     "lanIp": "LAN IP",
     "lanIpPrimary": "primary",
     "copyLanIp": "Copy",
@@ -357,7 +353,7 @@
   },
   "tags": {
     "tagsTitle": "Tags",
-    "tagsDescription": "A device can carry several tags. Devices sharing a tag marked \"members reach each other\" can talk to one another.",
+    "tagsDescription": "A device can carry several tags. With \"members reach each other\" on, devices sharing the tag can reach one another.",
     "tag": "Tag",
     "devices": "Devices",
     "default": "Approval default",
@@ -367,12 +363,17 @@
     "tagCreated": "Tag created",
     "tagDeleted": "Tag deleted",
     "rulesTitle": "Access rules",
-    "rulesDescription": "Devices with a source tag can reach devices with a target tag. Replies flow back; the reverse direction stays closed. The first rule carries subnet routes and cannot be deleted.",
-    "from": "Source",
-    "to": "Target",
+    "rulesDescription": "Read each rule as \"devices with the tags on the left can reach devices with the tags on the right\". It is one-way: replies flow back, the reverse stays closed. To open up a single device, give it a tag of its own (such as tag:ttxs-share) and put that tag on the right.",
+    "from": "Who can reach",
+    "to": "Can reach",
     "addRule": "Add rule",
     "ruleCreated": "Rule added",
     "ruleDeleted": "Rule deleted",
-    "delete": "Delete"
+    "delete": "Delete",
+    "canReach": "→ can reach →",
+    "noRules": "No cross-tag rules yet.",
+    "defaultRule": "Default rule (with subnet routes)",
+    "mutualOn": "Members now reach each other",
+    "mutualOff": "Members no longer reach each other"
   }
 }

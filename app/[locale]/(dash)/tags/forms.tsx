@@ -163,3 +163,30 @@ export function DeleteRule({ ruleKey, disabled }: { ruleKey: string; disabled?: 
     </Button>
   )
 }
+
+// Mutual is just the rule "tag → tag"; toggling adds or removes it
+export function MutualToggle({
+  tag,
+  checked,
+  selfKey,
+  disabled,
+}: {
+  tag: string
+  checked: boolean
+  selfKey?: string
+  disabled?: boolean
+}) {
+  const t = useTranslations('tags')
+  const { pending, run } = useRun()
+  return (
+    <Checkbox
+      checked={checked}
+      disabled={pending || disabled}
+      onCheckedChange={(on) =>
+        on
+          ? run(() => createRuleAction([tag], [tag]), t('mutualOn'))
+          : selfKey && run(() => deleteRuleAction(selfKey), t('mutualOff'))
+      }
+    />
+  )
+}

@@ -13,7 +13,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { DeleteRule, DeleteTag, RuleForm, TagForm } from './forms'
+import { DeleteRule, DeleteTag, MutualToggle, RuleForm, TagForm } from './forms'
 
 export const dynamic = 'force-dynamic'
 
@@ -34,7 +34,14 @@ export default async function TagsPage() {
   const baseline = loadBaseline()
   const tags = declaredTags(baseline)
   const acls = baseline.acls ?? []
-  const subnetRule = acls.find((a) => a.action === 'accept')
+  const defaultRule = acls.find((a) => a.action === 'accept')
+  const isSelf = (r: (typeof acls)[number]) =>
+    r.src.length === 1 && r.dst.length === 1 && r.dst[0] === `${r.src[0]}:*`
+  const selfKey = new Map(acls.filter(isSelf).map((r) => [r.src[0], ruleKey(r)]))
+  // A tag can also be mutual through a wider rule (tag:ttxs in the default rule); that one isn't toggled here
+  const mutual = (tag: string) =>
+    acls.some((r) => r.src.includes(tag) && r.dst.includes(`${tag}:*`))
+  const crossRules = acls.filter((r) => r !== defaultRule && !isSelf(r))
   const nodes = await listNodes()
   const members = (tag: string) => nodes.filter((n) => n.tags.includes(tag))
 
@@ -52,6 +59,7 @@ export default async function TagsPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>{t('tag')}</TableHead>
+                  <TableHead>{t('mutual')}</TableHead>
                   <TableHead>{t('devices')}</TableHead>
                   <TableHead />
                 </TableRow>
@@ -68,6 +76,14 @@ export default async function TagsPage() {
                             {t('default')}
                           </Badge>
                         )}
+                      </TableCell>
+                      <TableCell>
+                        <MutualToggle
+                          tag={tag}
+                          checked={mutual(tag)}
+                          selfKey={selfKey.get(tag)}
+                          disabled={mutual(tag) && !selfKey.has(tag)}
+                        />
                       </TableCell>
                       <TableCell className="max-w-xl truncate text-sm text-muted-foreground">
                         {m.length} · {m.map((n) => n.givenName).join(', ')}
@@ -90,31 +106,30 @@ export default async function TagsPage() {
           <CardDescription>{t('rulesDescription')}</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
-          <div className="rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>{t('from')}</TableHead>
-                  <TableHead>{t('to')}</TableHead>
-                  <TableHead />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {acls.map((rule) => (
-                  <TableRow key={ruleKey(rule)}>
-                    <TableCell>
-                      <Endpoints items={rule.src} />
-                    </TableCell>
-                    <TableCell>
-                      <Endpoints items={rule.dst} />
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DeleteRule ruleKey={ruleKey(rule)} disabled={rule === subnetRule} />
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+          <div className="flex flex-col divide-y rounded-md border">
+            {crossRules.length === 0 && (
+              <p className="px-4 py-3 text-sm text-muted-foreground">{t('noRules')}</p>
+            )}
+            {crossRules.map((rule) => (
+              <div key={ruleKey(rule)} className="flex items-center gap-3 px-4 py-3 text-sm">
+                <Endpoints items={rule.src} />
+                <span className="shrink-0 text-muted-foreground">{t('canReach')}</span>
+                <Endpoints items={rule.dst} />
+                <div className="ml-auto">
+                  <DeleteRule ruleKey={ruleKey(rule)} />
+                </div>
+              </div>
+            ))}
+            {defaultRule && (
+              <div className="flex items-center gap-3 px-4 py-3 text-sm text-muted-foreground">
+                <Endpoints items={defaultRule.src} />
+                <span className="shrink-0">{t('canReach')}</span>
+                <Endpoints items={defaultRule.dst} />
+                <Badge variant="secondary" className="ml-auto shrink-0">
+                  {t('defaultRule')}
+                </Badge>
+              </div>
+            )}
           </div>
           <RuleForm tags={tags} />
         </CardContent>
