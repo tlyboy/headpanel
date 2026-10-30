@@ -1,0 +1,87 @@
+'use server'
+
+import { revalidatePath } from 'next/cache'
+import { getTranslations } from 'next-intl/server'
+import { requireSuper } from '@/lib/auth'
+import { auditAfter } from '@/lib/db'
+import { approvedTag, defaultHsUserName } from '@/lib/default-zone'
+import { listGroups } from '@/lib/groups'
+import { listNodes, HeadscaleError } from '@/lib/headscale'
+import { addRule, addTag, removeRule, removeTag, updateBaselineAndApply } from '@/lib/policy'
+
+export interface ActionResult {
+  ok: boolean
+  error?: string
+}
+
+function fail(e: unknown, unknownMessage: string): ActionResult {
+  if (e instanceof HeadscaleError) return { ok: false, error: e.message }
+  return { ok: false, error: e instanceof Error ? e.message : unknownMessage }
+}
+
+function done(): ActionResult {
+  revalidatePath('/tags')
+  revalidatePath('/nodes')
+  return { ok: true }
+}
+
+export async function createTagAction(name: string, mutual: boolean): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
+  const bare = name.trim().toLowerCase().replace(/^tag:/, '')
+  const tag = `tag:${bare}`
+  try {
+    if (
+      !(await updateBaselineAndApply(addTag(tag, `${defaultHsUserName()}@`, mutual), listGroups()))
+    ) {
+      return { ok: false, error: t('tagExists') }
+    }
+    auditAfter('tag.create', tag, mutual ? 'mutual' : undefined, { actor: session.sub })
+    return done()
+  } catch (e) {
+    return fail(e, t('unknown'))
+  }
+}
+
+export async function deleteTagAction(tag: string): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
+  // Approval puts this tag on every new node; without it approval would fail
+  if (tag === approvedTag()) return { ok: false, error: t('tagIsDefault') }
+  try {
+    const used = (await listNodes()).filter((n) => n.tags.includes(tag))
+    if (used.length) {
+      return { ok: false, error: t('tagInUse', { count: used.length }) }
+    }
+    if (await updateBaselineAndApply(removeTag(tag), listGroups())) {
+      auditAfter('tag.delete', tag, undefined, { actor: session.sub })
+    }
+    return done()
+  } catch (e) {
+    return fail(e, t('unknown'))
+  }
+}
+
+export async function createRuleAction(src: string[], dst: string[]): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
+  try {
+    if (await updateBaselineAndApply(addRule(src, dst), listGroups())) {
+      auditAfter('rule.create', `${src.join(',')} → ${dst.join(',')}`, undefined, {
+        actor: session.sub,
+      })
+    }
+    return done()
+  } catch (e) {
+    return fail(e, t('unknown'))
+  }
+}
+
+export async function deleteRuleAction(key: string): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
+  try {
+    if (await updateBaselineAndApply(removeRule(key), listGroups())) {
+      auditAfter('rule.delete', key, undefined, { actor: session.sub })
+    }
+    return done()
+  } catch (e) {
+    return fail(e, t('unknown'))
+  }
+}

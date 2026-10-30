@@ -55,7 +55,8 @@
     "network": "网段设置",
     "scripts": "脚本下载",
     "audit": "审计日志",
-    "subnets": "子网路由"
+    "subnets": "子网路由",
+    "tags": "标签与访问"
   },
   "theme": {
     "toggle": "切换主题"
@@ -109,7 +110,6 @@
   "nodes": {
     "title": "节点",
     "alias": "别名",
-    "user": "用户",
     "approval": "审批",
     "note": "备注",
     "tags": "标签",
@@ -276,7 +276,11 @@
     "deleteTitle": "删除该节点？",
     "deleteDescription": "彻底从 headscale 移除，IP 会被回收。此操作不可撤销。",
     "deleted": "已删除",
-    "confirmDelete": "确认删除"
+    "confirmDelete": "确认删除",
+    "editTags": "改标签",
+    "tagsTitle": "设备标签",
+    "tagsDescription": "标签决定这台设备能访问谁、能被谁访问。至少保留一个标签。",
+    "tagsSaved": "标签已保存"
   },
   "network": {
     "addressPool": "地址池",
@@ -332,7 +336,12 @@
     "routeNotApproved": "该节点尚未批准这条路由",
     "primaryNotSwitched": "headscale 未按预期切换承载方，请刷新后确认当前状态",
     "routeApprovedAclFailed": "路由已批准，但 ACL 放通失败：{reason}。该网段可能仍不通，请检查 policy 基线",
-    "routeRevokedAclFailed": "路由已撤销，但 ACL 收回失败：{reason}。请检查 policy 基线"
+    "routeRevokedAclFailed": "路由已撤销，但 ACL 收回失败：{reason}。请检查 policy 基线",
+    "tagsRequired": "至少保留一个标签",
+    "tagUnknown": "标签不存在，请先在“标签与访问”里创建",
+    "tagExists": "标签已存在",
+    "tagIsDefault": "默认标签用于审批新设备，不能删除",
+    "tagInUse": "还有 {count} 台设备使用该标签，先把它们的标签改掉"
   },
   "subnets": {
     "title": "子网路由",
@@ -400,6 +409,7 @@
     "node.note": "修改备注",
     "node.reject": "拒绝节点",
     "node.rename": "重命名节点",
+    "node.setTags": "修改节点标签",
     "policy.allowSubnet": "ACL 放通网段",
     "policy.revokeSubnet": "ACL 收回网段",
     "preauthkey.create": "创建 PreAuthKey",
@@ -408,6 +418,30 @@
     "route.approve": "批准子网路由",
     "route.makePrimary": "切换承载节点",
     "route.restoreFailed": "备份路由恢复失败",
-    "route.revoke": "撤销子网路由"
+    "route.revoke": "撤销子网路由",
+    "rule.create": "添加访问规则",
+    "rule.delete": "删除访问规则",
+    "tag.create": "创建标签",
+    "tag.delete": "删除标签"
+  },
+  "tags": {
+    "tagsTitle": "标签",
+    "tagsDescription": "一台设备可以有多个标签。勾选“成员互通”的标签，带它的设备之间可以互相访问。",
+    "tag": "标签",
+    "devices": "设备",
+    "default": "审批默认",
+    "tagName": "标签名",
+    "mutual": "成员互通",
+    "addTag": "添加标签",
+    "tagCreated": "标签已创建",
+    "tagDeleted": "标签已删除",
+    "rulesTitle": "访问规则",
+    "rulesDescription": "带“来源”标签的设备可以访问带“目标”标签的设备，回包自动放行，反方向不通。第一条规则承载子网路由，不能删除。",
+    "from": "来源",
+    "to": "目标",
+    "addRule": "添加规则",
+    "ruleCreated": "规则已添加",
+    "ruleDeleted": "规则已删除",
+    "delete": "删除"
   }
 }

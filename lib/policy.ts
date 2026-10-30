@@ -47,7 +47,7 @@ export function loadBaseline(): PolicyBaseline {
   const path = baselinePath()
   let raw: string
   try {
-    raw = readFileSync(path, 'utf8')
+    raw = readFileSync(/* turbopackIgnore: true */ path, 'utf8')
   } catch (e) {
     if ((e as NodeJS.ErrnoException).code === 'ENOENT') return {}
     throw new PolicyBaselineError(
@@ -144,6 +144,81 @@ export function removeSubnetDst(cidr: string): Mutator {
     const next = rule.dst.filter((d) => d !== want)
     if (next.length === rule.dst.length) return false
     rule.dst = next
+    return true
+  }
+}
+
+// Tags and the rules between them live in the baseline too: tagOwners declares a tag, acls says who reaches whom.
+// Every tag is owned by the default user, so only the panel (never a client's own auth key) can put one on a node.
+export const TAG_RE = /^tag:[a-z0-9][a-z0-9-]{0,62}$/
+
+export function declaredTags(b: PolicyBaseline = loadBaseline()): string[] {
+  return Object.keys(b.tagOwners ?? {}).sort()
+}
+
+export function ruleKey(rule: PolicyAcl): string {
+  return JSON.stringify([rule.src, rule.dst])
+}
+
+function selfRule(tag: string): PolicyAcl {
+  return { action: 'accept', src: [tag], dst: [`${tag}:*`] }
+}
+
+function mentions(rule: PolicyAcl, tag: string): boolean {
+  return rule.src.includes(tag) || rule.dst.includes(`${tag}:*`)
+}
+
+export function addTag(tag: string, owner: string, mutual: boolean): Mutator {
+  return (b) => {
+    if (!TAG_RE.test(tag)) throw new BaselineNotWritableError(`invalid tag name ${tag}`)
+    if (b.tagOwners?.[tag]) return false
+    b.tagOwners = { ...b.tagOwners, [tag]: [owner] }
+    if (mutual) b.acls = [...(b.acls ?? []), selfRule(tag)]
+    return true
+  }
+}
+
+// Only its own "members reach each other" rule goes with the tag; any other rule naming it must be removed first,
+// or deleting the tag would silently widen or narrow someone else's access.
+export function removeTag(tag: string): Mutator {
+  return (b) => {
+    if (!b.tagOwners?.[tag]) return false
+    const self = ruleKey(selfRule(tag))
+    const acls = (b.acls ?? []).filter((r) => ruleKey(r) !== self)
+    if (acls.some((r) => mentions(r, tag))) {
+      throw new BaselineNotWritableError(`${tag} is still used by an access rule`)
+    }
+    const { [tag]: _, ...rest } = b.tagOwners
+    b.tagOwners = rest
+    b.acls = acls
+    return true
+  }
+}
+
+export function addRule(src: string[], dst: string[]): Mutator {
+  return (b) => {
+    const known = new Set(declaredTags(b))
+    const unknown = [...src, ...dst].filter((t) => !known.has(t))
+    if (!src.length || !dst.length || unknown.length) {
+      throw new BaselineNotWritableError(`unknown tags: ${unknown.join(', ') || '(none given)'}`)
+    }
+    const rule: PolicyAcl = { action: 'accept', src, dst: dst.map((t) => `${t}:*`) }
+    if ((b.acls ?? []).some((r) => ruleKey(r) === ruleKey(rule))) return false
+    b.acls = [...(b.acls ?? []), rule]
+    return true
+  }
+}
+
+// The first accept rule carries the approved subnets (see addSubnetDst), so it stays.
+export function removeRule(key: string): Mutator {
+  return (b) => {
+    const acls = b.acls ?? []
+    const i = acls.findIndex((r) => ruleKey(r) === key)
+    if (i === -1) return false
+    if (acls[i] === firstAcceptRule(b)) {
+      throw new BaselineNotWritableError('the first rule carries the subnet routes')
+    }
+    b.acls = acls.toSpliced(i, 1)
     return true
   }
 }

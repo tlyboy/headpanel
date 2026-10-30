@@ -55,7 +55,8 @@
     "network": "Network",
     "scripts": "Scripts",
     "audit": "Audit log",
-    "subnets": "Subnet routes"
+    "subnets": "Subnet routes",
+    "tags": "Tags & access"
   },
   "theme": {
     "toggle": "Toggle theme"
@@ -109,7 +110,6 @@
   "nodes": {
     "title": "Nodes",
     "alias": "Alias",
-    "user": "User",
     "approval": "Approval",
     "note": "Note",
     "tags": "Tags",
@@ -276,7 +276,11 @@
     "deleteTitle": "Delete this node?",
     "deleteDescription": "Remove it from headscale permanently. The IP will be released. This cannot be undone.",
     "deleted": "Deleted",
-    "confirmDelete": "Delete"
+    "confirmDelete": "Delete",
+    "editTags": "Edit tags",
+    "tagsTitle": "Device tags",
+    "tagsDescription": "Tags decide what this device can reach and who can reach it. Keep at least one.",
+    "tagsSaved": "Tags saved"
   },
   "network": {
     "addressPool": "Address pool",
@@ -332,7 +336,12 @@
     "routeNotApproved": "That node has not approved this route",
     "primaryNotSwitched": "headscale did not switch the serving node as expected; refresh and check the current state",
     "routeApprovedAclFailed": "The route was approved but the ACL update failed: {reason}. The subnet may still be unreachable — check the policy baseline.",
-    "routeRevokedAclFailed": "The route was revoked but the ACL cleanup failed: {reason}. Check the policy baseline."
+    "routeRevokedAclFailed": "The route was revoked but the ACL cleanup failed: {reason}. Check the policy baseline.",
+    "tagsRequired": "Keep at least one tag",
+    "tagUnknown": "Unknown tag; create it under Tags & access first",
+    "tagExists": "Tag already exists",
+    "tagIsDefault": "The default tag is used to approve new devices and cannot be deleted",
+    "tagInUse": "{count} device(s) still carry this tag; retag them first"
   },
   "subnets": {
     "title": "Subnet routes",
@@ -400,6 +409,7 @@
     "node.note": "Edit note",
     "node.reject": "Reject node",
     "node.rename": "Rename node",
+    "node.setTags": "Change node tags",
     "policy.allowSubnet": "Allow subnet in ACL",
     "policy.revokeSubnet": "Remove subnet from ACL",
     "preauthkey.create": "Create pre-auth key",
@@ -408,6 +418,30 @@
     "route.approve": "Approve subnet route",
     "route.makePrimary": "Switch serving node",
     "route.restoreFailed": "Standby route restore failed",
-    "route.revoke": "Revoke subnet route"
+    "route.revoke": "Revoke subnet route",
+    "rule.create": "Add access rule",
+    "rule.delete": "Delete access rule",
+    "tag.create": "Create tag",
+    "tag.delete": "Delete tag"
+  },
+  "tags": {
+    "tagsTitle": "Tags",
+    "tagsDescription": "A device can carry several tags. Devices sharing a tag marked \"members reach each other\" can talk to one another.",
+    "tag": "Tag",
+    "devices": "Devices",
+    "default": "Approval default",
+    "tagName": "Tag name",
+    "mutual": "Members reach each other",
+    "addTag": "Add tag",
+    "tagCreated": "Tag created",
+    "tagDeleted": "Tag deleted",
+    "rulesTitle": "Access rules",
+    "rulesDescription": "Devices with a source tag can reach devices with a target tag. Replies flow back; the reverse direction stays closed. The first rule carries subnet routes and cannot be deleted.",
+    "from": "Source",
+    "to": "Target",
+    "addRule": "Add rule",
+    "ruleCreated": "Rule added",
+    "ruleDeleted": "Rule deleted",
+    "delete": "Delete"
   }
 }

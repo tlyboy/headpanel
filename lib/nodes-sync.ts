@@ -4,8 +4,6 @@ import { eq, inArray } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { nodeMeta } from '@/lib/db/schema'
 import { listNodes, type HsNode } from '@/lib/headscale'
-import { approvedTag } from '@/lib/default-zone'
-import { listGroups } from '@/lib/groups'
 
 export interface MergedNode extends HsNode {
   status: 'pending' | 'approved' | 'rejected'
@@ -14,18 +12,13 @@ export interface MergedNode extends HsNode {
 }
 
 // Sync headscale nodes against local node_meta (headscale has no pending concept, so this table fills the gap):
-//  - Newly seen nodes that already have an approval tag (the group's ok_tag or the default area's approvedTag) → approved (direct key access)
-//  - Newly seen nodes without an approval tag → pending (awaiting approval; without a ticket tag, they are isolated by the ACL)
+//  - Newly seen nodes that already carry a tag → approved (direct key access; every tag is owned by the panel's users)
+//  - Newly seen nodes without tags → pending (awaiting approval; no ACL rule names an untagged node, so they are isolated)
 //  - Existing records: preserve their status (status is changed only by approval actions, not overwritten by sync)
 //  - Nodes deleted from headscale: clean up orphaned metadata
 export async function syncAndListNodes(): Promise<MergedNode[]> {
   const nodes = await listNodes()
   const liveIds = new Set(nodes.map((n) => n.id))
-
-  // All approval tags: each group's ticket tag plus the default area's tag. Determine whether a node already has a "ticket" by checking tags only
-  // (don't use user: headscale changes the user to tagged-devices for tagged nodes).
-  // If the default area's tag is missing, nodes using direct key access when there are no groups will be incorrectly marked as pending.
-  const okTags = new Set([approvedTag(), ...listGroups().map((g) => g.okTag)])
 
   const metas = db.select().from(nodeMeta).all()
   const metaById = new Map(metas.map((m) => [m.headscaleId, m]))
@@ -43,9 +36,7 @@ export async function syncAndListNodes(): Promise<MergedNode[]> {
   for (const n of nodes) {
     const meta = metaById.get(n.id)
     if (!meta) {
-      const initial: 'pending' | 'approved' = n.tags.some((t) => okTags.has(t))
-        ? 'approved'
-        : 'pending'
+      const initial: 'pending' | 'approved' = n.tags.length ? 'approved' : 'pending'
       db.insert(nodeMeta).values({ headscaleId: n.id, status: initial }).run()
       merged.push({
         ...n,

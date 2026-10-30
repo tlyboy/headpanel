@@ -2,7 +2,8 @@ import { getTranslations } from 'next-intl/server'
 import { cookies } from 'next/headers'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { requireSession } from '@/lib/auth'
-import { scopeNodes } from '@/lib/groups'
+import { listGroups, scopeNodes } from '@/lib/groups'
+import { declaredTags } from '@/lib/policy'
 import { readNodeNetInfo } from '@/lib/headscale-db'
 import { fmtTime, pickIpv4 } from '@/lib/format'
 import { Badge } from '@/components/ui/badge'
@@ -57,7 +58,6 @@ export default async function NodesPage({
     { key: 'alias', label: t('alias') },
     { key: 'ip', label: 'IP' },
     { key: 'lanIp', label: t('lanIp') },
-    { key: 'user', label: t('user') },
     { key: 'online', label: common('online') },
     { key: 'approval', label: t('approval') },
     { key: 'note', label: t('note') },
@@ -77,6 +77,10 @@ export default async function NodesPage({
   const all = scopeNodes(session, await syncAndListNodes())
   // LAN addresses can only be read from the headscale database; for deployments on separate hosts, return an empty table, and display — in this column
   const netInfo = readNodeNetInfo()
+  const tagOptions =
+    session.role === 'super'
+      ? [...new Set([...declaredTags(), ...listGroups().map((g) => g.okTag)])]
+      : undefined
 
   // Search includes LAN IPs: when locating a machine, the address you have on hand is often that one
   const nodes = all.filter((n) => {
@@ -88,7 +92,6 @@ export default async function NodesPage({
     if (!q) return true
     const hay = [
       n.givenName,
-      n.user?.name ?? '',
       ...n.ipAddresses,
       ...(netInfo.get(n.id)?.lanIps ?? []),
       ...n.tags,
@@ -127,7 +130,6 @@ export default async function NodesPage({
               {show('alias') && <TableHead>{t('alias')}</TableHead>}
               {show('ip') && <TableHead>IP</TableHead>}
               {show('lanIp') && <TableHead>{t('lanIp')}</TableHead>}
-              {show('user') && <TableHead>{t('user')}</TableHead>}
               {show('online') && <TableHead>{common('online')}</TableHead>}
               {show('approval') && <TableHead>{t('approval')}</TableHead>}
               {show('note') && <TableHead>{t('note')}</TableHead>}
@@ -165,7 +167,6 @@ export default async function NodesPage({
                         <LanIpCell ips={lanIps} />
                       </TableCell>
                     )}
-                    {show('user') && <TableCell>{n.user?.name ?? '—'}</TableCell>}
                     {show('online') && (
                       <TableCell>
                         {n.online ? (
@@ -206,7 +207,13 @@ export default async function NodesPage({
                       </TableCell>
                     )}
                     <TableCell className={STICKY_ACTIONS}>
-                      <NodeRowActions id={n.id} name={n.givenName} note={n.note ?? undefined} />
+                      <NodeRowActions
+                        id={n.id}
+                        name={n.givenName}
+                        note={n.note ?? undefined}
+                        tags={n.tags}
+                        tagOptions={tagOptions}
+                      />
                     </TableCell>
                   </TableRow>
                 )

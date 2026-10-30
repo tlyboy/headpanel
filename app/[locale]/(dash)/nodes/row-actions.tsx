@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,11 +37,25 @@ import {
   expireNodeAction,
   renameNodeAction,
   saveNoteAction,
+  setTagsAction,
   type ActionResult,
 } from './actions'
 import { noAutofill } from '@/lib/no-autofill'
 
-export function NodeRowActions({ id, name, note }: { id: string; name: string; note?: string }) {
+export function NodeRowActions({
+  id,
+  name,
+  note,
+  tags,
+  tagOptions,
+}: {
+  id: string
+  name: string
+  note?: string
+  tags: string[]
+  // Present only for super, who alone may edit tags
+  tagOptions?: string[]
+}) {
   const t = useTranslations('nodeActions')
   const common = useTranslations('common')
   const [pending, start] = useTransition()
@@ -50,6 +65,8 @@ export function NodeRowActions({ id, name, note }: { id: string; name: string; n
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [newName, setNewName] = useState(name)
   const [noteVal, setNoteVal] = useState(note ?? '')
+  const [tagsOpen, setTagsOpen] = useState(false)
+  const [picked, setPicked] = useState(tags)
 
   function run(p: Promise<ActionResult>, okMsg: string, onOk?: () => void) {
     start(async () => {
@@ -72,6 +89,16 @@ export function NodeRowActions({ id, name, note }: { id: string; name: string; n
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setRenameOpen(true)}>{t('rename')}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => setNoteOpen(true)}>{t('editNote')}</DropdownMenuItem>
+          {tagOptions && (
+            <DropdownMenuItem
+              onClick={() => {
+                setPicked(tags)
+                setTagsOpen(true)
+              }}
+            >
+              {t('editTags')}
+            </DropdownMenuItem>
+          )}
           <DropdownMenuItem onClick={() => setExpireOpen(true)}>{t('expire')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
             {t('deleteNode')}
@@ -143,6 +170,43 @@ export function NodeRowActions({ id, name, note }: { id: string; name: string; n
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {tagOptions && (
+        <Dialog open={tagsOpen} onOpenChange={setTagsOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('tagsTitle')}</DialogTitle>
+              <DialogDescription>{t('tagsDescription')}</DialogDescription>
+            </DialogHeader>
+            <div className="flex flex-col gap-2">
+              {[...new Set([...tagOptions, ...tags])].map((tag) => (
+                <Label key={tag} className="flex items-center gap-2 font-mono text-sm font-normal">
+                  <Checkbox
+                    checked={picked.includes(tag)}
+                    onCheckedChange={(on) =>
+                      setPicked((p) => (on ? [...p, tag] : p.filter((x) => x !== tag)))
+                    }
+                  />
+                  {tag}
+                </Label>
+              ))}
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setTagsOpen(false)} disabled={pending}>
+                {common('cancel')}
+              </Button>
+              <Button
+                disabled={pending || !picked.length}
+                onClick={() =>
+                  run(setTagsAction(id, picked), t('tagsSaved'), () => setTagsOpen(false))
+                }
+              >
+                {pending ? common('saving') : common('save')}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+      )}
 
       <AlertDialog open={expireOpen} onOpenChange={setExpireOpen}>
         <AlertDialogContent>

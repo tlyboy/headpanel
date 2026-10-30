@@ -25,6 +25,7 @@ const routeKeys = {
   scripts: 'scripts',
   audit: 'audit',
   subnets: 'subnets',
+  tags: 'tags',
 } as const
 
 export function DashboardHeader() {

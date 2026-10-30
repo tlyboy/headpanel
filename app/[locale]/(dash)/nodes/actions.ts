@@ -2,16 +2,18 @@
 
 import { revalidatePath } from 'next/cache'
 import { getTranslations } from 'next-intl/server'
-import { requireSession, type Session } from '@/lib/auth'
+import { requireSession, requireSuper, type Session } from '@/lib/auth'
 import { nodeTarget } from '@/lib/audit'
 import { auditAfter } from '@/lib/db'
-import { groupForNode } from '@/lib/groups'
+import { groupForNode, listGroups } from '@/lib/groups'
+import { declaredTags } from '@/lib/policy'
 import { setNodeNote } from '@/lib/nodes-sync'
 import {
   deleteNode,
   expireNode,
   getNode,
   renameNode,
+  setNodeTags,
   HeadscaleError,
   type HsNode,
 } from '@/lib/headscale'
@@ -102,6 +104,28 @@ export async function saveNoteAction(id: string, note: string): Promise<ActionRe
       actor: session.sub,
     })
     revalidatePath('/nodes')
+    return { ok: true }
+  } catch (e) {
+    return fail(e, t('unknown'))
+  }
+}
+
+// Tags decide what a node can reach, so only super edits them. headscale replaces the whole set; a tagged node
+// can't go back to having none, so at least one tag stays.
+export async function setTagsAction(id: string, tags: string[]): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSuper(), getTranslations('actionErrors')])
+  const known = new Set([...declaredTags(), ...listGroups().map((g) => g.okTag)])
+  const next = [...new Set(tags)].sort()
+  if (!next.length) return { ok: false, error: t('tagsRequired') }
+  if (next.some((tag) => !known.has(tag))) return { ok: false, error: t('tagUnknown') }
+  try {
+    const node = await getNode(id)
+    await setNodeTags(id, next)
+    auditAfter('node.setTags', nodeTarget(node), `${node.tags.join(',')} → ${next.join(',')}`, {
+      actor: session.sub,
+    })
+    revalidatePath('/nodes')
+    revalidatePath('/tags')
     return { ok: true }
   } catch (e) {
     return fail(e, t('unknown'))
