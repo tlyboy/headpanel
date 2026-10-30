@@ -6,29 +6,12 @@ import { declaredTags } from '@/lib/policy'
 import { readNodeNetInfo } from '@/lib/headscale-db'
 import { fmtTime, pickIpv4, tagLabel } from '@/lib/format'
 import { approvedTag } from '@/lib/default-zone'
-import { Badge } from '@/components/ui/badge'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { LanIpCell } from '@/components/lan-ip-cell'
 import { ListFilters } from '@/components/list-filters'
 import { ColumnFilter } from '@/components/column-filter'
-import {
-  columnCookieName,
-  makeIsVisible,
-  parseHidden,
-  visibleCount,
-  type ColumnDef,
-} from '@/components/columns'
-import { STICKY_ACTIONS } from '@/lib/table'
-import { NodeRowActions } from './row-actions'
+import { columnCookieName, makeIsVisible, parseHidden, type ColumnDef } from '@/components/columns'
 import { PendingCard } from './pending-card'
-import { NodeSelection, RowSelect, SelectAll, TagCell } from './selection'
+import { NodeSelection } from './selection'
+import { NodesTable, type NodeCol } from './nodes-table'
 
 const PAGE = 'nodes'
 
@@ -94,7 +77,7 @@ export default async function NodesPage({
   })
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex h-full min-h-0 flex-col gap-4">
       {pending.length > 0 && (
         <PendingCard
           nodes={pending.map((n) => ({
@@ -134,94 +117,21 @@ export default async function NodesPage({
         )}
         defaultTag={approvedTag()}
       >
-        <div className="rounded-md border">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead className="w-10">
-                  <SelectAll />
-                </TableHead>
-                {show('id') && <TableHead className="w-12">ID</TableHead>}
-                {show('alias') && <TableHead>{t('alias')}</TableHead>}
-                {show('ip') && <TableHead>IP</TableHead>}
-                {show('lanIp') && <TableHead>{t('lanIp')}</TableHead>}
-                {show('online') && <TableHead>{common('online')}</TableHead>}
-                {show('note') && <TableHead>{t('note')}</TableHead>}
-                {show('tags') && <TableHead>{t('tags')}</TableHead>}
-                {show('lastSeen') && <TableHead>{t('lastSeen')}</TableHead>}
-                {/* Leave the header blank: a column of ... menus needs no title, and the saved width goes to the data */}
-                <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {nodes.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={visibleCount(columns, hidden) + 1}
-                    className="py-8 text-center text-muted-foreground"
-                  >
-                    {t('empty')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                nodes.map((n) => {
-                  // The first one has the highest score (within a subnet it announced, not the .1 gateway, and not a docker range)
-                  const lanIps = netInfo.get(n.id)?.lanIps ?? []
-                  return (
-                    <TableRow key={n.id}>
-                      <TableCell>
-                        <RowSelect id={n.id} name={n.givenName} />
-                      </TableCell>
-                      {show('id') && (
-                        <TableCell className="text-muted-foreground">{n.id}</TableCell>
-                      )}
-                      {show('alias') && (
-                        <TableCell className="font-medium">{n.givenName}</TableCell>
-                      )}
-                      {show('ip') && (
-                        <TableCell className="font-mono text-xs">
-                          {pickIpv4(n.ipAddresses) ?? '—'}
-                        </TableCell>
-                      )}
-                      {show('lanIp') && (
-                        <TableCell className="text-xs">
-                          <LanIpCell ips={lanIps} />
-                        </TableCell>
-                      )}
-                      {show('online') && (
-                        <TableCell>
-                          {n.online ? (
-                            <Badge variant="success">{common('online')}</Badge>
-                          ) : (
-                            <Badge variant="secondary">{common('offline')}</Badge>
-                          )}
-                        </TableCell>
-                      )}
-                      {show('note') && (
-                        <TableCell className="max-w-[14rem] truncate text-sm">
-                          {n.note ? n.note : <span className="text-muted-foreground">—</span>}
-                        </TableCell>
-                      )}
-                      {show('tags') && (
-                        <TableCell className="py-1">
-                          <TagCell id={n.id} />
-                        </TableCell>
-                      )}
-                      {show('lastSeen') && (
-                        <TableCell className="text-xs text-muted-foreground">
-                          {fmtTime(n.lastSeen)}
-                        </TableCell>
-                      )}
-                      <TableCell className={STICKY_ACTIONS}>
-                        <NodeRowActions id={n.id} name={n.givenName} note={n.note ?? undefined} />
-                      </TableCell>
-                    </TableRow>
-                  )
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
+        <NodesTable
+          visible={columns
+            .map((c) => c.key)
+            .filter((k): k is NodeCol => k !== 'actions' && show(k))}
+          rows={nodes.map((n) => ({
+            id: n.id,
+            name: n.givenName,
+            ip: pickIpv4(n.ipAddresses) ?? '—',
+            // The first one has the highest score (within a subnet it announced, not the .1 gateway, and not a docker range)
+            lanIps: netInfo.get(n.id)?.lanIps ?? [],
+            online: n.online,
+            note: n.note ?? null,
+            lastSeen: fmtTime(n.lastSeen),
+          }))}
+        />
       </NodeSelection>
     </div>
   )
