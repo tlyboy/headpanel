@@ -92,17 +92,18 @@ export default async function PreAuthKeysPage({
       />
 
       <VirtualTable
+        minWidth="60rem"
         colSpan={visibleCount(columns, hidden)}
         empty={t('empty')}
         head={
           <>
             {show('id') && <TableHead className="w-12">ID</TableHead>}
             {show('key') && <TableHead>Key</TableHead>}
-            {show('mode') && <TableHead>{t('mode')}</TableHead>}
-            {show('reusable') && <TableHead>{t('reusable')}</TableHead>}
-            {show('used') && <TableHead>{t('used')}</TableHead>}
-            {show('status') && <TableHead>{t('status')}</TableHead>}
-            {show('expiration') && <TableHead>{t('expiration')}</TableHead>}
+            {show('mode') && <TableHead className="w-28">{t('mode')}</TableHead>}
+            {show('reusable') && <TableHead className="w-20">{t('reusable')}</TableHead>}
+            {show('used') && <TableHead className="w-20">{t('used')}</TableHead>}
+            {show('status') && <TableHead className="w-20">{t('status')}</TableHead>}
+            {show('expiration') && <TableHead className="w-44">{t('expiration')}</TableHead>}
             <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />
           </>
         }
@@ -114,7 +115,9 @@ export default async function PreAuthKeysPage({
             cells: (
               <>
                 {show('id') && <TableCell className="text-muted-foreground">{k.id}</TableCell>}
-                {show('key') && <TableCell className="font-mono text-xs">{k.key}</TableCell>}
+                {show('key') && (
+                  <TableCell className="truncate font-mono text-xs">{k.key}</TableCell>
+                )}
                 {show('mode') && (
                   <TableCell>
                     <Badge variant={m.variant}>{t(m.key)}</Badge>

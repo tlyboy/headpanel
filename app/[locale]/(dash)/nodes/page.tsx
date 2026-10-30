@@ -129,6 +129,7 @@ export default async function NodesPage({
         defaultTag={approvedTag()}
       >
         <VirtualTable
+          minWidth="72rem"
           colSpan={visibleCount(columns, hidden) + 1}
           empty={t('empty')}
           head={
@@ -137,13 +138,13 @@ export default async function NodesPage({
                 <SelectAll />
               </TableHead>
               {show('id') && <TableHead className="w-12">ID</TableHead>}
-              {show('alias') && <TableHead>{t('alias')}</TableHead>}
-              {show('ip') && <TableHead>IP</TableHead>}
-              {show('lanIp') && <TableHead>{t('lanIp')}</TableHead>}
-              {show('online') && <TableHead>{common('online')}</TableHead>}
+              {show('alias') && <TableHead className="w-52">{t('alias')}</TableHead>}
+              {show('ip') && <TableHead className="w-32">IP</TableHead>}
+              {show('lanIp') && <TableHead className="w-44">{t('lanIp')}</TableHead>}
+              {show('online') && <TableHead className="w-20">{common('online')}</TableHead>}
               {show('note') && <TableHead>{t('note')}</TableHead>}
-              {show('tags') && <TableHead>{t('tags')}</TableHead>}
-              {show('lastSeen') && <TableHead>{t('lastSeen')}</TableHead>}
+              {show('tags') && <TableHead className="w-56">{t('tags')}</TableHead>}
+              {show('lastSeen') && <TableHead className="w-44">{t('lastSeen')}</TableHead>}
               {/* Leave the header blank: a column of ... menus needs no title, and the saved width goes to the data */}
               <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />
             </>
@@ -156,7 +157,11 @@ export default async function NodesPage({
                   <RowSelect id={n.id} name={n.givenName} />
                 </TableCell>
                 {show('id') && <TableCell className="text-muted-foreground">{n.id}</TableCell>}
-                {show('alias') && <TableCell className="font-medium">{n.givenName}</TableCell>}
+                {show('alias') && (
+                  <TableCell className="truncate font-medium" title={n.givenName}>
+                    {n.givenName}
+                  </TableCell>
+                )}
                 {show('ip') && (
                   <TableCell className="font-mono text-xs">
                     {pickIpv4(n.ipAddresses) ?? '—'}
@@ -178,7 +183,7 @@ export default async function NodesPage({
                   </TableCell>
                 )}
                 {show('note') && (
-                  <TableCell className="max-w-[14rem] truncate text-sm">
+                  <TableCell className="truncate text-sm" title={n.note ?? undefined}>
                     {n.note ? n.note : <span className="text-muted-foreground">—</span>}
                   </TableCell>
                 )}

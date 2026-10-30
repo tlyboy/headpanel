@@ -125,15 +125,16 @@ export default async function SubnetsPage({
       />
 
       <VirtualTable
+        minWidth="56rem"
         colSpan={visibleCount(columns, hidden)}
         empty={t('empty')}
         head={
           <>
-            {show('route') && <TableHead>{t('route')}</TableHead>}
+            {show('route') && <TableHead className="w-40">{t('route')}</TableHead>}
             {show('node') && <TableHead>{t('node')}</TableHead>}
-            {show('lanIp') && <TableHead>{t('lanIp')}</TableHead>}
-            {show('status') && <TableHead>{t('status')}</TableHead>}
-            {show('advertising') && <TableHead>{t('advertising')}</TableHead>}
+            {show('lanIp') && <TableHead className="w-48">{t('lanIp')}</TableHead>}
+            {show('status') && <TableHead className="w-24">{t('status')}</TableHead>}
+            {show('advertising') && <TableHead className="w-36">{t('advertising')}</TableHead>}
             <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />
           </>
         }
@@ -149,7 +150,7 @@ export default async function SubnetsPage({
                   </TableCell>
                 )}
                 {show('node') && (
-                  <TableCell className="text-sm">
+                  <TableCell className="truncate text-sm" title={e.node.givenName}>
                     {e.node.givenName}
                     <span className="ml-2 font-mono text-xs text-muted-foreground">
                       {pickIpv4(e.node.ipAddresses) ?? '—'}

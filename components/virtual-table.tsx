@@ -11,6 +11,8 @@ export interface VirtualRow {
 }
 
 // Pages render the cells on the server; this only keeps the off-screen rows out of the DOM.
+// Columns use a fixed layout: widths come from the header cells, never from whichever rows happen
+// to be rendered, so they hold still while scrolling. Give each column a width, leave one flexible.
 // The header sits in its own table above the scrolling body, so it never moves and the scrollbar starts below it.
 // A collapsed copy of the header inside the body table sizes the columns; the visible header copies those widths.
 export function VirtualTable({
@@ -21,7 +23,7 @@ export function VirtualTable({
   className,
   footer,
   onEndReached,
-  fixed,
+  minWidth,
 }: {
   head: ReactNode
   rows: VirtualRow[]
@@ -32,9 +34,8 @@ export function VirtualTable({
   footer?: ReactNode
   // Called when the rendered window gets near the last row, to load the next batch
   onEndReached?: () => void
-  // Take column widths from the header cells only. Use it when rows load in batches,
-  // since auto widths follow whichever rows are on screen and jump while scrolling.
-  fixed?: boolean
+  // Below this the table scrolls sideways instead of squeezing its columns
+  minWidth: string
 }) {
   const scroller = useRef<HTMLDivElement>(null)
   const headBox = useRef<HTMLDivElement>(null)
@@ -106,7 +107,7 @@ export function VirtualTable({
         }}
         className="min-h-0 shrink [scrollbar-gutter:stable] overflow-auto"
       >
-        <table ref={bodyTable} className={cn('w-full text-sm', fixed && 'table-fixed')}>
+        <table ref={bodyTable} className="w-full table-fixed text-sm" style={{ minWidth }}>
           <thead aria-hidden className="[visibility:collapse]">
             <tr ref={ghost} inert>
               {head}
