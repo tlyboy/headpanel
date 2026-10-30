@@ -358,7 +358,7 @@
     "tagCreated": "Tag created",
     "tagDeleted": "Tag deleted",
     "rulesTitle": "Who can reach whom",
-    "rulesDescription": "Read each rule as \"devices with the tags on the left can reach devices with the tags on the right\". It is one-way: replies flow back, the reverse stays closed. To open up a single device, give it a tag of its own (such as tag:ttxs-share) and put that tag on the right.",
+    "rulesDescription": "Read each rule as \"devices with the tags on the left can reach devices with the tags on the right\". It is one-way: replies flow back, the reverse stays closed. To open up a single device, give it a tag of its own (such as ttxs-share) and put that tag on the right.",
     "from": "Who can reach",
     "to": "Can reach",
     "addRule": "Add rule",
