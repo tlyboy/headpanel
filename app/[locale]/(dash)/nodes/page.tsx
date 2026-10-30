@@ -129,7 +129,7 @@ export default async function NodesPage({
         defaultTag={approvedTag()}
       >
         <VirtualTable
-          minWidth="72rem"
+          minWidth="84rem"
           colSpan={visibleCount(columns, hidden) + 1}
           empty={t('empty')}
           head={

@@ -50,7 +50,7 @@ export function AuditList({
       colSpan={visible.length}
       empty={t('empty')}
       onEndReached={loadMore}
-      minWidth="56rem"
+      minWidth="60rem"
       footer={
         rows.length > 0 && (
           <p className="flex items-center justify-center gap-2 border-t py-3 text-xs text-muted-foreground">
