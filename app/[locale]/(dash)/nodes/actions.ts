@@ -11,6 +11,7 @@ import {
   deleteNode,
   expireNode,
   getNode,
+  listNodes,
   renameNode,
   setNodeTags,
   HeadscaleError,
@@ -137,6 +138,44 @@ export async function rejectNodeAction(id: string): Promise<ActionResult> {
     await deleteNode(id)
     auditAfter('node.reject', nodeTarget(node), 'deleted', { actor: session.sub })
     revalidatePath('/nodes')
+    return { ok: true }
+  } catch (e) {
+    return fail(e, t('unknown'))
+  }
+}
+
+// Add one tag to, or take it off, every selected device
+export async function bulkTagAction(
+  ids: string[],
+  tag: string,
+  mode: 'add' | 'remove',
+): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
+  if (!declaredTags().includes(tag)) return { ok: false, error: t('tagUnknown') }
+  try {
+    const want = new Set(ids)
+    const changes = (await listNodes())
+      .filter((n) => want.has(n.id) && n.tags.includes(tag) !== (mode === 'add'))
+      .map((n) => ({
+        node: n,
+        next: mode === 'add' ? [...n.tags, tag].sort() : n.tags.filter((x) => x !== tag),
+      }))
+    // headscale can't take the last tag off a node, so refuse before changing anything
+    const stuck = changes.filter((c) => !c.next.length)
+    if (stuck.length) {
+      return {
+        ok: false,
+        error: t('lastTag', { names: stuck.map((c) => c.node.givenName).join(', ') }),
+      }
+    }
+    for (const { node, next } of changes) {
+      await setNodeTags(node.id, next)
+      auditAfter('node.setTags', nodeTarget(node), `${node.tags.join(',')} → ${next.join(',')}`, {
+        actor: session.sub,
+      })
+    }
+    revalidatePath('/nodes')
+    revalidatePath('/tags')
     return { ok: true }
   } catch (e) {
     return fail(e, t('unknown'))

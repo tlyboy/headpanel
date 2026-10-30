@@ -49,7 +49,7 @@
     "dashboard": "概览",
     "nodes": "设备",
     "preauthKeys": "接入",
-    "tags": "访问控制",
+    "tags": "标签",
     "subnets": "内网路由",
     "audit": "操作记录",
     "network": "设置"
@@ -115,7 +115,16 @@
     "lanIpPrimary": "主",
     "copyLanIp": "复制",
     "searchPlaceholder": "搜索名称 / IP / 标签",
-    "allStatus": "全部状态"
+    "allStatus": "全部状态",
+    "allTags": "全部标签",
+    "selectAll": "全选",
+    "selectRow": "选择 {name}",
+    "bulkPicked": "已选 {count} 台",
+    "bulkAdd": "加入标签",
+    "bulkRemove": "移出标签",
+    "bulkClear": "取消选择",
+    "bulkAdded": "{count} 台设备已加入 {tag}",
+    "bulkRemoved": "{count} 台设备已移出 {tag}"
   },
   "pending": {
     "title": "{count} 台设备等待审批",
@@ -349,7 +358,7 @@
   },
   "tags": {
     "tagsTitle": "标签",
-    "tagsDescription": "标签就是一个组。同一个标签里的设备可以互相访问，一台设备可以加入多个标签。",
+    "tagsDescription": "标签就是一个组。同一个标签里的设备可以互相访问，一台设备可以加入多个标签。在设备页勾选设备，就能把它们加入或移出标签。",
     "tag": "标签",
     "devices": "设备",
     "default": "审批默认",
@@ -358,25 +367,14 @@
     "tagCreated": "标签已创建",
     "tagDeleted": "标签已删除",
     "delete": "删除",
-    "editMembers": "管理设备",
-    "membersTitle": "{tag} 里的设备",
-    "membersDescription": "勾选的设备之间可以互相访问。保存后立即生效。",
-    "searchDevices": "搜索设备名或 IP",
-    "onlyTag": "仅此标签，不能移出",
-    "membersSaved": "设备已更新",
-    "noMembers": "还没有设备，点“管理设备”添加",
-    "alsoSubnets": "还能访问内网",
+    "editMembers": "查看设备",
+    "noMembers": "还没有设备，去设备页勾选设备后点“加入标签”",
     "deleteTagTitle": "删除标签 {tag}？",
     "deleteTagDescription": "只有没有设备的标签才能删除。",
     "tagNamePlaceholder": "新标签名，如 shengchuang",
     "memberCount": "{count} 台设备 · {online} 台在线",
     "online": "在线",
     "offline": "离线",
-    "pickedCount": "已选 {picked} / {total}",
-    "selectAll": "全选",
-    "selectShown": "全选搜索结果",
-    "clearAll": "清空",
-    "noMatch": "没有匹配的设备",
     "deleteDisabled": "标签里还有设备，先移出再删除"
   }
 }

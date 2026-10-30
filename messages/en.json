@@ -49,7 +49,7 @@
     "dashboard": "Overview",
     "nodes": "Devices",
     "preauthKeys": "Join",
-    "tags": "Access",
+    "tags": "Tags",
     "subnets": "Subnet routes",
     "audit": "Activity log",
     "network": "Settings"
@@ -115,7 +115,16 @@
     "lanIpPrimary": "primary",
     "copyLanIp": "Copy",
     "searchPlaceholder": "Search name / IP / tag",
-    "allStatus": "All statuses"
+    "allStatus": "All statuses",
+    "allTags": "All tags",
+    "selectAll": "Select all",
+    "selectRow": "Select {name}",
+    "bulkPicked": "{count} selected",
+    "bulkAdd": "Add to tag",
+    "bulkRemove": "Remove from tag",
+    "bulkClear": "Clear selection",
+    "bulkAdded": "Added {count} device(s) to {tag}",
+    "bulkRemoved": "Removed {count} device(s) from {tag}"
   },
   "pending": {
     "title": "{count} device(s) waiting for approval",
@@ -349,7 +358,7 @@
   },
   "tags": {
     "tagsTitle": "Tags",
-    "tagsDescription": "A tag is a group. Devices with the same tag can reach each other, and a device can join several tags.",
+    "tagsDescription": "A tag is a group. Devices with the same tag can reach each other, and a device can join several tags. Select devices on the Devices page to add them to a tag or remove them.",
     "tag": "Tag",
     "devices": "Devices",
     "default": "Approval default",
@@ -358,25 +367,14 @@
     "tagCreated": "Tag created",
     "tagDeleted": "Tag deleted",
     "delete": "Delete",
-    "editMembers": "Devices",
-    "membersTitle": "Devices in {tag}",
-    "membersDescription": "Checked devices can reach each other. Takes effect on save.",
-    "searchDevices": "Search name or IP",
-    "onlyTag": "Only tag, cannot be removed",
-    "membersSaved": "Devices updated",
-    "noMembers": "No devices yet. Use Devices to add some.",
-    "alsoSubnets": "Also reaches",
+    "editMembers": "View devices",
+    "noMembers": "No devices yet. Select devices on the Devices page and use Add to tag.",
     "deleteTagTitle": "Delete tag {tag}?",
     "deleteTagDescription": "Only a tag with no devices can be deleted.",
     "tagNamePlaceholder": "New tag, e.g. shengchuang",
     "memberCount": "{count} devices · {online} online",
     "online": "Online",
     "offline": "Offline",
-    "pickedCount": "{picked} of {total} selected",
-    "selectAll": "Select all",
-    "selectShown": "Select results",
-    "clearAll": "Clear",
-    "noMatch": "No matching devices",
     "deleteDisabled": "Remove its devices before deleting"
   }
 }

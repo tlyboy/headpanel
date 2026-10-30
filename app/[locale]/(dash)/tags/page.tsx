@@ -1,5 +1,5 @@
 import { getTranslations } from 'next-intl/server'
-import { Route, Tag } from 'lucide-react'
+import { Tag } from 'lucide-react'
 import { requireSession } from '@/lib/auth'
 import { approvedTag } from '@/lib/default-zone'
 import { listNodes } from '@/lib/headscale'
@@ -7,7 +7,9 @@ import { declaredTags, loadBaseline } from '@/lib/policy'
 import { Badge } from '@/components/ui/badge'
 import { tagLabel } from '@/lib/format'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { DeleteTag, EditMembers, TagForm } from './forms'
+import { Link } from '@/i18n/navigation'
+import { Button } from '@/components/ui/button'
+import { DeleteTag, TagForm } from './forms'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,22 +21,6 @@ export default async function TagsPage() {
   const tags = declaredTags(baseline).toSorted(
     (a, b) => Number(b === approvedTag()) - Number(a === approvedTag()),
   )
-  const options = nodes.map((n) => ({
-    id: n.id,
-    name: n.givenName,
-    ip: n.ipAddresses.find((ip) => ip.includes('.')) ?? '',
-    online: n.online,
-    tags: n.tags,
-  }))
-
-  // Approved subnets ride on the first accept rule; show them on the tags that rule starts from
-  const routers = new Map<string, string>()
-  for (const n of nodes) for (const r of n.subnetRoutes ?? []) routers.set(r, n.givenName)
-  const subnetRule = (baseline.acls ?? []).find((a) => a.action === 'accept')
-  const subnets = (subnetRule?.dst ?? [])
-    .map((d) => d.replace(/:\*$/, ''))
-    .filter((d) => !d.startsWith('tag:'))
-
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
@@ -64,7 +50,13 @@ export default async function TagsPage() {
                   </CardDescription>
                 </div>
                 <div className="flex shrink-0 items-center gap-1">
-                  <EditMembers tag={tag} nodes={options} />
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    render={<Link href={{ pathname: '/nodes', query: { tag } }} />}
+                  >
+                    {t('editMembers')}
+                  </Button>
                   {!isDefault && <DeleteTag tag={tag} disabled={members.length > 0} />}
                 </div>
               </CardHeader>
@@ -88,24 +80,6 @@ export default async function TagsPage() {
                       </li>
                     ))}
                   </ul>
-                )}
-                {subnets.length > 0 && subnetRule?.src.includes(tag) && (
-                  <div className="flex flex-wrap items-center gap-2 border-t pt-4 text-sm">
-                    <span className="flex items-center gap-1.5 text-muted-foreground">
-                      <Route className="size-4" aria-hidden />
-                      {t('alsoSubnets')}
-                    </span>
-                    {subnets.map((s) => (
-                      <Badge key={s} variant="outline" className="font-mono">
-                        {s}
-                        {routers.has(s) && (
-                          <span className="ml-1 font-sans text-muted-foreground">
-                            {routers.get(s)}
-                          </span>
-                        )}
-                      </Badge>
-                    ))}
-                  </div>
                 )}
               </CardContent>
             </Card>
