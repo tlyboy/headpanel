@@ -1,95 +1,111 @@
+import type { ReactNode } from 'react'
 import { Skeleton } from '@/components/ui/skeleton'
 
-// The shared toolbar for list pages: filters and actions on the left, column filters on the right
-function ToolbarSkeleton({
-  filters = false,
-  action = false,
-}: {
-  filters?: boolean
-  action?: boolean
-}) {
+// Mirrors ListFilters: search box, dropdowns, search + reset, an optional page action, and the column picker on the right
+function ToolbarSkeleton({ selects = 0, action = false }: { selects?: number; action?: boolean }) {
   return (
     <div className="flex items-center justify-between gap-2">
-      <div className="flex items-center gap-2">
-        {filters ? (
-          <>
-            <Skeleton className="h-9 w-56" />
-            <Skeleton className="h-9 w-40" />
-            <Skeleton className="h-8 w-20" />
-            <Skeleton className="h-8 w-20" />
-          </>
-        ) : null}
-        {action ? <Skeleton className="h-8 w-28" /> : null}
+      <div className="flex flex-wrap items-center gap-2">
+        <Skeleton className="h-8 w-56" />
+        {Array.from({ length: selects }).map((_, i) => (
+          <Skeleton key={i} className="h-8 w-40" />
+        ))}
+        <Skeleton className="h-8 w-16" />
+        <Skeleton className="h-8 w-16" />
+        {action && <Skeleton className="h-8 w-24" />}
       </div>
-      <Skeleton className="h-8 w-20" />
+      <Skeleton className="h-8 w-14" />
     </div>
   )
 }
 
-function TableSkeleton({ columns, rows = 6 }: { columns: number; rows?: number }) {
-  return (
-    <div className="overflow-hidden rounded-md border">
-      <div
-        className="grid h-10 items-center gap-4 border-b px-4"
-        style={{ gridTemplateColumns: `repeat(${columns}, minmax(5rem, 1fr))` }}
-      >
-        {Array.from({ length: columns }).map((_, index) => (
-          <Skeleton key={index} className="h-3 w-14" />
-        ))}
-      </div>
-      {Array.from({ length: rows }).map((_, rowIndex) => (
-        <div
-          key={rowIndex}
-          className="grid h-12 items-center gap-4 border-b px-4 last:border-b-0"
-          style={{
-            gridTemplateColumns: `repeat(${columns}, minmax(5rem, 1fr))`,
-          }}
-        >
-          {Array.from({ length: columns }).map((_, columnIndex) => (
-            <Skeleton
-              key={columnIndex}
-              className={
-                columnIndex === 0
-                  ? 'h-4 w-8'
-                  : columnIndex === columns - 1
-                    ? 'ml-auto h-8 w-8'
-                    : 'h-4 w-full max-w-24'
-              }
-            />
-          ))}
+// Mirrors VirtualTable: a fixed header row over body rows, with the optional select and ⋯ columns at the ends
+function TableSkeleton({
+  columns,
+  rows,
+  select,
+  actions,
+}: {
+  columns: number
+  rows: number
+  select?: boolean
+  actions?: boolean
+}) {
+  const line = (cell: (i: number) => ReactNode, className: string, key?: number) => (
+    <div key={key} className={className}>
+      {select && <Skeleton className="size-4 shrink-0" />}
+      {Array.from({ length: columns }).map((_, i) => (
+        <div key={i} className="min-w-0 flex-1">
+          {cell(i)}
         </div>
       ))}
+      {actions && <Skeleton className="mx-3 size-5 shrink-0" />}
+    </div>
+  )
+  return (
+    <div className="overflow-hidden rounded-md border">
+      {line(
+        () => (
+          <Skeleton className="h-3 w-12" />
+        ),
+        'flex h-10 items-center gap-4 border-b px-3',
+      )}
+      {Array.from({ length: rows }).map((_, r) =>
+        line(
+          (i) => <Skeleton className={i === 0 ? 'h-4 w-3/4' : 'h-3.5 w-2/3 max-w-32'} />,
+          'flex h-11 items-center gap-4 border-b px-3 last:border-b-0',
+          r,
+        ),
+      )}
+    </div>
+  )
+}
+
+// A collapsed Fold card under the table
+function FoldSkeleton() {
+  return (
+    <div className="flex items-center gap-3 rounded-xl border px-6 py-4">
+      <Skeleton className="h-4 w-32" />
+      <Skeleton className="h-3 w-48" />
     </div>
   )
 }
 
 export function TablePageSkeleton({
   columns,
-  action = false,
-  filters = false,
+  rows = 10,
+  selects,
+  action,
+  select,
+  actions = true,
+  fold,
 }: {
+  /** Data columns, not counting the select and ⋯ columns */
   columns: number
-  /** The toolbar contains page-level action buttons (such as Generate Key) */
+  rows?: number
+  /** Dropdown filters next to the search box */
+  selects?: number
+  /** A page-level button in the toolbar, such as Generate key */
   action?: boolean
-  /** The toolbar contains search and filters */
-  filters?: boolean
+  /** A checkbox column on the left */
+  select?: boolean
+  /** A ⋯ menu column on the right */
+  actions?: boolean
+  /** A collapsed help card under the table */
+  fold?: boolean
 }) {
   return (
     <div className="flex flex-col gap-4" aria-busy="true">
-      {/* List pages no longer have a title area; the page name is in the breadcrumbs */}
-      <ToolbarSkeleton filters={filters} action={action} />
-      <div className="overflow-x-auto">
-        <div className="min-w-max">
-          <TableSkeleton columns={columns} />
-        </div>
-      </div>
+      <ToolbarSkeleton selects={selects} action={action} />
+      <TableSkeleton columns={columns} rows={rows} select={select} actions={actions} />
+      {fold && <FoldSkeleton />}
     </div>
   )
 }
 
 export function DashboardPageSkeleton() {
   return (
-    <div className="flex flex-col gap-4" aria-busy="true">
+    <div className="flex h-full min-h-0 flex-col gap-4" aria-busy="true">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
         {Array.from({ length: 5 }).map((_, index) => (
           <div key={index} className="rounded-xl border p-6">
@@ -99,6 +115,13 @@ export function DashboardPageSkeleton() {
           </div>
         ))}
       </div>
+      <div className="flex min-h-72 flex-1 flex-col gap-4 rounded-xl border p-6">
+        <div className="space-y-2">
+          <Skeleton className="h-5 w-20" />
+          <Skeleton className="h-3 w-36" />
+        </div>
+        <Skeleton className="flex-1" />
+      </div>
     </div>
   )
 }
@@ -107,16 +130,20 @@ export function NetworkPageSkeleton() {
   return (
     <div className="flex flex-col gap-6" aria-busy="true">
       <section className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_22rem]">
-        <div className="space-y-5 rounded-md border p-4">
+        <div className="space-y-4 rounded-md border p-4">
           <div className="space-y-2">
-            <Skeleton className="h-5 w-28" />
+            <Skeleton className="h-5 w-16" />
             <Skeleton className="h-4 w-56" />
           </div>
-          <Skeleton className="h-9 w-full" />
-          <Skeleton className="h-9 w-28" />
+          <Skeleton className="h-4 w-24" />
+          <Skeleton className="h-8 w-full max-w-md" />
+          <div className="flex gap-2">
+            <Skeleton className="h-8 w-28" />
+            <Skeleton className="h-8 w-16" />
+          </div>
         </div>
         <div className="space-y-4 rounded-md border p-4">
-          <Skeleton className="h-5 w-24" />
+          <Skeleton className="h-5 w-20" />
           {Array.from({ length: 4 }).map((_, index) => (
             <div key={index} className="space-y-2">
               <Skeleton className="h-3 w-16" />
@@ -125,34 +152,6 @@ export function NetworkPageSkeleton() {
           ))}
         </div>
       </section>
-      <TableSkeleton columns={4} rows={4} />
-    </div>
-  )
-}
-
-export function ScriptsPageSkeleton() {
-  return (
-    <div className="flex flex-col gap-6" aria-busy="true">
-      {Array.from({ length: 2 }).map((_, cardIndex) => (
-        <div key={cardIndex} className="rounded-xl border p-6">
-          <Skeleton className="mb-2 h-6 w-28" />
-          <Skeleton className="mb-6 h-4 w-36" />
-          <div className="space-y-2">
-            {Array.from({ length: cardIndex === 0 ? 3 : 4 }).map((_, rowIndex) => (
-              <div
-                key={rowIndex}
-                className="flex items-center justify-between gap-4 rounded-md border px-3 py-2"
-              >
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-48 max-w-[50vw]" />
-                  <Skeleton className="h-3 w-60 max-w-[55vw]" />
-                </div>
-                <Skeleton className="h-8 w-20" />
-              </div>
-            ))}
-          </div>
-        </div>
-      ))}
     </div>
   )
 }
