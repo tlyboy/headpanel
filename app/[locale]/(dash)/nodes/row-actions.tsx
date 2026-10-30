@@ -7,7 +7,6 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { TagChecklist } from '@/components/tag-checklist'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -37,24 +36,11 @@ import {
   expireNodeAction,
   renameNodeAction,
   saveNoteAction,
-  setTagsAction,
   type ActionResult,
 } from './actions'
 import { noAutofill } from '@/lib/no-autofill'
 
-export function NodeRowActions({
-  id,
-  name,
-  note,
-  tags,
-  tagOptions,
-}: {
-  id: string
-  name: string
-  note?: string
-  tags: string[]
-  tagOptions: string[]
-}) {
+export function NodeRowActions({ id, name, note }: { id: string; name: string; note?: string }) {
   const t = useTranslations('nodeActions')
   const common = useTranslations('common')
   const [pending, start] = useTransition()
@@ -64,8 +50,6 @@ export function NodeRowActions({
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [newName, setNewName] = useState(name)
   const [noteVal, setNoteVal] = useState(note ?? '')
-  const [tagsOpen, setTagsOpen] = useState(false)
-  const [picked, setPicked] = useState(tags)
 
   function run(p: Promise<ActionResult>, okMsg: string, onOk?: () => void) {
     start(async () => {
@@ -88,14 +72,6 @@ export function NodeRowActions({
         <DropdownMenuContent align="end">
           <DropdownMenuItem onClick={() => setRenameOpen(true)}>{t('rename')}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => setNoteOpen(true)}>{t('editNote')}</DropdownMenuItem>
-          <DropdownMenuItem
-            onClick={() => {
-              setPicked(tags)
-              setTagsOpen(true)
-            }}
-          >
-            {t('editTags')}
-          </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setExpireOpen(true)}>{t('expire')}</DropdownMenuItem>
           <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
             {t('deleteNode')}
@@ -160,33 +136,6 @@ export function NodeRowActions({
               disabled={pending || noteVal === (note ?? '')}
               onClick={() =>
                 run(saveNoteAction(id, noteVal), t('noteSaved'), () => setNoteOpen(false))
-              }
-            >
-              {pending ? common('saving') : common('save')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={tagsOpen} onOpenChange={setTagsOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>{t('tagsTitle')}</DialogTitle>
-            <DialogDescription>{t('tagsDescription')}</DialogDescription>
-          </DialogHeader>
-          <TagChecklist
-            options={[...new Set([...tagOptions, ...tags])]}
-            picked={picked}
-            onChange={setPicked}
-          />
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setTagsOpen(false)} disabled={pending}>
-              {common('cancel')}
-            </Button>
-            <Button
-              disabled={pending || !picked.length}
-              onClick={() =>
-                run(setTagsAction(id, picked), t('tagsSaved'), () => setTagsOpen(false))
               }
             >
               {pending ? common('saving') : common('save')}

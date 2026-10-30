@@ -9,7 +9,6 @@ import {
   ScrollText,
   Route,
   Settings,
-  Tags,
 } from 'lucide-react'
 import { Link, usePathname } from '@/i18n/navigation'
 import {
@@ -21,16 +20,9 @@ import {
   SidebarMenuItem,
 } from '@/components/ui/sidebar'
 
-type NavLabel = 'dashboard' | 'nodes' | 'preauthKeys' | 'tags' | 'subnets' | 'audit' | 'network'
+type NavLabel = 'dashboard' | 'nodes' | 'preauthKeys' | 'subnets' | 'audit' | 'network'
 
-type NavHref =
-  | '/dashboard'
-  | '/nodes'
-  | '/preauthkeys'
-  | '/tags'
-  | '/subnets'
-  | '/audit'
-  | '/network'
+type NavHref = '/dashboard' | '/nodes' | '/preauthkeys' | '/subnets' | '/audit' | '/network'
 
 interface NavItem {
   href: NavHref
@@ -47,7 +39,6 @@ const sections: { label: 'daily' | 'system'; items: NavItem[] }[] = [
       { href: '/dashboard', label: 'dashboard', icon: LayoutDashboard },
       { href: '/nodes', label: 'nodes', icon: Server },
       { href: '/preauthkeys', label: 'preauthKeys', icon: KeyRound },
-      { href: '/tags', label: 'tags', icon: Tags },
     ],
   },
   {

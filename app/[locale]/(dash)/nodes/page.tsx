@@ -28,7 +28,7 @@ import {
 import { STICKY_ACTIONS } from '@/lib/table'
 import { NodeRowActions } from './row-actions'
 import { PendingCard } from './pending-card'
-import { NodeSelection, RowSelect, SelectAll } from './selection'
+import { NodeSelection, RowSelect, SelectAll, TagCell } from './selection'
 
 const PAGE = 'nodes'
 
@@ -127,7 +127,13 @@ export default async function NodesPage({
         ]}
       />
 
-      <NodeSelection ids={nodes.map((n) => n.id)} tagOptions={tagOptions}>
+      <NodeSelection
+        tagsById={Object.fromEntries(nodes.map((n) => [n.id, n.tags]))}
+        tagCounts={Object.fromEntries(
+          tagOptions.map((tag) => [tag, all.filter((n) => n.tags.includes(tag)).length]),
+        )}
+        defaultTag={approvedTag()}
+      >
         <div className="rounded-md border">
           <Table>
             <TableHeader>
@@ -197,18 +203,8 @@ export default async function NodesPage({
                         </TableCell>
                       )}
                       {show('tags') && (
-                        <TableCell>
-                          {n.tags.length ? (
-                            <span className="flex flex-wrap gap-1">
-                              {n.tags.map((t) => (
-                                <Badge key={t} variant="outline">
-                                  {tagLabel(t)}
-                                </Badge>
-                              ))}
-                            </span>
-                          ) : (
-                            <span className="text-muted-foreground">—</span>
-                          )}
+                        <TableCell className="py-1">
+                          <TagCell id={n.id} />
                         </TableCell>
                       )}
                       {show('lastSeen') && (
@@ -217,13 +213,7 @@ export default async function NodesPage({
                         </TableCell>
                       )}
                       <TableCell className={STICKY_ACTIONS}>
-                        <NodeRowActions
-                          id={n.id}
-                          name={n.givenName}
-                          note={n.note ?? undefined}
-                          tags={n.tags}
-                          tagOptions={tagOptions}
-                        />
+                        <NodeRowActions id={n.id} name={n.givenName} note={n.note ?? undefined} />
                       </TableCell>
                     </TableRow>
                   )

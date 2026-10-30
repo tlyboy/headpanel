@@ -16,9 +16,10 @@
   serves a prefix when several advertise the same one.
 - **Pre-auth keys** — issue, expire and delete keys; each comes with a
   ready-to-paste install command for the target machine.
-- **Access** — a tag is a group: devices with the same tag reach each other, and
-  a device can join several tags. Tags live in a policy baseline file, so rules
-  you write by hand sit next to them.
+- **Tags** — a tag is a group: devices with the same tag reach each other, and
+  a device can join several tags. Click a device's tags in the list to change
+  them, or select several devices first to change them all at once. Tags live in
+  a policy baseline file, so rules you write by hand sit next to them.
 - **Audit log** — every panel action, searchable, filterable and banded by what
   the action does.
 - **Overview** — online nodes, subnet coverage, pending approvals and valid keys,

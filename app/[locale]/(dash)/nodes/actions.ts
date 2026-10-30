@@ -5,7 +5,8 @@ import { getTranslations } from 'next-intl/server'
 import { requireSession } from '@/lib/auth'
 import { nodeTarget } from '@/lib/audit'
 import { auditAfter } from '@/lib/db'
-import { declaredTags } from '@/lib/policy'
+import { addTag, declaredTags, removeTag, updateBaselineAndApply } from '@/lib/policy'
+import { approvedTag, defaultHsUserName } from '@/lib/default-zone'
 import { setNodeNote, setNodeStatus } from '@/lib/nodes-sync'
 import {
   deleteNode,
@@ -90,26 +91,6 @@ export async function saveNoteAction(id: string, note: string): Promise<ActionRe
 
 // headscale replaces the whole set; a tagged node
 // can't go back to having none, so at least one tag stays.
-export async function setTagsAction(id: string, tags: string[]): Promise<ActionResult> {
-  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
-  const known = new Set(declaredTags())
-  const next = [...new Set(tags)].sort()
-  if (!next.length) return { ok: false, error: t('tagsRequired') }
-  if (next.some((tag) => !known.has(tag))) return { ok: false, error: t('tagUnknown') }
-  try {
-    const node = await getNode(id)
-    await setNodeTags(id, next)
-    auditAfter('node.setTags', nodeTarget(node), `${node.tags.join(',')} → ${next.join(',')}`, {
-      actor: session.sub,
-    })
-    revalidatePath('/nodes')
-    revalidatePath('/tags')
-    return { ok: true }
-  } catch (e) {
-    return fail(e, t('unknown'))
-  }
-}
-
 // Approve with the tags picked in the dialog, so a new device lands in the right place in one step
 export async function approveNodeAction(id: string, tags: string[]): Promise<ActionResult> {
   const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
@@ -175,7 +156,38 @@ export async function bulkTagAction(
       })
     }
     revalidatePath('/nodes')
-    revalidatePath('/tags')
+    return { ok: true }
+  } catch (e) {
+    return fail(e, t('unknown'))
+  }
+}
+
+export async function createTagAction(name: string): Promise<ActionResult & { tag?: string }> {
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
+  const tag = `tag:${name.trim().toLowerCase().replace(/^tag:/, '')}`
+  try {
+    if (!(await updateBaselineAndApply(addTag(tag, `${defaultHsUserName()}@`)))) {
+      return { ok: false, error: t('tagExists') }
+    }
+    auditAfter('tag.create', tag, undefined, { actor: session.sub })
+    revalidatePath('/nodes')
+    return { ok: true, tag }
+  } catch (e) {
+    return fail(e, t('unknown'))
+  }
+}
+
+export async function deleteTagAction(tag: string): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
+  // Approval puts this tag on every new node; without it approval would fail
+  if (tag === approvedTag()) return { ok: false, error: t('tagIsDefault') }
+  try {
+    const used = (await listNodes()).filter((n) => n.tags.includes(tag))
+    if (used.length) return { ok: false, error: t('tagInUse', { count: used.length }) }
+    if (await updateBaselineAndApply(removeTag(tag))) {
+      auditAfter('tag.delete', tag, undefined, { actor: session.sub })
+    }
+    revalidatePath('/nodes')
     return { ok: true }
   } catch (e) {
     return fail(e, t('unknown'))
