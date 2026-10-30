@@ -1,7 +1,9 @@
 import 'server-only'
 
 import { existsSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs'
-import { HeadscaleError, setPolicy } from '@/lib/headscale'
+import { HeadscaleError, listNodes, setPolicy } from '@/lib/headscale'
+import { approvedTag } from '@/lib/default-zone'
+import { compileGrants, grantsNeedNodes, listGrants, type GrantRule } from '@/lib/grants'
 
 const DEFAULT_BASELINE_PATH = '/etc/headpanel/policy-baseline.json'
 
@@ -24,10 +26,18 @@ export class PolicyBaselineError extends Error {
   }
 }
 
-interface PolicyAcl {
+export interface PolicyAcl {
   action: 'accept'
   src: string[]
   dst: string[]
+}
+
+// A group as the policy sees it. id is absent for a group that is not saved yet (createGroup deploys first);
+// no grant can reference such a group.
+export interface PolicyGroup {
+  id?: number
+  hsUserName: string
+  okTag: string
 }
 
 type PolicyBaseline = Record<string, unknown> & {
@@ -73,7 +83,8 @@ export function loadBaseline(): PolicyBaseline {
 //  - One ok_tag per group, owned by that group's headscale user name (must include @)
 //  - One accept rule per group: members with the same ok_tag can communicate; no cross-group rules → deny → groups cannot see each other
 //  - Nodes without an ok_tag (pending approval) are in no rules → invisible to everyone
-export function buildPolicy(rows: { hsUserName: string; okTag: string }[]): string {
+//  - extraAcls (compiled access grants) go last, after the group rules
+export function buildPolicy(rows: PolicyGroup[], extraAcls: PolicyAcl[] = []): string {
   const baseline = loadBaseline()
   const tagOwners: Record<string, string[]> = { ...baseline.tagOwners }
   const acls: PolicyAcl[] = [...(baseline.acls ?? [])]
@@ -87,15 +98,23 @@ export function buildPolicy(rows: { hsUserName: string; okTag: string }[]): stri
     tagOwners[g.okTag] = [`${g.hsUserName}@`]
     acls.push({ action: 'accept', src: [g.okTag], dst: [`${g.okTag}:*`] })
   }
+  acls.push(...extraAcls)
   return JSON.stringify({ ...baseline, tagOwners, acls }, null, 2)
 }
 
 // Deploy the policy corresponding to the group set that should exist after the operation. The caller must invoke this before changing any data:
 // if deployment fails, the whole operation fails, avoiding a partial state where "headscale has changed but the panel reports an error."
 // When rows is empty, only the baseline remains (all group rules disappear); deleteGroup has already ensured there are no nodes in the group.
-export async function applyPolicy(rows: { hsUserName: string; okTag: string }[]): Promise<void> {
+// Grants resolve against rows too, so a grant to a group missing from rows simply drops out. Grant mutations pass the
+// grant set that should exist after the operation; everyone else deploys the saved one.
+export async function applyPolicy(
+  rows: PolicyGroup[],
+  grantRules: GrantRule[] = listGrants(),
+): Promise<void> {
+  const nodes = grantsNeedNodes(grantRules) ? await listNodes() : []
+  const extra = compileGrants(grantRules, rows, nodes, approvedTag())
   try {
-    await setPolicy(buildPolicy(rows))
+    await setPolicy(buildPolicy(rows, extra))
   } catch (e) {
     if (e instanceof HeadscaleError && /modes other than|policy\.mode/i.test(e.message)) {
       throw new PolicyReadOnlyError()
@@ -152,7 +171,7 @@ export function removeSubnetDst(cidr: string): Mutator {
 // keeping the modified file would cause every subsequent group operation to redeploy this bad rule, so it must be restored.
 export async function updateBaselineAndApply(
   mutate: Mutator,
-  rows: { hsUserName: string; okTag: string }[],
+  rows: PolicyGroup[],
 ): Promise<boolean> {
   const path = baselinePath()
   const original = existsSync(/* turbopackIgnore: true */ path)

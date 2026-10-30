@@ -74,6 +74,16 @@ CREATE TABLE IF NOT EXISTS preauth_keys (
   mode         TEXT NOT NULL DEFAULT 'plain',
   created_at   TEXT NOT NULL DEFAULT (current_timestamp)
 );
+CREATE TABLE IF NOT EXISTS grants (
+  id         INTEGER PRIMARY KEY AUTOINCREMENT,
+  src_kind   TEXT NOT NULL,
+  src_ref    TEXT,
+  dst_kind   TEXT NOT NULL,
+  dst_ref    TEXT,
+  ports      TEXT NOT NULL DEFAULT '*',
+  note       TEXT,
+  created_at TEXT NOT NULL DEFAULT (current_timestamp)
+);
 `)
 
   // Idempotently add missing columns to existing databases (SQLite has no ADD COLUMN IF NOT EXISTS, so check table_info first)

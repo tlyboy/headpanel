@@ -1,9 +1,9 @@
 import 'server-only'
 
 import { cache } from 'react'
-import { eq } from 'drizzle-orm'
+import { and, eq, or } from 'drizzle-orm'
 import { db } from '@/lib/db'
-import { admins, auditLog, groups, preauthKeys, type Group } from '@/lib/db/schema'
+import { admins, auditLog, grants, groups, preauthKeys, type Group } from '@/lib/db/schema'
 import { createHsUser, deleteHsUser, listNodes, listPreAuthKeys } from '@/lib/headscale'
 import { applyPolicy } from '@/lib/policy'
 import { hashPassword, type Session } from '@/lib/auth'
@@ -183,6 +183,16 @@ export async function deleteGroup(id: number): Promise<Group> {
   // Plaintext key backups must not be retained (security); keep audit records, setting only the dangling group_id to null
   db.delete(preauthKeys).where(eq(preauthKeys.groupId, id)).run()
   db.update(auditLog).set({ groupId: null }).where(eq(auditLog.groupId, id)).run()
+  // The policy above already excludes these grants (they resolve against the remaining groups)
+  const ref = String(id)
+  db.delete(grants)
+    .where(
+      or(
+        and(eq(grants.srcKind, 'group'), eq(grants.srcRef, ref)),
+        and(eq(grants.dstKind, 'group'), eq(grants.dstRef, ref)),
+      ),
+    )
+    .run()
   db.delete(groups).where(eq(groups.id, id)).run()
   return g
 }

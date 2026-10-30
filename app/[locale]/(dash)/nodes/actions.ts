@@ -7,6 +7,7 @@ import { nodeTarget } from '@/lib/audit'
 import { auditAfter } from '@/lib/db'
 import { groupForNode } from '@/lib/groups'
 import { setNodeNote } from '@/lib/nodes-sync'
+import { dropNodeGrants } from '@/lib/grants'
 import {
   deleteNode,
   expireNode,
@@ -79,6 +80,11 @@ export async function deleteNodeAction(id: string): Promise<ActionResult> {
   const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
   try {
     const { node, group } = await assertNode(session, id)
+    // Before deleting: the node's IP may be reassigned, so its grants must not survive it
+    await dropNodeGrants((n) => n === id, {
+      reason: `node-deleted ${nodeTarget(node)}`,
+      actor: session.sub,
+    })
     await deleteNode(id)
     auditAfter('node.delete', nodeTarget(node), undefined, {
       groupId: group?.id ?? null,

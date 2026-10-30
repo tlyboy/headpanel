@@ -21,6 +21,7 @@ const routeKeys = {
   pending: 'pending',
   preauthkeys: 'preauthKeys',
   groups: 'groups',
+  access: 'access',
   network: 'network',
   scripts: 'scripts',
   audit: 'audit',

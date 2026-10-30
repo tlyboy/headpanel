@@ -52,6 +52,7 @@
     "pending": "Pending",
     "preauthKeys": "PreAuthKeys",
     "groups": "Groups",
+    "access": "Access grants",
     "network": "Network",
     "scripts": "Scripts",
     "audit": "Audit log",
@@ -181,6 +182,48 @@
     "newPassword": "New password (at least 6 characters)",
     "newPasswordFor": "New password for {username} (at least 6 characters)",
     "passwordReset": "Password reset"
+  },
+  "access": {
+    "source": "Source",
+    "destination": "Destination",
+    "ports": "Ports",
+    "note": "Note",
+    "createdAt": "Created at",
+    "actions": "Actions",
+    "defaultZone": "Default zone",
+    "gone": "Gone",
+    "empty": "No access grants. Groups are fully isolated from each other.",
+    "searchPlaceholder": "Search source / destination / note"
+  },
+  "grantForm": {
+    "trigger": "New grant",
+    "title": "New access grant",
+    "description": "The source can open connections to the destination; replies are allowed automatically. The reverse direction is not granted.",
+    "source": "Source",
+    "destination": "Destination",
+    "kind": {
+      "zone": "Default zone",
+      "group": "Group",
+      "node": "Node"
+    },
+    "selectGroup": "Select a group",
+    "selectNode": "Select a node",
+    "ports": "Destination ports",
+    "portsHint": "* for all ports, or e.g. 22,443,8000-8100",
+    "note": "Note",
+    "notePlaceholder": "Optional, e.g. why this access is needed",
+    "created": "Access grant created",
+    "createFailed": "Failed to create access grant",
+    "creating": "Creating...",
+    "create": "Create"
+  },
+  "grantActions": {
+    "menu": "More actions",
+    "deleted": "Access grant deleted",
+    "deleteTitle": "Delete the grant {src} → {dst}?",
+    "deleteDescription": "The ACL is recalculated right away and the source loses access to the destination.",
+    "deleting": "Deleting...",
+    "confirmDelete": "Delete"
   },
   "preAuthKeys": {
     "title": "PreAuthKeys",
@@ -387,6 +430,8 @@
   },
   "auditActions": {
     "accesskey.gen": "Generate API key",
+    "grant.create": "Create access grant",
+    "grant.delete": "Delete access grant",
     "group.create": "Create group",
     "group.delete": "Delete group",
     "group.rename": "Rename group",
