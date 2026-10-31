@@ -24,8 +24,6 @@ import { CreateKey } from './create-key'
 import { KeyRowActions } from './key-row-actions'
 import { Scripts } from './scripts'
 
-export const dynamic = 'force-dynamic'
-
 const PAGE = 'preauthkeys'
 
 // A key carrying a tag is approved directly; without a tag, it needs review (after onboarding, it goes to pending approval)
@@ -71,7 +69,7 @@ export default async function PreAuthKeysPage({
   // Keys are masked in the list, but the prefix is enough to identify one
   const shown = q ? keys.filter((k) => [k.id, k.key].join(' ').toLowerCase().includes(q)) : keys
 
-  // RSC + force-dynamic: render on the server for every request and use the current time to check whether keys have expired, as expected
+  // Rendered per request (requireSession above reads the cookie), so we use the current time to check whether keys have expired, as expected
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now()
 

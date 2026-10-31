@@ -7,8 +7,6 @@ import { isHeadscaleHostControlEnabled, readHeadscaleNetworkConfig } from '@/lib
 import { Badge } from '@/components/ui/badge'
 import { NetworkForm } from './network-form'
 
-export const dynamic = 'force-dynamic'
-
 export default async function NetworkPage() {
   const [, t] = await Promise.all([requireSession(), getTranslations('network')])
   if (!isHeadscaleHostControlEnabled()) notFound()

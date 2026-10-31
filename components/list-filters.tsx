@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { noAutofill } from '@/lib/no-autofill'
+import { useResetOnHide } from '@/lib/use-reset-on-hide'
 
 export interface FilterSelect {
   /** URL parameter name */
@@ -26,7 +27,7 @@ export interface FilterSelect {
 }
 
 // The single toolbar at the top of each list page: filters and actions on the left, column visibility on the right.
-// Filter state lives in the URL, not in the component: pages are all RSC + force-dynamic, and filtering happens on the server,
+// Filter state lives in the URL, not in the component: pages render per request on the server, and filtering happens on the server,
 // giving us shareable links and working back/forward navigation for free.
 // If placeholder is omitted, the search area isn't rendered (those pages have nothing to filter),
 // but the toolbar remains for action buttons and column filters — all six list pages look the same.
@@ -53,6 +54,10 @@ export function ListFilters({
   // so back/forward navigation remounts the component and defaultValue naturally returns to the right value.
   const urlQ = params.get('q') ?? ''
   const searchable = placeholder != null
+  useResetOnHide(() => {
+    // An unsubmitted draft would otherwise sit over a list that ignores it
+    if (inputRef.current) inputRef.current.value = urlQ
+  })
 
   function push(next: URLSearchParams) {
     // Any filter change should return to the first page; otherwise, you'll end up on a page number that no longer exists

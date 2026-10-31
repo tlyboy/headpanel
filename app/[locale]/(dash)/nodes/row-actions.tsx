@@ -39,6 +39,7 @@ import {
   type ActionResult,
 } from './actions'
 import { noAutofill } from '@/lib/no-autofill'
+import { useResetOnHide } from '@/lib/use-reset-on-hide'
 
 export function NodeRowActions({ id, name, note }: { id: string; name: string; note?: string }) {
   const t = useTranslations('nodeActions')
@@ -48,6 +49,12 @@ export function NodeRowActions({ id, name, note }: { id: string; name: string; n
   const [noteOpen, setNoteOpen] = useState(false)
   const [expireOpen, setExpireOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
+  useResetOnHide(() => {
+    setRenameOpen(false)
+    setNoteOpen(false)
+    setExpireOpen(false)
+    setDeleteOpen(false)
+  })
   const [newName, setNewName] = useState(name)
   const [noteVal, setNoteVal] = useState(note ?? '')
 

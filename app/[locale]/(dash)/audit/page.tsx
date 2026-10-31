@@ -9,8 +9,6 @@ import { columnCookieName, makeIsVisible, parseHidden, type ColumnDef } from '@/
 import { auditTotal, loadAuditBatch, type AuditFilters } from '@/lib/audit-list'
 import { AuditList, type AuditCol } from './audit-list'
 
-export const dynamic = 'force-dynamic'
-
 const PAGE = 'audit'
 
 export default async function AuditPage({

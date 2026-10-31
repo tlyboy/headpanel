@@ -12,8 +12,6 @@ import { ACTIVITY_TOP_N, type ActivityPoint } from './activity'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Link } from '@/i18n/navigation'
 
-export const dynamic = 'force-dynamic'
-
 export default async function DashboardPage() {
   const [, t] = await Promise.all([requireSession(), getTranslations('dashboard')])
   const [nodes, allKeys, version] = await Promise.all([
@@ -27,7 +25,7 @@ export default async function DashboardPage() {
     if (node.online) online += 1
     if (node.status === 'pending') pending += 1
   }
-  // RSC + force-dynamic: render on the server for every request and check whether keys have expired based on the current time, as expected
+  // Rendered per request (requireSession above reads the cookie), so we check whether keys have expired based on the current time, as expected
   // eslint-disable-next-line react-hooks/purity
   const now = Date.now()
   let keyCount = 0

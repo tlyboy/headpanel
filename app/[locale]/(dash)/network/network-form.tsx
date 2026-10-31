@@ -20,6 +20,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { updateIpv4PrefixAction } from './actions'
 import { noAutofill } from '@/lib/no-autofill'
+import { useResetOnHide } from '@/lib/use-reset-on-hide'
 
 export function NetworkForm({ ipv4Prefix, usedIpv4 }: { ipv4Prefix: string; usedIpv4: string[] }) {
   const t = useTranslations('networkForm')
@@ -28,6 +29,9 @@ export function NetworkForm({ ipv4Prefix, usedIpv4 }: { ipv4Prefix: string; used
   const [pending, start] = useTransition()
   const [value, setValue] = useState(ipv4Prefix)
   const [confirmOpen, setConfirmOpen] = useState(false)
+  useResetOnHide(() => {
+    setConfirmOpen(false)
+  })
 
   const changed = value.trim() !== ipv4Prefix
 

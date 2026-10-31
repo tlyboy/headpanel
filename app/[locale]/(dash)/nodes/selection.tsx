@@ -11,6 +11,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { tagLabel } from '@/lib/format'
 import { noAutofill } from '@/lib/no-autofill'
 import { cn } from '@/lib/utils'
+import { useResetOnHide } from '@/lib/use-reset-on-hide'
 import { bulkTagAction, createTagAction, deleteTagAction } from './actions'
 
 const NAME_RE = /^[a-z0-9][a-z0-9-]{0,62}$/
@@ -99,6 +100,10 @@ export function TagCell({ id }: { id: string }) {
   const { picked, tagsById, tagCounts, defaultTag } = useSelection()
   const [open, setOpen] = useState(false)
   const [query, setQuery] = useState('')
+  useResetOnHide(() => {
+    setOpen(false)
+    setQuery('')
+  })
   const [pending, start] = useTransition()
 
   const own = tagsById[id] ?? []

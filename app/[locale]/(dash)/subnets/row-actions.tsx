@@ -24,6 +24,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
+import { useResetOnHide } from '@/lib/use-reset-on-hide'
 import { approveRouteAction, makePrimaryAction, revokeRouteAction } from './actions'
 
 export function RouteRowActions({
@@ -45,6 +46,10 @@ export function RouteRowActions({
   const [pending, start] = useTransition()
   const [toggleOpen, setToggleOpen] = useState(false)
   const [primaryOpen, setPrimaryOpen] = useState(false)
+  useResetOnHide(() => {
+    setToggleOpen(false)
+    setPrimaryOpen(false)
+  })
 
   function run(
     fn: () => Promise<{ ok: boolean; error?: string }>,

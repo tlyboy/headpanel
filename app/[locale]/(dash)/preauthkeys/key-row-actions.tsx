@@ -32,6 +32,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { useCurrentOrigin } from '@/lib/use-current-origin'
+import { useResetOnHide } from '@/lib/use-reset-on-hide'
 import { deleteKeyAction } from './actions'
 
 export function KeyRowActions({
@@ -53,6 +54,10 @@ export function KeyRowActions({
   const [pending, start] = useTransition()
   const [cmdOpen, setCmdOpen] = useState(false)
   const [delOpen, setDelOpen] = useState(false)
+  useResetOnHide(() => {
+    setCmdOpen(false)
+    setDelOpen(false)
+  })
   const panel = `${useCurrentOrigin()}${panelBasePath}`
 
   function del() {

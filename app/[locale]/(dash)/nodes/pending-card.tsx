@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/alert-dialog'
 import { TagChecklist } from '@/components/tag-checklist'
 import { fmtTime } from '@/lib/format'
+import { useResetOnHide } from '@/lib/use-reset-on-hide'
 import { approveNodeAction, rejectNodeAction } from './actions'
 
 export interface PendingNode {
@@ -48,6 +49,10 @@ function PendingRow({
   const [busy, start] = useTransition()
   const [approveOpen, setApproveOpen] = useState(false)
   const [rejectOpen, setRejectOpen] = useState(false)
+  useResetOnHide(() => {
+    setApproveOpen(false)
+    setRejectOpen(false)
+  })
   const [picked, setPicked] = useState([defaultTag])
 
   function approve() {

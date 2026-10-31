@@ -24,6 +24,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { useCopy } from '@/lib/use-copy'
+import { useResetOnHide } from '@/lib/use-reset-on-hide'
 import { createKeyAction, type AccessMode } from './actions'
 
 const DAY_OPTIONS = [
@@ -45,6 +46,9 @@ export function CreateKey() {
   const [mode, setMode] = useState<AccessMode>('review')
   const [result, setResult] = useState<string | null>(null)
   const { copied, copy } = useCopy()
+  useResetOnHide(() => {
+    close(false)
+  })
 
   function submit() {
     start(async () => {

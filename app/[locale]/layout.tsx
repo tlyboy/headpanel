@@ -1,8 +1,16 @@
 import type { Metadata } from 'next'
+import { Inter, Fira_Code } from 'next/font/google'
 import { hasLocale, NextIntlClientProvider } from 'next-intl'
-import { getMessages, getTranslations, setRequestLocale } from 'next-intl/server'
+import { getMessages, getTranslations } from 'next-intl/server'
 import { notFound } from 'next/navigation'
+import '../globals.css'
+import { ThemeProvider } from '@/components/theme-provider'
+import { Toaster } from '@/components/ui/sonner'
+import { TooltipProvider } from '@/components/ui/tooltip'
 import { routing } from '@/i18n/routing'
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
+const firaCode = Fira_Code({ subsets: ['latin'], variable: '--font-mono' })
 
 export function generateStaticParams() {
   return routing.locales.map((locale) => ({ locale }))
@@ -35,8 +43,30 @@ export default async function LocaleLayout({
     notFound()
   }
 
-  setRequestLocale(locale)
   const messages = await getMessages()
 
-  return <NextIntlClientProvider messages={messages}>{children}</NextIntlClientProvider>
+  return (
+    <html
+      lang={locale}
+      suppressHydrationWarning
+      className={`${inter.variable} ${firaCode.variable} font-sans antialiased`}
+    >
+      <head />
+      <body>
+        <NextIntlClientProvider messages={messages}>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="system"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <TooltipProvider>
+              {children}
+              <Toaster richColors position="top-center" />
+            </TooltipProvider>
+          </ThemeProvider>
+        </NextIntlClientProvider>
+      </body>
+    </html>
+  )
 }

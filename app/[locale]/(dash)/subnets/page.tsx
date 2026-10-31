@@ -24,8 +24,6 @@ import {
 import { STICKY_ACTIONS } from '@/lib/table'
 import { RouteRowActions } from './row-actions'
 
-export const dynamic = 'force-dynamic'
-
 const PAGE = 'subnets'
 
 // List the commands in the instructions one by one instead of lumping them into a single code block — each should be easy to copy and paste on its own
