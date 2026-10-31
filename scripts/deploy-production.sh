@@ -48,8 +48,8 @@ fi
 node_bin="$(readlink -f "${node_command}")"
 pnpm_entry="$(readlink -f "${pnpm_command}")"
 node_major="$(${node_bin} --version | sed -E 's/^v([0-9]+).*/\1/')"
-if [[ "${node_major}" != "24" ]]; then
-  echo "Node.js 24 is required; found $(${node_bin} --version)." >&2
+if [[ "${node_major}" != "26" ]]; then
+  echo "Node.js 26 is required; found $(${node_bin} --version)." >&2
   exit 1
 fi
 

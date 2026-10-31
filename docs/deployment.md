@@ -106,11 +106,11 @@ sudo headscale apikeys list
 sudo headscale apikeys expire --prefix <KEY_PREFIX>
 ```
 
-## 4. Install Node.js 24 and Headpanel
+## 4. Install Node.js 26 and Headpanel
 
-Headpanel requires Node.js 24 and builds with the pnpm version pinned by the
+Headpanel requires Node.js 26 and builds with the pnpm version pinned by the
 project. Install it however you like — a system package, mise, fnm or nvm all
-work. The only requirement is that **root can find Node.js 24 and pnpm** when
+work. The only requirement is that **root can find Node.js 26 and pnpm** when
 running the deployment script.
 
 The example below uses mise, which manages both node and pnpm and picks up the
@@ -119,14 +119,13 @@ pnpm version from the project's `packageManager` field:
 ```bash
 sudo -i
 curl https://mise.run | sh
-~/.local/bin/mise use -g node@24 pnpm@latest
+~/.local/bin/mise use -g node@26 pnpm@latest
 node --version
 pnpm --version
 exit
 ```
 
-A system package works just as well — apt ships Node.js 24 from Ubuntu 24.04
-onward:
+A system package works just as well, as long as it provides Node.js 26:
 
 ```bash
 sudo -i
@@ -136,7 +135,7 @@ exit
 ```
 
 **If you later write a systemd unit, keep version numbers out of the paths.** A
-line like `/root/.local/share/fnm/node-versions/v24.15.0/installation/bin/node`
+line like `/root/.local/share/fnm/node-versions/v26.13.0/installation/bin/node`
 breaks the service the moment node is upgraded. Use the stable entry point your
 version manager provides (mise: `/root/.local/share/mise/shims/pnpm`) or the
 system package's `/usr/bin/node`.
@@ -421,7 +420,7 @@ sudo journalctl -u headpanel -n 100 --no-pager
 curl -IL http://127.0.0.1:3000/login
 ```
 
-Check Node.js 24, environment-file permissions, proxy/base-path agreement, and
+Check Node.js 26, environment-file permissions, proxy/base-path agreement, and
 whether the panel was rebuilt after changing `HEADPANEL_BASE_PATH`.
 
 ### Tailscale clients cannot connect

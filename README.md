@@ -30,7 +30,7 @@
 
 ### Requirements
 
-- Node.js 24
+- Node.js 26
 - pnpm
 - A reachable Headscale server and API key
 
@@ -104,7 +104,7 @@ sudo HEADPANEL_BIND_HOST=127.0.0.1 HEADPANEL_PORT=3000 \
 
 Customize the deployment with `HEADPANEL_APP_DIR`, `HEADPANEL_ENV_FILE`,
 `HEADPANEL_SERVICE_NAME`, `HEADPANEL_SERVICE_USER`, `HEADPANEL_BIND_HOST`, and
-`HEADPANEL_PORT`. The script verifies Node.js 24, installs from the lockfile,
+`HEADPANEL_PORT`. The script verifies Node.js 26, installs from the lockfile,
 rebuilds for `HEADPANEL_BASE_PATH`, updates the systemd service, and performs a
 local health check after restart. Reverse proxy and TLS configuration remain the
 deployer's responsibility.

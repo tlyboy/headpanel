@@ -24,7 +24,7 @@
 
 ### 环境要求
 
-- Node.js 24
+- Node.js 26
 - pnpm
 - 可访问的 Headscale 服务和 API key
 
@@ -91,7 +91,7 @@ sudo HEADPANEL_BIND_HOST=127.0.0.1 HEADPANEL_PORT=3000 \
 
 可通过 `HEADPANEL_APP_DIR`、`HEADPANEL_ENV_FILE`、`HEADPANEL_SERVICE_NAME`、
 `HEADPANEL_SERVICE_USER`、`HEADPANEL_BIND_HOST` 和 `HEADPANEL_PORT` 调整部署参数。
-脚本会检查 Node.js 24、使用锁文件安装依赖、按 `HEADPANEL_BASE_PATH` 重新构建、更新
+脚本会检查 Node.js 26、使用锁文件安装依赖、按 `HEADPANEL_BASE_PATH` 重新构建、更新
 systemd 服务，并在重启后完成本机健康检查。反向代理及 TLS 由部署者自行配置。
 
 查看服务状态和日志：
