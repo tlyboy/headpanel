@@ -46,5 +46,6 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   // Everything except API routes, Next static assets, favicon, and other resources goes through proxy.
-  matcher: ['/((?!api|trpc|_next|_vercel|.*\\..*).*)'],
+  // '/' is listed on its own because under a basePath the pattern below becomes /panel/(...) and misses /panel itself.
+  matcher: ['/', '/((?!api|trpc|_next|_vercel|.*\\..*).*)'],
 }
