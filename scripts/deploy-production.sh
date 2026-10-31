@@ -36,6 +36,9 @@ fi
 
 if command -v corepack >/dev/null 2>&1; then
   corepack enable pnpm
+elif ! command -v pnpm >/dev/null 2>&1; then
+  # Node 25+ no longer bundles corepack, so install the pnpm version pinned in packageManager directly
+  npm install -g "$(node -p "require('${PROJECT_DIR}/package.json').packageManager")"
 fi
 
 node_command="$(command -v node || true)"

@@ -129,8 +129,8 @@ A system package works just as well, as long as it provides Node.js 26:
 
 ```bash
 sudo -i
-apt install -y nodejs
-corepack enable pnpm
+apt install -y nodejs npm
+npm install -g pnpm
 exit
 ```
 

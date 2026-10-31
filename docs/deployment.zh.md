@@ -134,8 +134,8 @@ exit
 
 ```bash
 sudo -i
-apt install -y nodejs
-corepack enable pnpm
+apt install -y nodejs npm
+npm install -g pnpm
 exit
 ```
 
