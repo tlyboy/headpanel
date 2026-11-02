@@ -114,7 +114,7 @@ if [ "$(uname -s 2>/dev/null)" = "Darwin" ]; then
 
 macOS one-shot join (no Homebrew/App Store required; uses built-in curl and installer):
 
-  P=\$(curl -fsSL https://pkgs.tailscale.com/stable/ | grep -oE 'Tailscale-[0-9.]+-macos\.pkg' | head -1) && curl -fsSL "https://pkgs.tailscale.com/stable/\$P" -o /tmp/ts.pkg && sudo installer -pkg /tmp/ts.pkg -target / && sudo ln -sf "/Applications/Tailscale.app/Contents/MacOS/Tailscale" /usr/local/bin/tailscale && sudo tailscale up --login-server=$HEADSCALE_URL --authkey=$AUTHKEY
+  P=\$(curl -fsSL https://pkgs.tailscale.com/stable/ | grep -oE 'Tailscale-[0-9.]+-macos\.pkg' | head -1) && rm -f /tmp/ts.pkg; for i in 1 2 3 4 5 6 7 8 9 10; do curl -fsSL -C - --speed-limit 102400 --speed-time 10 "https://pkgs.tailscale.com/stable/\$P" -o /tmp/ts.pkg && break; sleep 2; done; sudo installer -pkg /tmp/ts.pkg -target / && sudo ln -sf "/Applications/Tailscale.app/Contents/MacOS/Tailscale" /usr/local/bin/tailscale && sudo tailscale up --login-server=$HEADSCALE_URL --authkey=$AUTHKEY
 If Homebrew is available:
   brew install --cask tailscale && sudo ln -sf "/Applications/Tailscale.app/Contents/MacOS/Tailscale" /usr/local/bin/tailscale && sudo tailscale up --login-server=$HEADSCALE_URL --authkey=$AUTHKEY
 EOF
