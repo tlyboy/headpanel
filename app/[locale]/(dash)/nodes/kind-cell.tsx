@@ -55,7 +55,10 @@ export function KindCell({
         <span className="flex-1 truncate text-left">{kinds(shown)}</span>
       </SelectTrigger>
       <SelectContent>
-        <SelectItem value={AUTO}>{t('kindAuto', { kind: kinds(inferred) })}</SelectItem>
+        <SelectItem value={AUTO}>
+          <DeviceKindIcon kind={inferred} className="size-3.5" />
+          {t('kindAuto', { kind: kinds(inferred) })}
+        </SelectItem>
         {DEVICE_KINDS.map((kind) => (
           <SelectItem key={kind} value={kind}>
             <DeviceKindIcon kind={kind} className="size-3.5" />

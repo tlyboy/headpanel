@@ -79,7 +79,7 @@
     "noValidKey": "No usable key — new devices cannot join",
     "twinTitle": "Network status",
     "twinDesc": "Devices are placed by their last reported LAN address. Refreshes every 30 seconds",
-    "twinOther": "Other networks",
+    "twinOther": "No LAN address",
     "twinGateway": "Gateway {name}",
     "twinNoGateway": "No gateway",
     "twinOnline": "{online}/{total} online",

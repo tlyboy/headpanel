@@ -4,6 +4,7 @@ export interface TwinNode {
   id: string
   kind: ResolvedKind
   name: string
+  note: string | null
   ip: string | null
   lanIp: string | null
   online: boolean
@@ -11,7 +12,10 @@ export interface TwinNode {
   lastSeen: string
 }
 
-/** One platform in the scene. `cidr` is null for the catch-all zone of nodes outside every approved subnet. */
+/**
+ * One platform in the scene: an approved subnet with its gateway, a /24 seen in reported LAN addresses,
+ * or, with a null `cidr`, the nodes that report no usable LAN address.
+ */
 export interface TwinSite {
   key: string
   cidr: string | null

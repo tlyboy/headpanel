@@ -1,18 +1,34 @@
 import type { TwinNode, TwinSite } from './twin'
 
-const SPACING = 1.7
-const PADDING = 1.5
-const SITE_GAP = 1.6
-const HUB_CLEARANCE = 2.2
-const RING_ASPECT = 2.1
+const CELL_WIDTH = 3
+const CELL_DEPTH = 2.8
+const PADDING = 0.5
+const ZONE_GAP = 0.8
+/** Zones lean wide because the card is wide and depth is foreshortened anyway. */
+const ZONE_ASPECT = 2.2
+const ROW_GAP = 1.6
+const HUB_ROW_DEPTH = 2.6
+const MAX_ZOOM = 44
+const FRAME_MARGIN_PX = 16
+/** Tallest thing in the scene, so the frame leaves room above the back row. */
+const SCENE_HEIGHT = 1.6
+const ELEVATION = (42 * Math.PI) / 180
 
 export const HUB_RADIUS = 1.1
 export const PLATFORM_HEIGHT = 0.3
+/** How far in front of a device's centre its label starts. */
+export const LABEL_OFFSET_Z = 0.55
+const DEVICE_OFFSET_Z = -0.15
 
-/** Unit vectors of the fixed isometric camera: 45 degree azimuth, atan(1/sqrt(2)) elevation. */
-export const CAMERA_DIR = [1 / Math.sqrt(3), 1 / Math.sqrt(3), 1 / Math.sqrt(3)] as const
-const CAMERA_RIGHT = [Math.SQRT1_2, 0, -Math.SQRT1_2] as const
-const CAMERA_UP = [-1 / Math.sqrt(6), 2 / Math.sqrt(6), -1 / Math.sqrt(6)] as const
+/** Unit vectors of the fixed camera, which looks straight ahead and down. */
+export const CAMERA_DIR = [0, Math.sin(ELEVATION), Math.cos(ELEVATION)] as const
+const CAMERA_RIGHT = [1, 0, 0] as const
+const CAMERA_UP = [0, Math.cos(ELEVATION), -Math.sin(ELEVATION)] as const
+
+export interface ViewSize {
+  width: number
+  height: number
+}
 
 export interface PlacedNode {
   node: TwinNode
@@ -24,94 +40,111 @@ export interface PlacedSite {
   site: TwinSite
   x: number
   z: number
-  size: number
+  width: number
+  depth: number
   nodes: PlacedNode[]
 }
 
 export interface TwinLayout {
   sites: PlacedSite[]
-  /** World point the camera looks at, and the scene's projected size in world units. */
+  hubZ: number
+  zoom: number
+  /** Width in pixels of one device cell, which bounds its label. */
+  cellPx: number
   center: [number, number, number]
   midU: number
   midV: number
-  width: number
-  height: number
-  /** Radius of the ground area, used to size the shadow camera. */
+  /** Half the ground extent, used to size the shadow camera. */
   radius: number
 }
 
-function placeNodes(site: TwinSite): { size: number; nodes: PlacedNode[] } {
-  const cols = Math.max(1, Math.ceil(Math.sqrt(site.nodes.length)))
-  const rows = Math.max(1, Math.ceil(site.nodes.length / cols))
-  const size = Math.max(cols, rows) * SPACING + PADDING
-  const nodes = site.nodes.map((node, i) => ({
-    node,
-    x: ((i % cols) - (cols - 1) / 2) * SPACING,
-    z: (Math.floor(i / cols) - (rows - 1) / 2) * SPACING,
-  }))
-  return { size, nodes }
-}
+type Zone = Omit<PlacedSite, 'x' | 'z'>
 
-/** Where zone `i` of `count` sits on an ellipse that fills a wide card: long axis left to right on screen. */
-function ringPoint(i: number, count: number, radius: number): [number, number] {
-  const angle = (i / count) * Math.PI * 2 - Math.PI / 2
-  const across = Math.cos(angle) * radius * RING_ASPECT
-  const depth = Math.sin(angle) * radius
-  return [Math.SQRT1_2 * (across + depth), Math.SQRT1_2 * (depth - across)]
-}
-
-function ringRadius(sizes: number[]): number {
-  const reach = (size: number) => (size * Math.SQRT2) / 2
-  const fits = (radius: number) => {
-    const points = sizes.map((_, i) => ringPoint(i, sizes.length, radius))
-    return points.every(([x, z], i) => {
-      if (Math.hypot(x, z) < reach(sizes[i]) + HUB_RADIUS + HUB_CLEARANCE) return false
-      return points.every(([ox, oz], j) => {
-        return j <= i || Math.hypot(x - ox, z - oz) >= reach(sizes[i]) + reach(sizes[j]) + SITE_GAP
-      })
-    })
+function shapeZone(site: TwinSite): Zone {
+  const count = Math.max(1, site.nodes.length)
+  const cols = Math.min(count, Math.ceil(Math.sqrt(count * ZONE_ASPECT)))
+  const rows = Math.ceil(count / cols)
+  return {
+    site,
+    width: cols * CELL_WIDTH + PADDING * 2,
+    depth: rows * CELL_DEPTH + PADDING,
+    nodes: site.nodes.map((node, i) => ({
+      node,
+      x: ((i % cols) - (cols - 1) / 2) * CELL_WIDTH,
+      z: (Math.floor(i / cols) - (rows - 1) / 2) * CELL_DEPTH + DEVICE_OFFSET_Z,
+    })),
   }
-  let radius = 1
-  while (!fits(radius)) radius += 0.25
-  return radius
+}
+
+const rowWidth = (row: Zone[]) =>
+  row.reduce((sum, zone) => sum + zone.width, 0) + ZONE_GAP * Math.max(0, row.length - 1)
+
+/** Gateways share the first row so their links fan out from the hub without crossing other zones. */
+function packRows(gateways: Zone[], rest: Zone[], maxWidth: number): Zone[][] {
+  const rows: Zone[][] = gateways.length ? [gateways] : []
+  let current: Zone[] = []
+  for (const zone of rest) {
+    if (current.length && rowWidth([...current, zone]) > maxWidth) {
+      rows.push(current)
+      current = []
+    }
+    current.push(zone)
+  }
+  if (current.length) rows.push(current)
+  return rows
 }
 
 const dot = (a: readonly number[], x: number, y: number, z: number) =>
   a[0] * x + a[1] * y + a[2] * z
 
-export function layoutTwin(sites: TwinSite[]): TwinLayout {
-  const placed = sites.map(placeNodes)
-  const radius = ringRadius(placed.map((p) => p.size))
-  const result: PlacedSite[] = placed.map((p, i) => {
-    const [x, z] = ringPoint(i, sites.length, radius)
-    return {
-      site: sites[i],
-      x,
-      z,
-      size: p.size,
-      nodes: p.nodes,
-    }
-  })
+function arrange(rows: Zone[][], view: ViewSize): TwinLayout {
+  const totalDepth =
+    HUB_ROW_DEPTH +
+    rows.reduce((sum, row) => sum + Math.max(...row.map((z) => z.depth)) + ROW_GAP, 0)
 
-  const points: [number, number, number][] = [
-    [-HUB_RADIUS, 0, -HUB_RADIUS],
-    [HUB_RADIUS, 2, HUB_RADIUS],
-  ]
-  for (const s of result) {
-    const half = s.size / 2
-    for (const dx of [-half, half]) {
-      for (const dz of [-half, half]) {
-        points.push([s.x + dx, 0, s.z + dz], [s.x + dx, 1.6, s.z + dz])
-      }
+  const sites: PlacedSite[] = []
+  let cursor = -totalDepth / 2 + HUB_ROW_DEPTH + ROW_GAP / 2
+  for (const row of rows) {
+    const depth = Math.max(...row.map((z) => z.depth))
+    let left = -rowWidth(row) / 2
+    for (const zone of row) {
+      sites.push({ ...zone, x: left + zone.width / 2, z: cursor + zone.depth / 2 })
+      left += zone.width + ZONE_GAP
     }
+    cursor += depth + ROW_GAP
+  }
+
+  const hubZ = -totalDepth / 2 + HUB_RADIUS
+  const points: [number, number, number][] = [
+    [-HUB_RADIUS, SCENE_HEIGHT, hubZ - HUB_RADIUS],
+    [HUB_RADIUS, 0, hubZ + HUB_RADIUS],
+  ]
+  let radius = totalDepth / 2
+  for (const s of sites) {
+    const [hw, hd] = [s.width / 2, s.depth / 2]
+    points.push([s.x - hw, 0, s.z + hd], [s.x + hw, SCENE_HEIGHT, s.z - hd])
+    radius = Math.max(radius, Math.abs(s.x) + hw)
   }
   const us = points.map(([x, y, z]) => dot(CAMERA_RIGHT, x, y, z))
   const vs = points.map(([x, y, z]) => dot(CAMERA_UP, x, y, z))
-  const midU = (Math.min(...us) + Math.max(...us)) / 2
-  const midV = (Math.min(...vs) + Math.max(...vs)) / 2
+  const [minU, maxU, minV, maxV] = [
+    Math.min(...us),
+    Math.max(...us),
+    Math.min(...vs),
+    Math.max(...vs),
+  ]
+  const [midU, midV] = [(minU + maxU) / 2, (minV + maxV) / 2]
+  const zoom = Math.min(
+    MAX_ZOOM,
+    (view.width - FRAME_MARGIN_PX * 2) / (maxU - minU),
+    (view.height - FRAME_MARGIN_PX * 2) / (maxV - minV),
+  )
 
   return {
-    sites: result,
+    sites,
+    hubZ,
+    zoom,
+    cellPx: CELL_WIDTH * zoom,
     midU,
     midV,
     center: [
@@ -119,33 +152,34 @@ export function layoutTwin(sites: TwinSite[]): TwinLayout {
       CAMERA_RIGHT[1] * midU + CAMERA_UP[1] * midV,
       CAMERA_RIGHT[2] * midU + CAMERA_UP[2] * midV,
     ],
-    width: Math.max(...us) - Math.min(...us),
-    height: Math.max(...vs) - Math.min(...vs),
-    radius: radius * RING_ASPECT + Math.max(0, ...placed.map((p) => p.size)),
+    radius,
   }
 }
 
-export interface ViewSize {
-  width: number
-  height: number
-}
+/** Tries each row width and keeps the one that lets the scene render largest in this view. */
+export function layoutTwin(sites: TwinSite[], view: ViewSize): TwinLayout {
+  const zones = sites.map(shapeZone)
+  const gateways = zones.filter((z) => z.site.gatewayId)
+  const rest = zones.filter((z) => !z.site.gatewayId)
+  const narrowest = Math.max(rowWidth(gateways), ...rest.map((z) => z.width), CELL_WIDTH)
+  const widest = Math.max(narrowest, rowWidth(rest))
 
-export function fitZoom(layout: TwinLayout, view: ViewSize, marginPx: number): number {
-  return Math.min(
-    (view.width - marginPx * 2) / layout.width,
-    (view.height - marginPx * 2) / layout.height,
-  )
+  let best = arrange(packRows(gateways, rest, narrowest), view)
+  for (let width = narrowest + 1; width <= widest + 1; width += 1) {
+    const candidate = arrange(packRows(gateways, rest, width), view)
+    if (candidate.zoom > best.zoom) best = candidate
+  }
+  return best
 }
 
 /** Pixel position of a world point. The camera is orthographic, so this is linear. */
 export function projectToView(
   layout: TwinLayout,
   view: ViewSize,
-  zoom: number,
   [x, y, z]: [number, number, number],
 ): { left: number; top: number } {
   return {
-    left: view.width / 2 + zoom * (dot(CAMERA_RIGHT, x, y, z) - layout.midU),
-    top: view.height / 2 - zoom * (dot(CAMERA_UP, x, y, z) - layout.midV),
+    left: view.width / 2 + layout.zoom * (dot(CAMERA_RIGHT, x, y, z) - layout.midU),
+    top: view.height / 2 - layout.zoom * (dot(CAMERA_UP, x, y, z) - layout.midV),
   }
 }
