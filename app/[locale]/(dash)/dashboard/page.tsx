@@ -1,25 +1,20 @@
 import { getTranslations } from 'next-intl/server'
-import { getHeadscaleVersion, getPolicy, listPreAuthKeys } from '@/lib/headscale'
+import { getHeadscaleVersion, listPreAuthKeys } from '@/lib/headscale'
 import { requireSession } from '@/lib/auth'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { isNever } from '@/lib/format'
 import { readNodeNetInfo } from '@/lib/headscale-db'
 import { NetworkTwin } from './network-twin'
-import { parsePolicy } from './twin-access'
 import { buildTwin } from './twin-data'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Link } from '@/i18n/navigation'
 
 export default async function DashboardPage() {
   const [, t] = await Promise.all([requireSession(), getTranslations('dashboard')])
-  const [nodes, allKeys, version, policy] = await Promise.all([
+  const [nodes, allKeys, version] = await Promise.all([
     syncAndListNodes(),
     listPreAuthKeys(),
     getHeadscaleVersion(),
-    // A policy we can't read only limits the access view, so it must not take the dashboard down
-    getPolicy()
-      .then((p) => parsePolicy(p.policy))
-      .catch(() => null),
   ])
   let online = 0
   let pending = 0
@@ -126,11 +121,7 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      <NetworkTwin
-        network={buildTwin(nodes, readNodeNetInfo())}
-        policy={policy}
-        version={version.version}
-      />
+      <NetworkTwin network={buildTwin(nodes, readNodeNetInfo())} version={version.version} />
     </div>
   )
 }

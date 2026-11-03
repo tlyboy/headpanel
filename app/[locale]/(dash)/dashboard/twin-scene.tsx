@@ -1,29 +1,19 @@
 'use client'
 
-import {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-  useSyncExternalStore,
-  type RefObject,
-} from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Canvas, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Line } from '@react-three/drei'
-import { Color, Matrix4, type InstancedMesh } from 'three'
+import { Matrix4, type InstancedMesh } from 'three'
 import { Maximize, Minus, Plus } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { osLabel } from '@/components/os-icon'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { isServing, type TwinNetwork } from './twin'
-import type { TwinHighlight } from './twin-access'
 import { getThemeColors, subscribeTheme, type TwinColors } from './twin-colors'
 import {
   buildInstances,
-  deviceTop,
-  zoneBorder,
+  gatewayTop,
   type BoxInstance,
   type HitTarget,
   type TwinInstances,
@@ -43,8 +33,6 @@ import { CAMERA_DISTANCE, useTwinCamera } from './use-twin-camera'
 /** A shadow map stretched over a huge scene looks bad and costs a second pass of every box. */
 const SHADOW_DEVICE_LIMIT = 300
 const HOVER_PLATE_SIZE = 1.5
-/** How far a device outside the selection fades into its platform. */
-const DIM_AMOUNT = 0.8
 
 function useViewSize() {
   const ref = useRef<HTMLDivElement>(null)
@@ -64,9 +52,6 @@ function useViewSize() {
 
 function BoxInstances({
   boxes,
-  meshRef,
-  highlight,
-  dimTo,
   castShadow,
   receiveShadow,
   visible = true,
@@ -74,37 +59,30 @@ function BoxInstances({
   onPointerOut,
 }: {
   boxes: BoxInstance[]
-  meshRef?: RefObject<InstancedMesh | null>
-  highlight?: TwinHighlight | null
-  dimTo?: string
   castShadow?: boolean
   receiveShadow?: boolean
   visible?: boolean
   onPointerMove?: (e: ThreeEvent<PointerEvent>) => void
   onPointerOut?: () => void
 }) {
-  const ownRef = useRef<InstancedMesh>(null)
-  const mesh = meshRef ?? ownRef
+  const mesh = useRef<InstancedMesh>(null)
   const invalidate = useThree((s) => s.invalidate)
 
   useLayoutEffect(() => {
     const instanced = mesh.current
     if (!instanced) return
     const matrix = new Matrix4()
-    const dimTarget = new Color(dimTo)
-    const dimmed = new Color()
     boxes.forEach((box, i) => {
       matrix.makeScale(...box.size)
       matrix.setPosition(...box.position)
       instanced.setMatrixAt(i, matrix)
-      const dim = highlight && box.nodeId !== undefined && !highlight.lit.has(box.nodeId)
-      instanced.setColorAt(i, dim ? dimmed.copy(box.color).lerp(dimTarget, DIM_AMOUNT) : box.color)
+      instanced.setColorAt(i, box.color)
     })
     instanced.instanceMatrix.needsUpdate = true
     if (instanced.instanceColor) instanced.instanceColor.needsUpdate = true
     instanced.computeBoundingSphere()
     invalidate()
-  }, [boxes, mesh, highlight, dimTo, invalidate])
+  }, [boxes, invalidate])
 
   return (
     <instancedMesh
@@ -130,7 +108,7 @@ function HubLinks({ layout, colors }: { layout: TwinLayout; colors: TwinColors }
     const target = isServing(site) ? up : down
     for (const placed of nodes) {
       if (!placed.isGateway) continue
-      target.push([0, 1.2, layout.hubZ], [x + placed.x, deviceTop(placed), z + placed.z])
+      target.push([0, 1.2, layout.hubZ], [x + placed.x, gatewayTop(placed), z + placed.z])
     }
   }
   return (
@@ -151,47 +129,12 @@ function HubLinks({ layout, colors }: { layout: TwinLayout; colors: TwinColors }
   )
 }
 
-function AccessLinks({
-  instances,
-  highlight,
-  colors,
-}: {
-  instances: TwinInstances
-  highlight: TwinHighlight
-  colors: TwinColors
-}) {
-  const points = useMemo(() => {
-    const byId = new Map(instances.hitTargets.map((t) => [t.placed.node.id, t]))
-    const from = highlight.selectedId ? byId.get(highlight.selectedId) : undefined
-    if (!from) return []
-    const top = (t: HitTarget): [number, number, number] => [t.x, deviceTop(t.placed), t.z]
-    return highlight.linkedIds.flatMap((id) => {
-      const to = byId.get(id)
-      return to ? [top(from), top(to)] : []
-    })
-  }, [instances, highlight])
-  if (!points.length) return null
-  return (
-    <Line
-      segments
-      points={points}
-      color={colors.foreground}
-      lineWidth={1.5}
-      transparent
-      opacity={0.5}
-    />
-  )
-}
-
 function SceneContent({
   layout,
   instances,
   colors,
   shadows,
   hovered,
-  selected,
-  highlight,
-  pickMeshRef,
   onHover,
   onLeave,
 }: {
@@ -200,20 +143,10 @@ function SceneContent({
   colors: TwinColors
   shadows: boolean
   hovered: HitTarget | null
-  selected: HitTarget | null
-  highlight: TwinHighlight | null
-  pickMeshRef: RefObject<InstancedMesh | null>
   onHover: (e: ThreeEvent<PointerEvent>) => void
   onLeave: () => void
 }) {
   useEffect(() => () => instances.outlines.dispose(), [instances])
-  const litBorders = useMemo(
-    () =>
-      highlight
-        ? layout.sites.filter((p) => highlight.litSites.has(p.site.key)).flatMap(zoneBorder)
-        : [],
-    [layout, highlight],
-  )
   return (
     <>
       <ambientLight intensity={shadows ? 1.7 : 2.2} />
@@ -235,38 +168,24 @@ function SceneContent({
             <cylinderGeometry args={[HUB_RADIUS, HUB_RADIUS, 1.2, 48]} />
             <meshStandardMaterial color={colors.primary} />
           </mesh>
-          {!highlight && <HubLinks layout={layout} colors={colors} />}
+          <HubLinks layout={layout} colors={colors} />
         </>
       )}
-      <BoxInstances
-        boxes={instances.solids}
-        highlight={highlight}
-        dimTo={colors.muted}
-        castShadow={shadows}
-        receiveShadow={shadows}
-      />
+      <BoxInstances boxes={instances.solids} castShadow={shadows} receiveShadow={shadows} />
       <lineSegments geometry={instances.outlines}>
         <lineBasicMaterial vertexColors />
       </lineSegments>
-      {highlight && <AccessLinks instances={instances} highlight={highlight} colors={colors} />}
-      {litBorders.length > 0 && (
-        <Line segments points={litBorders} color={colors.primary} lineWidth={2.5} />
-      )}
       <BoxInstances
         boxes={instances.hitBoxes}
-        meshRef={pickMeshRef}
         visible={false}
         onPointerMove={onHover}
         onPointerOut={onLeave}
       />
-      {[selected, hovered].map(
-        (target, i) =>
-          target && (
-            <mesh key={i} position={[target.x, PLATFORM_TOP + 0.01, target.z]}>
-              <boxGeometry args={[HOVER_PLATE_SIZE, 0.02, HOVER_PLATE_SIZE]} />
-              <meshBasicMaterial color={colors.primary} transparent opacity={0.45} />
-            </mesh>
-          ),
+      {hovered && (
+        <mesh position={[hovered.x, PLATFORM_TOP + 0.01, hovered.z]}>
+          <boxGeometry args={[HOVER_PLATE_SIZE, 0.02, HOVER_PLATE_SIZE]} />
+          <meshBasicMaterial color={colors.primary} transparent opacity={0.45} />
+        </mesh>
       )}
     </>
   )
@@ -281,13 +200,7 @@ function HubLabel({ version }: { version: string }) {
   )
 }
 
-function DeviceLabels({
-  layout,
-  highlight,
-}: {
-  layout: TwinLayout
-  highlight: TwinHighlight | null
-}) {
+function DeviceLabels({ layout }: { layout: TwinLayout }) {
   return layout.sites.map(({ site, x, z, nodes }) => (
     <div key={site.key} data-zone>
       {nodes.map((n) => (
@@ -296,7 +209,6 @@ function DeviceLabels({
           className={cn(
             'absolute -translate-x-1/2 text-center text-[11px] leading-tight',
             !n.node.online && 'text-muted-foreground',
-            highlight && !highlight.lit.has(n.node.id) && 'opacity-25',
           )}
           style={{
             ...labelPosition(x + n.x, PLATFORM_TOP, z + n.z + LABEL_OFFSET_Z),
@@ -313,13 +225,7 @@ function DeviceLabels({
   ))
 }
 
-function ZoneTitles({
-  layout,
-  highlight,
-}: {
-  layout: TwinLayout
-  highlight: TwinHighlight | null
-}) {
+function ZoneTitles({ layout }: { layout: TwinLayout }) {
   const t = useTranslations('dashboard')
   return layout.sites.map(({ site }) => {
     const online = site.nodes.filter((n) => n.online).length
@@ -335,12 +241,7 @@ function ZoneTitles({
           .join(' · ')
     return (
       <div key={site.key} data-zone className="absolute top-0 left-0 pb-1 text-xs leading-tight">
-        <div
-          className={cn(
-            'w-fit max-w-full truncate rounded-sm font-medium group-data-[detail=off]/titles:bg-card/85 group-data-[detail=off]/titles:px-1',
-            highlight?.litSites.has(site.key) && 'text-primary',
-          )}
-        >
+        <div className="w-fit max-w-full truncate rounded-sm font-medium group-data-[detail=off]/titles:bg-card/85 group-data-[detail=off]/titles:px-1">
           {site.location ?? (subnet || t('twinOther'))}
         </div>
         <div
@@ -359,13 +260,12 @@ function ZoneTitles({
 export default function TwinScene({
   network,
   version,
-  highlight,
-  onSelectNode,
+  fitKey,
 }: {
   network: TwinNetwork
   version: string
-  highlight: TwinHighlight | null
-  onSelectNode: (id: string | null) => void
+  /** The view refits when this changes, because the filtered scene is a different shape. */
+  fitKey: string | null
 }) {
   const t = useTranslations('dashboard')
   const format = useFormatter()
@@ -378,19 +278,14 @@ export default function TwinScene({
     () => (layout ? buildInstances(layout, colors) : null),
     [layout, colors],
   )
-  const pickMeshRef = useRef<InstancedMesh>(null)
-  const camera = useTwinCamera(
-    layout,
-    view,
-    labelLayerRef,
-    titleLayerRef,
-    containerRef,
-    pickMeshRef,
-    (instanceId) => {
-      const target = instanceId === null ? undefined : instances?.hitTargets[instanceId]
-      onSelectNode(target?.placed.node.id ?? null)
-    },
-  )
+  const camera = useTwinCamera(layout, view, labelLayerRef, titleLayerRef, containerRef)
+  const { fit } = camera
+  const lastFitKey = useRef(fitKey)
+  useLayoutEffect(() => {
+    if (lastFitKey.current === fitKey) return
+    lastFitKey.current = fitKey
+    fit()
+  }, [fitKey, fit])
   const [hover, setHover] = useState<{ target: HitTarget; x: number; y: number } | null>(null)
   const shadows = (instances?.hitTargets.length ?? 0) <= SHADOW_DEVICE_LIMIT
 
@@ -399,10 +294,7 @@ export default function TwinScene({
   return (
     <div
       ref={containerRef}
-      className={cn(
-        'absolute inset-0 touch-none overflow-hidden select-none',
-        hover ? 'cursor-pointer' : 'cursor-grab',
-      )}
+      className="absolute inset-0 cursor-grab touch-none overflow-hidden select-none"
       onPointerLeave={() => setHover(null)}
       {...camera.handlers}
     >
@@ -423,11 +315,6 @@ export default function TwinScene({
               colors={colors}
               shadows={shadows}
               hovered={hover?.target ?? null}
-              selected={
-                instances.hitTargets.find((t) => t.placed.node.id === highlight?.selectedId) ?? null
-              }
-              highlight={highlight}
-              pickMeshRef={pickMeshRef}
               onHover={(e) => {
                 if (camera.isDragging() || e.instanceId === undefined) return
                 e.stopPropagation()
@@ -449,13 +336,13 @@ export default function TwinScene({
                 <HubLabel version={version} />
               </div>
             )}
-            <DeviceLabels layout={layout} highlight={highlight} />
+            <DeviceLabels layout={layout} />
           </div>
           <div
             ref={titleLayerRef}
             className="group/titles pointer-events-none absolute inset-0 overflow-hidden"
           >
-            <ZoneTitles layout={layout} highlight={highlight} />
+            <ZoneTitles layout={layout} />
           </div>
           <div
             className="absolute right-2 bottom-2 flex flex-col gap-1"

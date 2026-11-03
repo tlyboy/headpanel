@@ -20,8 +20,6 @@ export interface BoxInstance {
   position: [number, number, number]
   size: [number, number, number]
   color: Color
-  /** The device this box belongs to, so a selection can dim it. Platforms have none. */
-  nodeId?: string
 }
 
 export interface HitTarget {
@@ -38,21 +36,8 @@ export interface TwinInstances {
   outlines: BufferGeometry
 }
 
-export function deviceTop(placed: PlacedNode) {
-  return PLATFORM_TOP + (placed.isGateway ? GATEWAY_PLATE_HEIGHT : 0) + modelHeight(placed.node.os)
-}
-
-/** The zone's top edge, as pairs of points for a segmented line. */
-export function zoneBorder({ x, z, width, depth }: PlacedSite): [number, number, number][] {
-  const [hw, hd] = [width / 2, depth / 2]
-  const y = PLATFORM_TOP + 0.01
-  const corners: [number, number, number][] = [
-    [x - hw, y, z - hd],
-    [x + hw, y, z - hd],
-    [x + hw, y, z + hd],
-    [x - hw, y, z + hd],
-  ]
-  return corners.flatMap((corner, i) => [corner, corners[(i + 1) % 4]])
+export function gatewayTop(placed: PlacedNode) {
+  return PLATFORM_TOP + GATEWAY_PLATE_HEIGHT + modelHeight(placed.node.os)
 }
 
 function outlineSite(
@@ -121,7 +106,6 @@ export function buildInstances(layout: TwinLayout, colors: TwinColors): TwinInst
           position: [nx, PLATFORM_TOP + GATEWAY_PLATE_HEIGHT / 2, nz],
           size: [GATEWAY_PLATE_SIZE, GATEWAY_PLATE_HEIGHT, GATEWAY_PLATE_SIZE],
           color: primary,
-          nodeId: placed.node.id,
         })
       }
       const body = placed.node.online ? online : offline
@@ -131,7 +115,6 @@ export function buildInstances(layout: TwinLayout, colors: TwinColors): TwinInst
           position: [nx + part.position[0], baseY + part.position[1], nz + part.position[2]],
           size: part.size,
           color: tones[part.tone],
-          nodeId: placed.node.id,
         })
       }
       hitBoxes.push({

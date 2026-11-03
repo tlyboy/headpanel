@@ -9,7 +9,6 @@ import {
   type RefObject,
 } from 'react'
 import type { RootState } from '@react-three/fiber'
-import { Vector2, type InstancedMesh } from 'three'
 import {
   CAMERA_DIR,
   CAMERA_RIGHT,
@@ -26,8 +25,6 @@ import {
 
 const MAX_ZOOM = 90
 const WHEEL_SPEED = 0.0015
-/** A press that travels further than this is a drag, not a click. */
-const TAP_TRAVEL_PX = 5
 const BUTTON_FACTOR = 1.35
 export const CAMERA_DISTANCE = 1000
 
@@ -55,13 +52,11 @@ export function useTwinCamera(
   labelLayerRef: RefObject<HTMLDivElement | null>,
   titleLayerRef: RefObject<HTMLDivElement | null>,
   containerRef: RefObject<HTMLDivElement | null>,
-  pickMeshRef: RefObject<InstancedMesh | null>,
-  onTap: (instanceId: number | null) => void,
 ) {
   const three = useRef<RootState | null>(null)
   const camera = useRef<CameraState>({ u: 0, v: 0, zoom: 1 })
   const moved = useRef(false)
-  const drag = useRef<{ x: number; y: number; travel: number } | null>(null)
+  const drag = useRef<{ x: number; y: number } | null>(null)
 
   const apply = useCallback(() => {
     const { u, v, zoom } = camera.current
@@ -183,20 +178,10 @@ export function useTwinCamera(
     [apply],
   )
 
-  // Pointer capture sends the release to the container, so three's own click events never fire
-  const pick = (x: number, y: number, rect: DOMRect) => {
-    const state = three.current
-    const mesh = pickMeshRef.current
-    if (!state || !mesh) return null
-    const pointer = new Vector2((x / rect.width) * 2 - 1, 1 - (y / rect.height) * 2)
-    state.raycaster.setFromCamera(pointer, state.camera)
-    return state.raycaster.intersectObject(mesh)[0]?.instanceId ?? null
-  }
-
   const handlers = {
     onPointerDown: (e: PointerEvent<HTMLDivElement>) => {
       if (e.button !== 0) return
-      drag.current = { x: e.clientX, y: e.clientY, travel: 0 }
+      drag.current = { x: e.clientX, y: e.clientY }
       e.currentTarget.setPointerCapture(e.pointerId)
       e.currentTarget.style.cursor = 'grabbing'
     },
@@ -206,22 +191,13 @@ export function useTwinCamera(
       const c = camera.current
       c.u -= (e.clientX - start.x) / c.zoom
       c.v += (e.clientY - start.y) / c.zoom
-      drag.current = {
-        x: e.clientX,
-        y: e.clientY,
-        travel: start.travel + Math.hypot(e.clientX - start.x, e.clientY - start.y),
-      }
+      drag.current = { x: e.clientX, y: e.clientY }
       moved.current = true
       clamp()
       apply()
     },
     onPointerUp: (e: PointerEvent<HTMLDivElement>) => {
-      const press = drag.current
       drag.current = null
-      if (press && press.travel < TAP_TRAVEL_PX) {
-        const rect = e.currentTarget.getBoundingClientRect()
-        onTap(pick(e.clientX - rect.left, e.clientY - rect.top, rect))
-      }
       e.currentTarget.style.cursor = ''
     },
   }

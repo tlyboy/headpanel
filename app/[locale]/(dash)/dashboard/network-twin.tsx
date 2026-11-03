@@ -10,9 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { OsIcon, osLabel, osLogoPath } from '@/components/os-icon'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-import { isServing, type TwinNetwork } from './twin'
-import { buildAccessView, toHighlight, type AccessPolicy, type TwinSelection } from './twin-access'
-import { AccessPanel } from './twin-access-panel'
+import { filterByTag, isServing, type TwinNetwork } from './twin'
 
 const REFRESH_MS = 30_000
 /** The hidden list exists for screen readers. Past this size the nodes page serves them better. */
@@ -56,15 +54,7 @@ function useAutoRefresh() {
   }, [router])
 }
 
-function TwinList({
-  network,
-  onSelectNode,
-  className,
-}: {
-  network: TwinNetwork
-  onSelectNode: (id: string) => void
-  className?: string
-}) {
+function TwinList({ network, className }: { network: TwinNetwork; className?: string }) {
   const t = useTranslations('dashboard')
   return (
     <div className={cn('flex flex-col gap-4', className)}>
@@ -98,13 +88,7 @@ function TwinList({
                 {node.os && (
                   <OsIcon os={node.os} className="size-3.5 shrink-0 text-muted-foreground" />
                 )}
-                <button
-                  type="button"
-                  className="truncate text-left underline-offset-2 hover:underline"
-                  onClick={() => onSelectNode(node.id)}
-                >
-                  {node.name}
-                </button>
+                <span className="truncate">{node.name}</span>
                 {node.os && <span className="sr-only">{osLabel(node.os)}</span>}
                 <span className="sr-only">
                   {node.online ? t('twinLegendOnline') : t('twinLegendOffline')}
@@ -124,44 +108,25 @@ function TwinList({
 }
 
 export function NetworkTwin({
-  network,
-  policy,
+  network: fullNetwork,
   version,
 }: {
   network: TwinNetwork
-  policy: AccessPolicy | null
   version: string
 }) {
   const t = useTranslations('dashboard')
   const mode = useMode()
   useAutoRefresh()
-  const [selection, setSelection] = useState<TwinSelection | null>(null)
-  // A selected device or tag may disappear on refresh, and the view then simply closes
-  const view = selection && buildAccessView(network, policy, selection)
-  const highlight = toHighlight(view)
-  const open = view !== null
-
-  useEffect(() => {
-    if (!open) return
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setSelection(null)
-    }
-    window.addEventListener('keydown', onKey)
-    return () => window.removeEventListener('keydown', onKey)
-  }, [open])
-
-  const selectNode = (id: string | null) =>
-    setSelection(
-      id === null || (selection?.kind === 'node' && selection.id === id)
-        ? null
-        : { kind: 'node', id },
-    )
+  const [pickedTag, setPickedTag] = useState<string | null>(null)
+  const tags = [...new Set(fullNetwork.sites.flatMap((s) => s.nodes.flatMap((n) => n.tags)))].sort()
+  // The tag may be gone after a refresh, and the filter then simply clears
+  const tag = pickedTag && tags.includes(pickedTag) ? pickedTag : null
+  const network = tag ? filterByTag(fullNetwork, tag) : fullNetwork
 
   const nodes = network.sites.flatMap((s) => s.nodes)
   const empty = nodes.length === 0
   const systems = [...new Set(nodes.flatMap((n) => n.os ?? []))].sort()
   const hasNoLogo = nodes.some((n) => !osLogoPath(n.os))
-  const tags = [...new Set(nodes.flatMap((n) => n.tags))].sort()
 
   return (
     <Card className="flex min-h-[28rem] flex-1 flex-col">
@@ -204,35 +169,27 @@ export function NetworkTwin({
           </div>
         )}
       </CardHeader>
-      {tags.length > 0 && !empty && (
+      {tags.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 px-4 pb-2 text-xs text-muted-foreground">
           <span>{t('twinTagFilter')}</span>
-          {tags.map((tag) => {
-            const active = selection?.kind === 'tag' && selection.tag === tag
-            return (
-              <Button
-                key={tag}
-                variant={active ? 'default' : 'outline'}
-                size="xs"
-                aria-pressed={active}
-                onClick={() => setSelection(active ? null : { kind: 'tag', tag })}
-              >
-                {tag}
-              </Button>
-            )
-          })}
+          {[null, ...tags].map((option) => (
+            <Button
+              key={option ?? 'all'}
+              variant={option === tag ? 'default' : 'outline'}
+              size="xs"
+              aria-pressed={option === tag}
+              onClick={() => setPickedTag(option)}
+            >
+              {option ?? t('twinTagAll')}
+            </Button>
+          ))}
         </div>
       )}
       <CardContent className="relative min-h-0 flex-1">
         {empty ? (
           <p className="text-sm text-muted-foreground">{t('twinEmpty')}</p>
         ) : mode === 'list' ? (
-          <>
-            {view && (
-              <AccessPanel view={view} onClose={() => setSelection(null)} className="mb-4" />
-            )}
-            <TwinList network={network} onSelectNode={selectNode} />
-          </>
+          <TwinList network={network} />
         ) : (
           <>
             {mode === 'scene' && (
@@ -244,23 +201,11 @@ export function NetworkTwin({
                   total: nodes.length,
                 })}
               >
-                <TwinScene
-                  network={network}
-                  version={version}
-                  highlight={highlight}
-                  onSelectNode={selectNode}
-                />
+                <TwinScene network={network} version={version} fitKey={tag} />
               </div>
             )}
             {nodes.length <= HIDDEN_LIST_LIMIT && (
-              <TwinList network={network} onSelectNode={selectNode} className="sr-only" />
-            )}
-            {view && (
-              <AccessPanel
-                view={view}
-                onClose={() => setSelection(null)}
-                className="absolute top-0 right-6 z-10 max-h-full w-72"
-              />
+              <TwinList network={network} className="sr-only" />
             )}
           </>
         )}
