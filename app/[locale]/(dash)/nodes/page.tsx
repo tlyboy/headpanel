@@ -20,6 +20,7 @@ import { LocationCell } from './location-cell'
 import { PendingCard } from './pending-card'
 import { NodeSelection, RowSelect, SelectAll, TagCell } from './selection'
 import { NodeRowActions } from './row-actions'
+import { osLabel } from '@/components/os-icon'
 import { Badge } from '@/components/ui/badge'
 import { TableCell, TableHead } from '@/components/ui/table'
 import { LanIpCell } from '@/components/lan-ip-cell'
@@ -138,7 +139,7 @@ export default async function NodesPage({
           {
             name: 'system',
             placeholder: t('allSystems'),
-            options: systemOptions.map((value) => ({ value, label: value })),
+            options: systemOptions.map((value) => ({ value, label: osLabel(value) })),
           },
         ]}
       />
@@ -191,11 +192,8 @@ export default async function NodesPage({
                     <KindCell
                       id={n.id}
                       kind={n.deviceKind}
-                      system={
-                        [netInfo.get(n.id)?.os, netInfo.get(n.id)?.deviceModel]
-                          .filter(Boolean)
-                          .join(' · ') || undefined
-                      }
+                      os={netInfo.get(n.id)?.os ?? null}
+                      deviceModel={netInfo.get(n.id)?.deviceModel ?? null}
                     />
                   </TableCell>
                 )}

@@ -4,6 +4,7 @@ import { useTransition } from 'react'
 import { useTranslations } from 'next-intl'
 import { toast } from 'sonner'
 import { DeviceKindIcon } from '@/components/device-kind-icon'
+import { OsIcon, osLabel } from '@/components/os-icon'
 import { Select, SelectContent, SelectItem, SelectTrigger } from '@/components/ui/select'
 import { DEVICE_KINDS, isDeviceKind, type DeviceKind } from '@/lib/device-kind'
 import { cn } from '@/lib/utils'
@@ -15,12 +16,14 @@ const UNSET = 'unset'
 export function KindCell({
   id,
   kind,
-  system,
+  os,
+  deviceModel,
 }: {
   id: string
   kind: DeviceKind | null
-  /** What the client reports, shown only as a hint for whoever picks the kind. */
-  system?: string
+  /** What the client reports. Shown while no kind is set, and never used to pick one. */
+  os: string | null
+  deviceModel: string | null
 }) {
   const t = useTranslations('nodes')
   const kinds = useTranslations('deviceKinds')
@@ -43,14 +46,23 @@ export function KindCell({
       <SelectTrigger
         size="sm"
         aria-label={t('kind')}
-        title={system}
+        title={[os && osLabel(os), deviceModel].filter(Boolean).join(' · ') || undefined}
         className={cn(
           'w-full border-transparent bg-transparent shadow-none dark:bg-transparent',
           !kind && 'text-muted-foreground',
         )}
       >
-        <DeviceKindIcon kind={kind ?? UNSET} className="size-3.5 shrink-0" />
-        <span className="flex-1 truncate text-left">{kinds(kind ?? UNSET)}</span>
+        {!kind && os ? (
+          <>
+            <OsIcon os={os} className="size-3.5 shrink-0" />
+            <span className="flex-1 truncate text-left">{osLabel(os)}</span>
+          </>
+        ) : (
+          <>
+            <DeviceKindIcon kind={kind ?? UNSET} className="size-3.5 shrink-0" />
+            <span className="flex-1 truncate text-left">{kinds(kind ?? UNSET)}</span>
+          </>
+        )}
       </SelectTrigger>
       <SelectContent>
         <SelectItem value={UNSET}>

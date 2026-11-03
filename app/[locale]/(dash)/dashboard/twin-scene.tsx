@@ -6,6 +6,7 @@ import { Line } from '@react-three/drei'
 import { Matrix4, type InstancedMesh } from 'three'
 import { Maximize, Minus, Plus } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
+import { OsIcon, osLabel } from '@/components/os-icon'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { isServing, type TwinNetwork } from './twin'
@@ -214,7 +215,12 @@ function DeviceLabels({ layout }: { layout: TwinLayout }) {
             width: LABEL_WIDTH_PX,
           }}
         >
-          <div className="truncate font-medium">{n.node.note ?? n.node.name}</div>
+          <div className="flex items-center justify-center gap-1 font-medium">
+            {n.node.kind === 'unset' && n.node.os && (
+              <OsIcon os={n.node.os} className="size-2.5 shrink-0" />
+            )}
+            <span className="truncate">{n.node.note ?? n.node.name}</span>
+          </div>
           <div className="truncate font-mono text-[10px] text-muted-foreground">
             {n.node.lanIp ?? n.node.ip}
           </div>
@@ -365,7 +371,13 @@ export default function TwinScene({ network, version }: { network: TwinNetwork; 
           {node.note && <div>{node.note}</div>}
           {node.location && <div className="text-muted-foreground">{node.location}</div>}
           <div className="text-muted-foreground">
-            {[kinds(node.kind), node.os, node.deviceModel].filter(Boolean).join(' · ')}
+            {[
+              node.kind === 'unset' && node.os ? null : kinds(node.kind),
+              node.os && osLabel(node.os),
+              node.deviceModel,
+            ]
+              .filter(Boolean)
+              .join(' · ')}
           </div>
           {node.ip && <div className="font-mono text-muted-foreground">{node.ip}</div>}
           {node.lanIp && (
