@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DeviceKindIcon } from '@/components/device-kind-icon'
+import { OsIcon, osLabel } from '@/components/os-icon'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
 import { DEVICE_KINDS, type ResolvedKind } from '@/lib/device-kind'
@@ -86,12 +87,18 @@ function TwinList({ network, className }: { network: TwinNetwork; className?: st
                     node.online ? 'bg-success' : 'bg-muted-foreground',
                   )}
                 />
-                <DeviceKindIcon
-                  kind={node.kind}
-                  className="size-3.5 shrink-0 text-muted-foreground"
-                />
+                {node.kind === 'unset' && node.os ? (
+                  <OsIcon os={node.os} className="size-3.5 shrink-0 text-muted-foreground" />
+                ) : (
+                  <DeviceKindIcon
+                    kind={node.kind}
+                    className="size-3.5 shrink-0 text-muted-foreground"
+                  />
+                )}
                 <span className="truncate">{node.name}</span>
-                <span className="sr-only">{kinds(node.kind)}</span>
+                <span className="sr-only">
+                  {node.kind === 'unset' && node.os ? osLabel(node.os) : kinds(node.kind)}
+                </span>
                 <span className="sr-only">
                   {node.online ? t('twinLegendOnline') : t('twinLegendOffline')}
                 </span>
