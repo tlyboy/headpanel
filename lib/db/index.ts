@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS node_meta (
   approved_at  TEXT,
   approved_by  TEXT,
   note         TEXT,
-  device_kind  TEXT
+  device_kind  TEXT,
+  location     TEXT
 );
 CREATE TABLE IF NOT EXISTS audit_log (
   id     INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -77,6 +78,9 @@ CREATE TABLE IF NOT EXISTS preauth_keys (
   if (!hasColumn('audit_log', 'actor')) sqlite.exec('ALTER TABLE audit_log ADD COLUMN actor TEXT')
   if (!hasColumn('node_meta', 'device_kind')) {
     sqlite.exec('ALTER TABLE node_meta ADD COLUMN device_kind TEXT')
+  }
+  if (!hasColumn('node_meta', 'location')) {
+    sqlite.exec('ALTER TABLE node_meta ADD COLUMN location TEXT')
   }
 
   // Groups were removed in favor of tags. A database that still holds groups has nodes tagged tag:ok-<slug>

@@ -15,8 +15,8 @@ import {
   visibleCount,
   type ColumnDef,
 } from '@/components/columns'
-import { inferDeviceKind } from '@/lib/device-kind'
 import { KindCell } from './kind-cell'
+import { LocationCell } from './location-cell'
 import { PendingCard } from './pending-card'
 import { NodeSelection, RowSelect, SelectAll, TagCell } from './selection'
 import { NodeRowActions } from './row-actions'
@@ -44,6 +44,7 @@ export default async function NodesPage({
     { key: 'id', label: 'ID' },
     { key: 'alias', label: t('alias') },
     { key: 'kind', label: t('kind') },
+    { key: 'location', label: t('location') },
     { key: 'ip', label: 'IP' },
     { key: 'lanIp', label: t('lanIp') },
     { key: 'online', label: common('online') },
@@ -61,11 +62,17 @@ export default async function NodesPage({
   const q = one('q').toLowerCase()
   const status = one('status')
   const tagFilter = one('tag')
+  const locationFilter = one('location')
+  const systemFilter = one('system')
 
   const all = await syncAndListNodes()
   // LAN addresses can only be read from the headscale database; for deployments on separate hosts, return an empty table, and display — in this column
   const netInfo = readNodeNetInfo()
   const tagOptions = declaredTags()
+  const sortedUnique = (values: (string | null | undefined)[]) =>
+    [...new Set(values.filter((v): v is string => Boolean(v)))].sort((a, b) => a.localeCompare(b))
+  const locationOptions = sortedUnique(all.map((n) => n.location))
+  const systemOptions = sortedUnique(all.map((n) => netInfo.get(n.id)?.os))
 
   // Pending nodes get their own card above the list; rejected ones are deleted from headscale.
   const pending = all.filter((n) => n.status === 'pending')
@@ -75,6 +82,8 @@ export default async function NodesPage({
     if (status === 'online' && !n.online) return false
     if (status === 'offline' && n.online) return false
     if (tagFilter && !n.tags.includes(tagFilter)) return false
+    if (locationFilter && n.location !== locationFilter) return false
+    if (systemFilter && netInfo.get(n.id)?.os !== systemFilter) return false
     if (!q) return true
     const hay = [
       n.givenName,
@@ -82,6 +91,8 @@ export default async function NodesPage({
       ...(netInfo.get(n.id)?.lanIps ?? []),
       ...n.tags,
       n.note ?? '',
+      n.location ?? '',
+      netInfo.get(n.id)?.os ?? '',
     ]
       .join(' ')
       .toLowerCase()
@@ -119,6 +130,16 @@ export default async function NodesPage({
             placeholder: t('allTags'),
             options: tagOptions.map((tag) => ({ value: tag, label: tagLabel(tag) })),
           },
+          {
+            name: 'location',
+            placeholder: t('allLocations'),
+            options: locationOptions.map((value) => ({ value, label: value })),
+          },
+          {
+            name: 'system',
+            placeholder: t('allSystems'),
+            options: systemOptions.map((value) => ({ value, label: value })),
+          },
         ]}
       />
 
@@ -130,7 +151,7 @@ export default async function NodesPage({
         defaultTag={approvedTag()}
       >
         <VirtualTable
-          minWidth="92rem"
+          minWidth="101rem"
           colSpan={visibleCount(columns, hidden) + 1}
           empty={t('empty')}
           head={
@@ -141,6 +162,7 @@ export default async function NodesPage({
               {show('id') && <TableHead className="w-12">ID</TableHead>}
               {show('alias') && <TableHead className="w-52">{t('alias')}</TableHead>}
               {show('kind') && <TableHead className="w-32">{t('kind')}</TableHead>}
+              {show('location') && <TableHead className="w-36">{t('location')}</TableHead>}
               {show('ip') && <TableHead className="w-32">IP</TableHead>}
               {show('lanIp') && <TableHead className="w-44">{t('lanIp')}</TableHead>}
               {show('online') && <TableHead className="w-20">{common('online')}</TableHead>}
@@ -168,9 +190,18 @@ export default async function NodesPage({
                   <TableCell className="py-1">
                     <KindCell
                       id={n.id}
-                      manual={n.deviceKind}
-                      inferred={inferDeviceKind(netInfo.get(n.id))}
+                      kind={n.deviceKind}
+                      system={
+                        [netInfo.get(n.id)?.os, netInfo.get(n.id)?.deviceModel]
+                          .filter(Boolean)
+                          .join(' · ') || undefined
+                      }
                     />
+                  </TableCell>
+                )}
+                {show('location') && (
+                  <TableCell className="py-1">
+                    <LocationCell id={n.id} location={n.location} options={locationOptions} />
                   </TableCell>
                 )}
                 {show('ip') && (

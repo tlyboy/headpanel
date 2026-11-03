@@ -78,10 +78,8 @@
     "noSubnet": "未配置内网路由",
     "noValidKey": "没有可用 key，新设备无法接入",
     "twinTitle": "网络现状",
-    "twinDesc": "设备按最近上报的内网地址归位，每 30 秒刷新",
-    "twinOther": "未上报内网地址",
-    "twinGateway": "网关 {name}",
-    "twinNoGateway": "无网关",
+    "twinDesc": "优先按位置分区，没有位置的按上报的内网地址分区。拖动平移，滚轮缩放",
+    "twinOther": "未分区",
     "twinOnline": "{online}/{total} 在线",
     "twinDown": "网关离线，网段不可达",
     "twinLegendOnline": "在线",
@@ -90,7 +88,10 @@
     "twinLanIp": "内网 {ip}",
     "twinLastSeen": "最后在线 {time}",
     "twinEmpty": "还没有设备接入",
-    "twinSceneLabel": "网络拓扑：{sites} 个分区，{online}/{total} 台设备在线"
+    "twinSceneLabel": "网络拓扑：{sites} 个分区，{online}/{total} 台设备在线",
+    "twinZoomIn": "放大",
+    "twinZoomOut": "缩小",
+    "twinFit": "显示全部"
   },
   "audit": {
     "title": "操作记录",
@@ -136,9 +137,14 @@
     "tagDeleted": "已删除标签 {tag}",
     "tagNoMatch": "没有匹配的标签",
     "kind": "类型",
-    "kindAuto": "自动（{kind}）",
-    "kindAutoHint": "根据设备上报的系统自动判断，可手动修改",
-    "kindBulkDone": "已修改 {count} 台设备的类型"
+    "kindBulkDone": "已修改 {count} 台设备的类型",
+    "location": "位置",
+    "locationSearch": "搜索或输入新位置",
+    "locationCreate": "设为“{location}”",
+    "locationClear": "清除位置",
+    "locationBulkDone": "已修改 {count} 台设备的位置",
+    "allLocations": "全部位置",
+    "allSystems": "全部系统"
   },
   "pending": {
     "title": "{count} 台设备等待审批",
@@ -290,7 +296,8 @@
     "tagIsDefault": "默认标签用于审批新设备，不能删除",
     "tagInUse": "还有 {count} 台设备使用该标签，先把它们的标签改掉",
     "lastTag": "{names} 只剩这一个标签，不能移出",
-    "kindAuto": "自动判断"
+    "locationTooLong": "位置不能超过 40 个字符",
+    "locationCleared": "已清除"
   },
   "subnets": {
     "title": "内网路由",
@@ -366,13 +373,24 @@
     "rule.delete": "删除访问规则",
     "tag.create": "创建标签",
     "tag.delete": "删除标签",
-    "node.setKind": "修改设备类型"
+    "node.setKind": "修改设备类型",
+    "node.setLocation": "修改设备位置"
   },
   "deviceKinds": {
     "server": "服务器",
-    "pc": "电脑",
+    "vm": "虚拟机",
+    "nas": "NAS",
+    "desktop": "台式机",
+    "laptop": "笔记本",
     "phone": "手机",
+    "tablet": "平板",
+    "router": "路由器",
+    "camera": "摄像头",
+    "printer": "打印机",
+    "sbc": "开发板",
     "iot": "物联网",
-    "unknown": "未知"
+    "industrial": "工控设备",
+    "other": "其他",
+    "unset": "未设置"
   }
 }

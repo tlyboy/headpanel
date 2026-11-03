@@ -7,11 +7,14 @@ import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { DeviceKindIcon } from '@/components/device-kind-icon'
 import { Skeleton } from '@/components/ui/skeleton'
-import { DEVICE_KINDS } from '@/lib/device-kind'
 import { cn } from '@/lib/utils'
-import type { TwinNetwork } from './twin'
+import { DEVICE_KINDS, type ResolvedKind } from '@/lib/device-kind'
+import { isServing, type TwinNetwork } from './twin'
 
 const REFRESH_MS = 30_000
+const KIND_ORDER: ResolvedKind[] = [...DEVICE_KINDS, 'unset']
+/** The hidden list exists for screen readers. Past this size the nodes page serves them better. */
+const HIDDEN_LIST_LIMIT = 300
 const WIDE_QUERY = '(min-width: 640px)'
 
 const TwinScene = dynamic(() => import('./twin-scene'), {
@@ -58,9 +61,16 @@ function TwinList({ network, className }: { network: TwinNetwork; className?: st
     <div className={cn('flex flex-col gap-4', className)}>
       {network.sites.map((site) => (
         <section key={site.key}>
-          <h3 className="font-mono text-sm font-medium">{site.cidr ?? t('twinOther')}</h3>
-          <p className={cn('text-xs', site.serving ? 'text-muted-foreground' : 'text-destructive')}>
-            {site.serving
+          <h3 className="text-sm font-medium">
+            {site.location ?? (site.cidrs.join(', ') || t('twinOther'))}
+          </h3>
+          <p
+            className={cn(
+              'text-xs',
+              isServing(site) ? 'text-muted-foreground' : 'text-destructive',
+            )}
+          >
+            {isServing(site)
               ? t('twinOnline', {
                   online: site.nodes.filter((n) => n.online).length,
                   total: site.nodes.length,
@@ -85,7 +95,7 @@ function TwinList({ network, className }: { network: TwinNetwork; className?: st
                 <span className="sr-only">
                   {node.online ? t('twinLegendOnline') : t('twinLegendOffline')}
                 </span>
-                {node.id === site.gatewayId && (
+                {site.gateways.some((g) => g.id === node.id) && (
                   <span className="shrink-0 text-xs text-muted-foreground">
                     {t('twinLegendGateway')}
                   </span>
@@ -107,6 +117,7 @@ export function NetworkTwin({ network, version }: { network: TwinNetwork; versio
 
   const nodes = network.sites.flatMap((s) => s.nodes)
   const empty = nodes.length === 0
+  const kindsInUse = KIND_ORDER.filter((kind) => nodes.some((n) => n.kind === kind))
 
   return (
     <Card className="flex min-h-[28rem] flex-1 flex-col">
@@ -120,7 +131,7 @@ export function NetworkTwin({ network, version }: { network: TwinNetwork; versio
             aria-hidden
             className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
           >
-            {DEVICE_KINDS.map((kind) => (
+            {kindsInUse.map((kind) => (
               <span key={kind} className="flex items-center gap-1">
                 <DeviceKindIcon kind={kind} className="size-3.5" />
                 {kinds(kind)}
@@ -160,7 +171,9 @@ export function NetworkTwin({ network, version }: { network: TwinNetwork; versio
                 <TwinScene network={network} version={version} />
               </div>
             )}
-            <TwinList network={network} className="sr-only" />
+            {nodes.length <= HIDDEN_LIST_LIMIT && (
+              <TwinList network={network} className="sr-only" />
+            )}
           </>
         )}
       </CardContent>

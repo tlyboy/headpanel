@@ -8,7 +8,7 @@ import { auditAfter } from '@/lib/db'
 import { addTag, declaredTags, removeTag, updateBaselineAndApply } from '@/lib/policy'
 import { approvedTag, defaultHsUserName } from '@/lib/default-zone'
 import { isDeviceKind, type DeviceKind } from '@/lib/device-kind'
-import { setNodeDeviceKind, setNodeNote, setNodeStatus } from '@/lib/nodes-sync'
+import { setNodeDeviceKind, setNodeLocation, setNodeNote, setNodeStatus } from '@/lib/nodes-sync'
 import {
   deleteNode,
   expireNode,
@@ -104,7 +104,30 @@ export async function setDeviceKindAction(
     const nodes = await Promise.all(ids.map(getNode))
     for (const node of nodes) {
       setNodeDeviceKind(node.id, kind)
-      auditAfter('node.setKind', nodeTarget(node), kind ? kinds(kind) : t('kindAuto'), {
+      auditAfter('node.setKind', nodeTarget(node), kinds(kind ?? 'unset'), {
+        actor: session.sub,
+      })
+    }
+    revalidatePath('/nodes')
+    revalidatePath('/dashboard')
+    return { ok: true }
+  } catch (e) {
+    return fail(e, t('unknown'))
+  }
+}
+
+export async function setDeviceLocationAction(
+  ids: string[],
+  location: string | null,
+): Promise<ActionResult> {
+  const [session, t] = await Promise.all([requireSession(), getTranslations('actionErrors')])
+  const value = location?.trim() || null
+  if (value && value.length > 40) return { ok: false, error: t('locationTooLong') }
+  try {
+    const nodes = await Promise.all(ids.map(getNode))
+    for (const node of nodes) {
+      setNodeLocation(node.id, value)
+      auditAfter('node.setLocation', nodeTarget(node), value ?? t('locationCleared'), {
         actor: session.sub,
       })
     }
