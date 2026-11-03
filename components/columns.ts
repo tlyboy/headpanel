@@ -15,6 +15,8 @@ export interface ColumnDef {
   label: string
   /** Columns that cannot be hidden, such as the actions column, are omitted from the dropdown */
   locked?: boolean
+  /** Starts hidden until the user changes their columns, so a narrow screen doesn't begin with a scrollbar */
+  defaultHidden?: boolean
 }
 
 export function columnCookieName(page: string): string {
@@ -30,6 +32,12 @@ export function parseHidden(raw: string | undefined): Set<string> {
       .map((s) => s.trim())
       .filter(Boolean),
   )
+}
+
+/** No cookie means the user never chose, which is different from an empty cookie: they chose to show everything. */
+export function resolveHidden(columns: ColumnDef[], raw: string | undefined): Set<string> {
+  if (raw !== undefined) return parseHidden(raw)
+  return new Set(columns.filter((c) => c.defaultHidden).map((c) => c.key))
 }
 
 export function serializeHidden(hidden: Set<string>): string {

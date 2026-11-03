@@ -9,8 +9,16 @@ import { buildTwin } from './twin-data'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Link } from '@/i18n/navigation'
 
-export default async function DashboardPage() {
-  const [, t] = await Promise.all([requireSession(), getTranslations('dashboard')])
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>
+}) {
+  const [, t, { tag }] = await Promise.all([
+    requireSession(),
+    getTranslations('dashboard'),
+    searchParams,
+  ])
   const [nodes, allKeys, version] = await Promise.all([
     syncAndListNodes(),
     listPreAuthKeys(),
@@ -121,7 +129,11 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      <NetworkTwin network={buildTwin(nodes, readNodeNetInfo())} version={version.version} />
+      <NetworkTwin
+        network={buildTwin(nodes, readNodeNetInfo())}
+        version={version.version}
+        initialTag={typeof tag === 'string' ? tag : null}
+      />
     </div>
   )
 }

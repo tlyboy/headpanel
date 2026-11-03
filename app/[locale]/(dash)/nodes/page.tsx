@@ -11,7 +11,7 @@ import { ColumnFilter } from '@/components/column-filter'
 import {
   columnCookieName,
   makeIsVisible,
-  parseHidden,
+  resolveHidden,
   visibleCount,
   type ColumnDef,
 } from '@/components/columns'
@@ -27,6 +27,26 @@ import { VirtualTable } from '@/components/virtual-table'
 import { STICKY_ACTIONS } from '@/lib/table'
 
 const PAGE = 'nodes'
+/** Mirrors the header widths below. The rest is the checkbox, the actions and a usable note column. */
+const COLUMN_REM: Record<string, number> = {
+  id: 3,
+  alias: 11,
+  system: 6,
+  location: 7,
+  ip: 8,
+  lanIp: 10,
+  online: 5,
+  tags: 12,
+  lastSeen: 11,
+}
+const FIXED_REM = 2.5 + 3.25 + 11
+
+function minWidthRem(show: (key: string) => boolean) {
+  return Object.entries(COLUMN_REM).reduce(
+    (sum, [key, rem]) => (show(key) ? sum + rem : sum),
+    FIXED_REM,
+  )
+}
 
 function SystemCell({ os }: { os: string | null | undefined }) {
   if (!os) return <span className="text-muted-foreground">—</span>
@@ -51,7 +71,7 @@ export default async function NodesPage({
     cookies(),
   ])
   const columns: ColumnDef[] = [
-    { key: 'id', label: 'ID' },
+    { key: 'id', label: 'ID', defaultHidden: true },
     { key: 'alias', label: t('alias') },
     { key: 'system', label: t('system') },
     { key: 'location', label: t('location') },
@@ -60,10 +80,10 @@ export default async function NodesPage({
     { key: 'online', label: common('online') },
     { key: 'note', label: t('note') },
     { key: 'tags', label: t('tags') },
-    { key: 'lastSeen', label: t('lastSeen') },
+    { key: 'lastSeen', label: t('lastSeen'), defaultHidden: true },
     { key: 'actions', label: t('actions'), locked: true },
   ]
-  const hidden = parseHidden(cookieStore.get(columnCookieName(PAGE))?.value)
+  const hidden = resolveHidden(columns, cookieStore.get(columnCookieName(PAGE))?.value)
   const show = makeIsVisible(columns, hidden)
   const one = (k: string) => {
     const v = sp[k]
@@ -161,7 +181,7 @@ export default async function NodesPage({
         defaultTag={approvedTag()}
       >
         <VirtualTable
-          minWidth="99rem"
+          minWidth={`${minWidthRem(show)}rem`}
           colSpan={visibleCount(columns, hidden) + 1}
           empty={t('empty')}
           head={
@@ -170,14 +190,14 @@ export default async function NodesPage({
                 <SelectAll />
               </TableHead>
               {show('id') && <TableHead className="w-12">ID</TableHead>}
-              {show('alias') && <TableHead className="w-52">{t('alias')}</TableHead>}
-              {show('system') && <TableHead className="w-28">{t('system')}</TableHead>}
-              {show('location') && <TableHead className="w-36">{t('location')}</TableHead>}
+              {show('alias') && <TableHead className="w-44">{t('alias')}</TableHead>}
+              {show('system') && <TableHead className="w-24">{t('system')}</TableHead>}
+              {show('location') && <TableHead className="w-28">{t('location')}</TableHead>}
               {show('ip') && <TableHead className="w-32">IP</TableHead>}
-              {show('lanIp') && <TableHead className="w-44">{t('lanIp')}</TableHead>}
+              {show('lanIp') && <TableHead className="w-40">{t('lanIp')}</TableHead>}
               {show('online') && <TableHead className="w-20">{common('online')}</TableHead>}
               {show('note') && <TableHead>{t('note')}</TableHead>}
-              {show('tags') && <TableHead className="w-56">{t('tags')}</TableHead>}
+              {show('tags') && <TableHead className="w-48">{t('tags')}</TableHead>}
               {show('lastSeen') && <TableHead className="w-44">{t('lastSeen')}</TableHead>}
               {/* Leave the header blank: a column of ... menus needs no title, and the saved width goes to the data */}
               <TableHead className={STICKY_ACTIONS} aria-label={t('actions')} />

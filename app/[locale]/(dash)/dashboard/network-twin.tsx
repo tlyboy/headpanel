@@ -4,6 +4,7 @@ import { useEffect, useState, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { CircleHelp } from 'lucide-react'
+import { Box, List } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -76,28 +77,43 @@ function TwinList({ network, className }: { network: TwinNetwork; className?: st
                 })
               : t('twinDown')}
           </p>
-          <ul className="mt-1 grid gap-1 text-sm sm:grid-cols-2">
+          <ul className="mt-1 grid gap-2 text-sm sm:grid-cols-2 xl:grid-cols-3">
             {site.nodes.map((node) => (
-              <li key={node.id} className="flex min-w-0 items-center gap-2">
+              <li key={node.id} className="flex min-w-0 items-start gap-2">
                 <span
                   className={cn(
-                    'size-2 shrink-0 rounded-full',
+                    'mt-1.5 size-2 shrink-0 rounded-full',
                     node.online ? 'bg-success' : 'bg-muted-foreground',
                   )}
                 />
                 {node.os && (
-                  <OsIcon os={node.os} className="size-3.5 shrink-0 text-muted-foreground" />
+                  <OsIcon os={node.os} className="mt-0.5 size-3.5 shrink-0 text-muted-foreground" />
                 )}
-                <span className="truncate">{node.name}</span>
-                {node.os && <span className="sr-only">{osLabel(node.os)}</span>}
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-baseline gap-2">
+                    <span className="truncate">{node.note ?? node.name}</span>
+                    {site.gateways.some((g) => g.id === node.id) && (
+                      <span className="shrink-0 text-xs text-muted-foreground">
+                        {t('twinLegendGateway')}
+                      </span>
+                    )}
+                  </div>
+                  <div className="truncate text-xs text-muted-foreground">
+                    {[
+                      node.note && node.name,
+                      node.lanIp,
+                      node.ip,
+                      node.os && [osLabel(node.os), node.deviceModel].filter(Boolean).join(' '),
+                      node.tags.join(', '),
+                      node.location,
+                    ]
+                      .filter(Boolean)
+                      .join(' · ')}
+                  </div>
+                </div>
                 <span className="sr-only">
                   {node.online ? t('twinLegendOnline') : t('twinLegendOffline')}
                 </span>
-                {site.gateways.some((g) => g.id === node.id) && (
-                  <span className="shrink-0 text-xs text-muted-foreground">
-                    {t('twinLegendGateway')}
-                  </span>
-                )}
               </li>
             ))}
           </ul>
@@ -110,14 +126,18 @@ function TwinList({ network, className }: { network: TwinNetwork; className?: st
 export function NetworkTwin({
   network: fullNetwork,
   version,
+  initialTag,
 }: {
   network: TwinNetwork
   version: string
+  initialTag: string | null
 }) {
   const t = useTranslations('dashboard')
-  const mode = useMode()
+  const available = useMode()
+  const [listView, setListView] = useState(false)
+  const mode: Mode = available === 'scene' && listView ? 'list' : available
   useAutoRefresh()
-  const [pickedTag, setPickedTag] = useState<string | null>(null)
+  const [pickedTag, setPickedTag] = useState(initialTag)
   const allNodes = fullNetwork.sites.flatMap((s) => s.nodes)
   const tagCounts = new Map<string, number>()
   for (const n of allNodes) for (const t of n.tags) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1)
@@ -125,6 +145,14 @@ export function NetworkTwin({
   // The tag may be gone after a refresh, and the filter then simply clears
   const tag = pickedTag && tags.includes(pickedTag) ? pickedTag : null
   const network = tag ? filterByTag(fullNetwork, tag) : fullNetwork
+
+  const pickTag = (next: string | null) => {
+    setPickedTag(next)
+    const url = new URL(window.location.href)
+    if (next) url.searchParams.set('tag', next)
+    else url.searchParams.delete('tag')
+    window.history.replaceState(null, '', url)
+  }
 
   const nodes = network.sites.flatMap((s) => s.nodes)
   const empty = nodes.length === 0
@@ -172,35 +200,59 @@ export function NetworkTwin({
           </div>
         )}
       </CardHeader>
-      {tags.length > 0 && (
-        <div
-          role="group"
-          aria-label={t('twinTagFilter')}
-          className="flex flex-wrap items-center gap-1.5 px-4 pb-2 text-xs text-muted-foreground"
-        >
-          <span aria-hidden>{t('twinTagFilter')}</span>
-          {[null, ...tags].map((option) => (
-            <Button
-              key={option ?? 'all'}
-              variant={option === tag ? 'default' : 'outline'}
-              size="xs"
-              aria-pressed={option === tag}
-              className="max-sm:h-9 max-sm:px-3"
-              onClick={() => setPickedTag(option)}
-            >
-              {option ?? t('twinTagAll')}
-              <span className="tabular-nums opacity-70">
-                {option ? tagCounts.get(option) : allNodes.length}
-              </span>
-            </Button>
-          ))}
-        </div>
-      )}
+      <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-2">
+        {tags.length > 0 && (
+          <div
+            role="group"
+            aria-label={t('twinTagFilter')}
+            className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"
+          >
+            <span aria-hidden>{t('twinTagFilter')}</span>
+            {[null, ...tags].map((option) => (
+              <Button
+                key={option ?? 'all'}
+                variant={option === tag ? 'default' : 'outline'}
+                size="xs"
+                aria-pressed={option === tag}
+                className="max-sm:h-9 max-sm:px-3"
+                onClick={() => pickTag(option)}
+              >
+                {option ?? t('twinTagAll')}
+                <span className="tabular-nums opacity-70">
+                  {option ? tagCounts.get(option) : allNodes.length}
+                </span>
+              </Button>
+            ))}
+          </div>
+        )}
+        {available === 'scene' && !empty && (
+          <div role="group" aria-label={t('twinViewLabel')} className="flex items-center gap-1">
+            {[
+              { list: false, label: t('twinViewScene'), Icon: Box },
+              { list: true, label: t('twinViewList'), Icon: List },
+            ].map(({ list, label, Icon }) => (
+              <Button
+                key={label}
+                variant={listView === list ? 'default' : 'outline'}
+                size="xs"
+                aria-pressed={listView === list}
+                onClick={() => setListView(list)}
+              >
+                <Icon />
+                {label}
+              </Button>
+            ))}
+          </div>
+        )}
+      </div>
       <CardContent className="relative min-h-0 flex-1">
         {empty ? (
           <p className="text-sm text-muted-foreground">{t('twinEmpty')}</p>
         ) : mode === 'list' ? (
-          <TwinList network={network} />
+          <TwinList
+            network={network}
+            className={available === 'scene' ? 'absolute inset-0 overflow-y-auto px-4' : undefined}
+          />
         ) : (
           <>
             {mode === 'scene' && (

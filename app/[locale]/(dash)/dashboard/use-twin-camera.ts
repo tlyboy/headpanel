@@ -27,7 +27,7 @@ import {
 const MAX_ZOOM = 90
 const WHEEL_SPEED = 0.0015
 const BUTTON_FACTOR = 1.35
-const KEY_PAN_PX = 80
+const PAN_STEP_PX = 80
 export const CAMERA_DISTANCE = 1000
 
 // Below these zooms the text would be unreadable, so hiding it is also what keeps huge networks fast.
@@ -40,7 +40,7 @@ interface CameraState {
   zoom: number
 }
 
-const KEY_PAN: Record<string, [number, number]> = {
+const KEY_PAN: Record<string, [-1 | 0 | 1, -1 | 0 | 1]> = {
   ArrowLeft: [-1, 0],
   ArrowRight: [1, 0],
   ArrowUp: [0, 1],
@@ -191,16 +191,20 @@ export function useTwinCamera(
     if (view) zoomAt(BUTTON_FACTOR ** direction, view.width / 2, view.height / 2)
   }
 
+  const panButton = (dx: -1 | 0 | 1, dy: -1 | 0 | 1) => {
+    const c = camera.current
+    c.u += (dx * PAN_STEP_PX) / c.zoom
+    c.v += (dy * PAN_STEP_PX) / c.zoom
+    moved.current = true
+    clamp()
+    apply()
+  }
+
   const handlers = {
     onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
-      const [dx, dy] = KEY_PAN[e.key] ?? [0, 0]
-      if (dx || dy) {
-        const c = camera.current
-        c.u += (dx * KEY_PAN_PX) / c.zoom
-        c.v += (dy * KEY_PAN_PX) / c.zoom
-        moved.current = true
-        clamp()
-        apply()
+      const direction = KEY_PAN[e.key]
+      if (direction) {
+        panButton(...direction)
       } else if (e.key === '+' || e.key === '=') {
         zoomButton(1)
       } else if (e.key === '-') {
@@ -233,5 +237,5 @@ export function useTwinCamera(
     },
   }
 
-  return { attach, handlers, fit, zoomButton, isDragging: () => drag.current !== null }
+  return { attach, handlers, fit, zoomButton, panButton, isDragging: () => drag.current !== null }
 }

@@ -4,7 +4,7 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalS
 import { Canvas, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Line } from '@react-three/drei'
 import { Matrix4, type InstancedMesh } from 'three'
-import { Maximize, Minus, Plus } from 'lucide-react'
+import { ArrowDown, ArrowLeft, ArrowRight, ArrowUp, Maximize, Minus, Plus } from 'lucide-react'
 import { useFormatter, useTranslations } from 'next-intl'
 import { osLabel } from '@/components/os-icon'
 import { Button } from '@/components/ui/button'
@@ -33,6 +33,12 @@ import { CAMERA_DISTANCE, useTwinCamera } from './use-twin-camera'
 /** A shadow map stretched over a huge scene looks bad and costs a second pass of every box. */
 const SHADOW_DEVICE_LIMIT = 300
 const HOVER_PLATE_SIZE = 1.5
+const PAN_BUTTONS = [
+  { key: 'twinPanUp', Icon: ArrowUp, dx: 0, dy: 1, cell: 'col-start-2' },
+  { key: 'twinPanLeft', Icon: ArrowLeft, dx: -1, dy: 0, cell: 'col-start-1' },
+  { key: 'twinPanDown', Icon: ArrowDown, dx: 0, dy: -1, cell: '' },
+  { key: 'twinPanRight', Icon: ArrowRight, dx: 1, dy: 0, cell: '' },
+] as const
 /** Half of the tooltip's max-w-64 plus a margin, so it never leaves the clipped scene sideways. */
 const TOOLTIP_HALF_WIDTH_PX = 136
 /** Above this distance from the top the tooltip fits over the pointer, otherwise it goes below. */
@@ -358,36 +364,53 @@ export default function TwinScene({
             <ZoneTitles layout={layout} />
           </div>
           <div
-            className="absolute right-2 bottom-2 flex flex-col gap-1"
+            className="absolute right-2 bottom-2 flex items-end gap-1"
             onPointerDown={(e) => e.stopPropagation()}
           >
-            <Button
-              variant="outline"
-              size="icon-sm"
-              aria-label={t('twinZoomIn')}
-              title={t('twinZoomIn')}
-              onClick={() => camera.zoomButton(1)}
-            >
-              <Plus />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              aria-label={t('twinZoomOut')}
-              title={t('twinZoomOut')}
-              onClick={() => camera.zoomButton(-1)}
-            >
-              <Minus />
-            </Button>
-            <Button
-              variant="outline"
-              size="icon-sm"
-              aria-label={t('twinFit')}
-              title={t('twinFit')}
-              onClick={camera.fit}
-            >
-              <Maximize />
-            </Button>
+            <div className="grid grid-cols-3 gap-1">
+              {PAN_BUTTONS.map(({ key, Icon, dx, dy, cell }) => (
+                <Button
+                  key={key}
+                  variant="outline"
+                  size="icon-sm"
+                  className={cell}
+                  aria-label={t(key)}
+                  title={t(key)}
+                  onClick={() => camera.panButton(dx, dy)}
+                >
+                  <Icon />
+                </Button>
+              ))}
+            </div>
+            <div className="flex flex-col gap-1">
+              <Button
+                variant="outline"
+                size="icon-sm"
+                aria-label={t('twinZoomIn')}
+                title={t('twinZoomIn')}
+                onClick={() => camera.zoomButton(1)}
+              >
+                <Plus />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                aria-label={t('twinZoomOut')}
+                title={t('twinZoomOut')}
+                onClick={() => camera.zoomButton(-1)}
+              >
+                <Minus />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon-sm"
+                aria-label={t('twinFit')}
+                title={t('twinFit')}
+                onClick={camera.fit}
+              >
+                <Maximize />
+              </Button>
+            </div>
           </div>
         </>
       )}
