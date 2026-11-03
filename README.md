@@ -6,11 +6,12 @@
 | --------- | --------------------------------- |
 | Framework | Next.js 16                        |
 | UI        | React 19, Tailwind CSS, shadcn/ui |
+| 3D        | three.js, React Three Fiber       |
 | I18n      | next-intl                         |
 | Data      | SQLite, Drizzle ORM               |
 
-- **Nodes** — approve, reject, rename, tag, annotate and delete, with search and
-  filters. Each node's LAN address is shown next to its tailnet IP when the panel
+- **Nodes** — approve, reject, rename, tag, annotate, set a location and delete,
+  with search and filters. Each node's LAN address and OS are shown when the panel
   can read Headscale's database.
 - **Subnet routes** — approve or revoke advertised routes, and choose which node
   serves a prefix when several advertise the same one.
@@ -22,6 +23,11 @@
   a policy baseline file, so rules you write by hand sit next to them.
 - **Audit log** — every panel action, searchable, filterable and banded by what
   the action does.
+- **Dashboard** — online nodes, subnet coverage, pending approvals, valid keys,
+  and a 3D view of the network. Devices are zoned by the location you set, then by
+  LAN subnet, and shaped by the OS they report. Pan and zoom by mouse or keyboard.
+  Filter by tag: selecting several shows only the devices with all of them, and
+  the filter stays in the URL so you can share it.
 - **Overview** — online nodes, subnet coverage, pending approvals and valid keys,
   over 30 days of activity.
 - **English and 简体中文.**
@@ -59,8 +65,8 @@ change tags or subnet routes, and deploys the whole file each time. See
 [the deployment guide](docs/deployment.md#acl-policy-baseline).
 
 `HEADSCALE_DB_PATH` is optional and only useful when the panel runs on the
-Headscale host. Headscale's REST API does not expose a node's LAN address, so
-reading its SQLite directly is the only way to show one. It falls back to the
+Headscale host. Headscale's REST API does not expose a node's LAN address or OS, so
+reading its SQLite directly is the only way to show them. It falls back to the
 path in `HEADSCALE_CONFIG_PATH`, then to `/var/lib/headscale/db.sqlite`; if the
 file can't be read those columns are simply left empty.
 
