@@ -10,12 +10,10 @@ import {
   type TwinLayout,
 } from './twin-layout'
 
-export const GATEWAY_SCALE = 1.25
 export const GATEWAY_PLATE_HEIGHT = 0.06
 const GATEWAY_PLATE_SIZE = 1.1
 const HIT_BOX_SIZE = 0.95
-const SCREEN_SHADE = 0.3
-const DETAIL_LIGHTEN = 0.65
+const ACCENT_SHADE = 0.45
 const DOWN_TINT = 0.35
 
 export interface BoxInstance {
@@ -39,7 +37,7 @@ export interface TwinInstances {
 }
 
 export function gatewayTop(placed: PlacedNode) {
-  return PLATFORM_TOP + GATEWAY_PLATE_HEIGHT + modelHeight(placed.node.os) * GATEWAY_SCALE
+  return PLATFORM_TOP + GATEWAY_PLATE_HEIGHT + modelHeight(placed.node.os)
 }
 
 function outlineSite(
@@ -75,12 +73,7 @@ function outlineSite(
 export function buildInstances(layout: TwinLayout, colors: TwinColors): TwinInstances {
   const online = new Color(colors.success)
   const offline = new Color(colors['muted-foreground'])
-  const white = new Color('#fff')
-  const shades = (body: Color) => ({
-    body,
-    screen: body.clone().multiplyScalar(SCREEN_SHADE),
-    detail: body.clone().lerp(white, DETAIL_LIGHTEN),
-  })
+  const shades = (body: Color) => ({ body, accent: body.clone().multiplyScalar(ACCENT_SHADE) })
   const onlineTones = shades(online)
   const offlineTones = shades(offline)
   const primary = new Color(colors.primary)
@@ -107,7 +100,6 @@ export function buildInstances(layout: TwinLayout, colors: TwinColors): TwinInst
 
     for (const placed of nodes) {
       const [nx, nz] = [x + placed.x, z + placed.z]
-      const scale = placed.isGateway ? GATEWAY_SCALE : 1
       const baseY = PLATFORM_TOP + (placed.isGateway ? GATEWAY_PLATE_HEIGHT : 0)
       if (placed.isGateway) {
         solids.push({
@@ -120,19 +112,14 @@ export function buildInstances(layout: TwinLayout, colors: TwinColors): TwinInst
       const tones = placed.node.online ? onlineTones : offlineTones
       for (const part of systemModel(placed.node.os)) {
         solids.push({
-          position: [
-            nx + part.position[0] * scale,
-            baseY + part.position[1] * scale,
-            nz + part.position[2] * scale,
-          ],
-          size: [part.size[0] * scale, part.size[1] * scale, part.size[2] * scale],
+          position: [nx + part.position[0], baseY + part.position[1], nz + part.position[2]],
+          size: part.size,
           color: tones[part.tone],
         })
       }
-      const hitSize = HIT_BOX_SIZE * scale
       hitBoxes.push({
-        position: [nx, baseY + hitSize / 2, nz],
-        size: [hitSize, hitSize, hitSize],
+        position: [nx, baseY + HIT_BOX_SIZE / 2, nz],
+        size: [HIT_BOX_SIZE, HIT_BOX_SIZE, HIT_BOX_SIZE],
         color: body,
       })
       hitTargets.push({ key: `${site.key}/${placed.node.id}`, placed, x: nx, z: nz })
