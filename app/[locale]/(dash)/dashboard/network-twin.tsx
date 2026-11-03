@@ -118,7 +118,10 @@ export function NetworkTwin({
   const mode = useMode()
   useAutoRefresh()
   const [pickedTag, setPickedTag] = useState<string | null>(null)
-  const tags = [...new Set(fullNetwork.sites.flatMap((s) => s.nodes.flatMap((n) => n.tags)))].sort()
+  const allNodes = fullNetwork.sites.flatMap((s) => s.nodes)
+  const tagCounts = new Map<string, number>()
+  for (const n of allNodes) for (const t of n.tags) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1)
+  const tags = [...tagCounts.keys()].sort()
   // The tag may be gone after a refresh, and the filter then simply clears
   const tag = pickedTag && tags.includes(pickedTag) ? pickedTag : null
   const network = tag ? filterByTag(fullNetwork, tag) : fullNetwork
@@ -170,17 +173,29 @@ export function NetworkTwin({
         )}
       </CardHeader>
       {tags.length > 0 && (
-        <div className="flex flex-wrap items-center gap-1.5 px-4 pb-2 text-xs text-muted-foreground">
-          <span>{t('twinTagFilter')}</span>
+        <div
+          role="group"
+          aria-label={t('twinTagFilter')}
+          className="flex flex-wrap items-center gap-1.5 px-4 pb-2 text-xs text-muted-foreground"
+        >
+          <span aria-hidden>{t('twinTagFilter')}</span>
           {[null, ...tags].map((option) => (
             <Button
               key={option ?? 'all'}
               variant={option === tag ? 'default' : 'outline'}
               size="xs"
               aria-pressed={option === tag}
+              className={cn(
+                'max-sm:h-9 max-sm:px-3',
+                // The primary token only reaches 3:1 against its foreground, too low for 12px text
+                option === tag && 'bg-foreground text-background hover:bg-foreground/90',
+              )}
               onClick={() => setPickedTag(option)}
             >
               {option ?? t('twinTagAll')}
+              <span className="tabular-nums opacity-70">
+                {option ? tagCounts.get(option) : allNodes.length}
+              </span>
             </Button>
           ))}
         </div>
@@ -193,16 +208,16 @@ export function NetworkTwin({
         ) : (
           <>
             {mode === 'scene' && (
-              <div
-                role="img"
-                aria-label={t('twinSceneLabel', {
+              <TwinScene
+                network={network}
+                version={version}
+                fitKey={tag}
+                label={t('twinSceneLabel', {
                   sites: network.sites.length,
                   online: nodes.filter((n) => n.online).length,
                   total: nodes.length,
                 })}
-              >
-                <TwinScene network={network} version={version} fitKey={tag} />
-              </div>
+              />
             )}
             {nodes.length <= HIDDEN_LIST_LIMIT && (
               <TwinList network={network} className="sr-only" />

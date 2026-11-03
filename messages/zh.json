@@ -91,7 +91,7 @@
     "twinLanIp": "内网 {ip}",
     "twinLastSeen": "最后在线 {time}",
     "twinEmpty": "还没有设备接入",
-    "twinSceneLabel": "网络拓扑：{sites} 个分区，{online}/{total} 台设备在线",
+    "twinSceneLabel": "网络拓扑：{sites} 个分区，{online}/{total} 台设备在线。方向键平移，加减键缩放",
     "twinZoomIn": "放大",
     "twinZoomOut": "缩小",
     "twinFit": "显示全部"

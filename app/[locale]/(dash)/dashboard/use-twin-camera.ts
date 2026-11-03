@@ -5,6 +5,7 @@ import {
   useEffect,
   useLayoutEffect,
   useRef,
+  type KeyboardEvent,
   type PointerEvent,
   type RefObject,
 } from 'react'
@@ -26,6 +27,7 @@ import {
 const MAX_ZOOM = 90
 const WHEEL_SPEED = 0.0015
 const BUTTON_FACTOR = 1.35
+const KEY_PAN_PX = 80
 export const CAMERA_DISTANCE = 1000
 
 // Below these zooms the text would be unreadable, so hiding it is also what keeps huge networks fast.
@@ -36,6 +38,13 @@ interface CameraState {
   u: number
   v: number
   zoom: number
+}
+
+const KEY_PAN: Record<string, [number, number]> = {
+  ArrowLeft: [-1, 0],
+  ArrowRight: [1, 0],
+  ArrowUp: [0, 1],
+  ArrowDown: [0, -1],
 }
 
 /** Extra room around the view so labels near the edge are ready before they scroll in. */
@@ -178,7 +187,29 @@ export function useTwinCamera(
     [apply],
   )
 
+  const zoomButton = (direction: 1 | -1) => {
+    if (view) zoomAt(BUTTON_FACTOR ** direction, view.width / 2, view.height / 2)
+  }
+
   const handlers = {
+    onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
+      const [dx, dy] = KEY_PAN[e.key] ?? [0, 0]
+      if (dx || dy) {
+        const c = camera.current
+        c.u += (dx * KEY_PAN_PX) / c.zoom
+        c.v += (dy * KEY_PAN_PX) / c.zoom
+        moved.current = true
+        clamp()
+        apply()
+      } else if (e.key === '+' || e.key === '=') {
+        zoomButton(1)
+      } else if (e.key === '-') {
+        zoomButton(-1)
+      } else {
+        return
+      }
+      e.preventDefault()
+    },
     onPointerDown: (e: PointerEvent<HTMLDivElement>) => {
       if (e.button !== 0) return
       drag.current = { x: e.clientX, y: e.clientY }
@@ -200,10 +231,6 @@ export function useTwinCamera(
       drag.current = null
       e.currentTarget.style.cursor = ''
     },
-  }
-
-  const zoomButton = (direction: 1 | -1) => {
-    if (view) zoomAt(BUTTON_FACTOR ** direction, view.width / 2, view.height / 2)
   }
 
   return { attach, handlers, fit, zoomButton, isDragging: () => drag.current !== null }

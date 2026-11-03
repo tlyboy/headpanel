@@ -33,6 +33,10 @@ import { CAMERA_DISTANCE, useTwinCamera } from './use-twin-camera'
 /** A shadow map stretched over a huge scene looks bad and costs a second pass of every box. */
 const SHADOW_DEVICE_LIMIT = 300
 const HOVER_PLATE_SIZE = 1.5
+/** Half of the tooltip's max-w-64 plus a margin, so it never leaves the clipped scene sideways. */
+const TOOLTIP_HALF_WIDTH_PX = 136
+/** Above this distance from the top the tooltip fits over the pointer, otherwise it goes below. */
+const TOOLTIP_FLIP_Y_PX = 180
 
 function useViewSize() {
   const ref = useRef<HTMLDivElement>(null)
@@ -208,7 +212,7 @@ function DeviceLabels({ layout }: { layout: TwinLayout }) {
           key={n.node.id}
           className={cn(
             'absolute -translate-x-1/2 text-center text-[11px] leading-tight',
-            !n.node.online && 'text-muted-foreground',
+            !n.node.online && 'text-foreground/70',
           )}
           style={{
             ...labelPosition(x + n.x, PLATFORM_TOP, z + n.z + LABEL_OFFSET_Z),
@@ -216,7 +220,7 @@ function DeviceLabels({ layout }: { layout: TwinLayout }) {
           }}
         >
           <div className="truncate font-medium">{n.node.note ?? n.node.name}</div>
-          <div className="truncate font-mono text-[10px] text-muted-foreground">
+          <div className="truncate font-mono text-[10px] text-foreground/70">
             {n.node.lanIp ?? n.node.ip}
           </div>
         </div>
@@ -240,13 +244,17 @@ function ZoneTitles({ layout }: { layout: TwinLayout }) {
           .filter(Boolean)
           .join(' · ')
     return (
-      <div key={site.key} data-zone className="absolute top-0 left-0 pb-1 text-xs leading-tight">
-        <div className="w-fit max-w-full truncate rounded-sm font-medium group-data-[detail=off]/titles:bg-card/85 group-data-[detail=off]/titles:px-1">
+      <div
+        key={site.key}
+        data-zone
+        className="absolute top-0 left-0 flex flex-col items-start pb-1 text-xs leading-tight"
+      >
+        <div className="max-w-full truncate rounded-sm bg-card/85 px-1 font-medium">
           {site.location ?? (subnet || t('twinOther'))}
         </div>
         <div
           className={cn(
-            'truncate group-data-[detail=off]/titles:hidden',
+            'max-w-full truncate rounded-sm bg-card/85 px-1 group-data-[detail=off]/titles:hidden',
             down.length ? 'text-destructive' : 'text-muted-foreground',
           )}
         >
@@ -261,11 +269,13 @@ export default function TwinScene({
   network,
   version,
   fitKey,
+  label,
 }: {
   network: TwinNetwork
   version: string
   /** The view refits when this changes, because the filtered scene is a different shape. */
   fitKey: string | null
+  label: string
 }) {
   const t = useTranslations('dashboard')
   const format = useFormatter()
@@ -294,7 +304,10 @@ export default function TwinScene({
   return (
     <div
       ref={containerRef}
-      className="absolute inset-0 cursor-grab touch-none overflow-hidden select-none"
+      role="group"
+      aria-label={label}
+      tabIndex={0}
+      className="absolute inset-0 cursor-grab touch-none overflow-hidden outline-none select-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-inset"
       onPointerLeave={() => setHover(null)}
       {...camera.handlers}
     >
@@ -352,6 +365,7 @@ export default function TwinScene({
               variant="outline"
               size="icon-sm"
               aria-label={t('twinZoomIn')}
+              title={t('twinZoomIn')}
               onClick={() => camera.zoomButton(1)}
             >
               <Plus />
@@ -360,11 +374,18 @@ export default function TwinScene({
               variant="outline"
               size="icon-sm"
               aria-label={t('twinZoomOut')}
+              title={t('twinZoomOut')}
               onClick={() => camera.zoomButton(-1)}
             >
               <Minus />
             </Button>
-            <Button variant="outline" size="icon-sm" aria-label={t('twinFit')} onClick={camera.fit}>
+            <Button
+              variant="outline"
+              size="icon-sm"
+              aria-label={t('twinFit')}
+              title={t('twinFit')}
+              onClick={camera.fit}
+            >
               <Maximize />
             </Button>
           </div>
@@ -374,8 +395,17 @@ export default function TwinScene({
       {hover && node && (
         <div
           role="tooltip"
-          className="pointer-events-none absolute z-20 w-max max-w-64 -translate-x-1/2 -translate-y-full rounded-md border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md"
-          style={{ left: hover.x, top: hover.y - 12 }}
+          className={cn(
+            'pointer-events-none absolute z-20 w-max max-w-64 -translate-x-1/2 rounded-md border bg-popover px-3 py-2 text-xs text-popover-foreground shadow-md',
+            hover.y >= TOOLTIP_FLIP_Y_PX && '-translate-y-full',
+          )}
+          style={{
+            left: Math.min(
+              Math.max(hover.x, TOOLTIP_HALF_WIDTH_PX),
+              Math.max(TOOLTIP_HALF_WIDTH_PX, (view?.width ?? 0) - TOOLTIP_HALF_WIDTH_PX),
+            ),
+            top: hover.y >= TOOLTIP_FLIP_Y_PX ? hover.y - 12 : hover.y + 16,
+          }}
         >
           <div className="font-medium">{node.name}</div>
           {node.note && <div>{node.note}</div>}
