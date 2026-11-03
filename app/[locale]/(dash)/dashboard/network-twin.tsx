@@ -3,7 +3,7 @@
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
-import { Box, CircleHelp, List } from 'lucide-react'
+import { CircleHelp } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
@@ -132,9 +132,7 @@ export function NetworkTwin({
   initialTags: string[]
 }) {
   const t = useTranslations('dashboard')
-  const available = useMode()
-  const [listView, setListView] = useState(false)
-  const mode: Mode = available === 'scene' && listView ? 'list' : available
+  const mode = useMode()
   useAutoRefresh()
   const [pickedTags, setPickedTags] = useState(initialTags)
   const allNodes = fullNetwork.sites.flatMap((s) => s.nodes)
@@ -201,62 +199,38 @@ export function NetworkTwin({
           </div>
         )}
       </CardHeader>
-      <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-2">
-        {tags.length > 0 && (
-          <div
-            role="group"
-            aria-label={t('twinTagFilter')}
-            className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"
-          >
-            <span aria-hidden>{t('twinTagFilter')}</span>
-            {[null, ...tags].map((option) => {
-              const active = option ? selected.includes(option) : selected.length === 0
-              return (
-                <Button
-                  key={option ?? 'all'}
-                  variant={active ? 'default' : 'outline'}
-                  size="xs"
-                  aria-pressed={active}
-                  className="max-sm:h-9 max-sm:px-3"
-                  onClick={() => (option ? toggleTag(option) : selectTags([]))}
-                >
-                  {option ?? t('twinTagAll')}
-                  <span className="tabular-nums opacity-70">
-                    {option ? tagCounts.get(option) : allNodes.length}
-                  </span>
-                </Button>
-              )
-            })}
-          </div>
-        )}
-        {available === 'scene' && !empty && (
-          <div role="group" aria-label={t('twinViewLabel')} className="flex items-center gap-1">
-            {[
-              { list: false, label: t('twinViewScene'), Icon: Box },
-              { list: true, label: t('twinViewList'), Icon: List },
-            ].map(({ list, label, Icon }) => (
+      {tags.length > 0 && (
+        <div
+          role="group"
+          aria-label={t('twinTagFilter')}
+          className="flex flex-wrap items-center gap-1.5 px-4 pb-2 text-xs text-muted-foreground"
+        >
+          <span aria-hidden>{t('twinTagFilter')}</span>
+          {[null, ...tags].map((option) => {
+            const active = option ? selected.includes(option) : selected.length === 0
+            return (
               <Button
-                key={label}
-                variant={listView === list ? 'default' : 'outline'}
+                key={option ?? 'all'}
+                variant={active ? 'default' : 'outline'}
                 size="xs"
-                aria-pressed={listView === list}
-                onClick={() => setListView(list)}
+                aria-pressed={active}
+                className="max-sm:h-9 max-sm:px-3"
+                onClick={() => (option ? toggleTag(option) : selectTags([]))}
               >
-                <Icon />
-                {label}
+                {option ?? t('twinTagAll')}
+                <span className="tabular-nums opacity-70">
+                  {option ? tagCounts.get(option) : allNodes.length}
+                </span>
               </Button>
-            ))}
-          </div>
-        )}
-      </div>
+            )
+          })}
+        </div>
+      )}
       <CardContent className="relative min-h-0 flex-1">
         {empty ? (
           <p className="text-sm text-muted-foreground">{t('twinEmpty')}</p>
         ) : mode === 'list' ? (
-          <TwinList
-            network={network}
-            className={available === 'scene' ? 'absolute inset-0 overflow-y-auto px-4' : undefined}
-          />
+          <TwinList network={network} />
         ) : (
           <>
             {mode === 'scene' && (
