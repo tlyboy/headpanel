@@ -1,14 +1,11 @@
-import { getMessages, getTranslations } from 'next-intl/server'
+import { getTranslations } from 'next-intl/server'
 import { getHeadscaleVersion, listPreAuthKeys } from '@/lib/headscale'
 import { requireSession } from '@/lib/auth'
 import { syncAndListNodes } from '@/lib/nodes-sync'
 import { isNever } from '@/lib/format'
-import { gte, sql } from 'drizzle-orm'
-import { db } from '@/lib/db'
-import { auditLog } from '@/lib/db/schema'
-import { ActivityChart } from './activity-chart'
-import { auditKind, type AuditKind } from '@/lib/audit'
-import { ACTIVITY_TOP_N, type ActivityPoint } from './activity'
+import { readNodeNetInfo } from '@/lib/headscale-db'
+import { NetworkTwin } from './network-twin'
+import { buildTwin } from './twin-data'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Link } from '@/i18n/navigation'
 
@@ -39,66 +36,6 @@ export default async function DashboardPage() {
 
   // Among the approved networks, how many currently have nodes actively serving them. This number drops when a serving node goes offline,
   // which is exactly when "the network is currently unreachable" — more useful than listing the total number of networks.
-  // Operation frequency over the last 30 days. Filling in zeros is essential — there are 45 days with no records in an 82-day span,
-  // and plotting only days with records would make the timeline discontinuous, as if something happened every day.
-  const DAYS = 30
-  const since = new Date(now - (DAYS - 1) * 86400_000)
-  const sinceStr = since.toISOString().slice(0, 10)
-  const dayRows = db
-    .select({
-      d: sql<string>`date(${auditLog.ts})`,
-      a: auditLog.action,
-      n: sql<number>`count(*)`,
-    })
-    .from(auditLog)
-    .where(gte(sql`date(${auditLog.ts})`, sinceStr))
-    .groupBy(sql`date(${auditLog.ts})`, auditLog.action)
-    .all()
-
-  // The action name key itself contains a dot (node.approve), so it can't go through t()'s namespace resolution
-  const actionMap = ((await getMessages()).auditActions ?? {}) as Record<string, string>
-  const byDay = new Map<string, Map<string, number>>()
-  for (const r of dayRows) {
-    const bucket = byDay.get(r.d) ?? new Map<string, number>()
-    bucket.set(r.a, (bucket.get(r.a) ?? 0) + Number(r.n))
-    byDay.set(r.d, bucket)
-  }
-  // Translation, bucketing, sorting, and truncation are all done on the server; the client component only renders
-  const activity: ActivityPoint[] = Array.from({ length: DAYS }, (_, i) => {
-    const d = new Date(since.getTime() + i * 86400_000).toISOString().slice(0, 10)
-    const point: ActivityPoint = {
-      date: d,
-      success: 0,
-      update: 0,
-      approve: 0,
-      danger: 0,
-      total: 0,
-      items: [],
-    }
-    const bucket = byDay.get(d)
-    if (!bucket) return point
-
-    const sorted = [...bucket.entries()].sort((a, b) => b[1] - a[1])
-    for (const [action, n] of sorted) {
-      point[auditKind(action)] += n
-      point.total += n
-    }
-    point.items = sorted.slice(0, ACTIVITY_TOP_N).map(([action, n]) => ({
-      label: actionMap[action] ?? action,
-      count: n,
-      kind: auditKind(action),
-    }))
-    const rest = sorted.slice(ACTIVITY_TOP_N).reduce((n, [, c]) => n + c, 0)
-    if (rest > 0) {
-      point.items.push({
-        label: t('activityOther'),
-        count: rest,
-        kind: 'success' as AuditKind,
-      })
-    }
-    return point
-  })
-
   const approvedRoutes = new Set<string>()
   const servingRoutes = new Set<string>()
   for (const n of nodes) {
@@ -184,15 +121,7 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      <Card className="flex min-h-72 flex-1 flex-col">
-        <CardHeader>
-          <CardTitle className="text-base">{t('activityTitle')}</CardTitle>
-          <CardDescription>{t('activityDesc', { days: 30 })}</CardDescription>
-        </CardHeader>
-        <CardContent className="min-h-0 flex-1">
-          <ActivityChart data={activity} />
-        </CardContent>
-      </Card>
+      <NetworkTwin network={buildTwin(nodes, readNodeNetInfo())} version={version.version} />
     </div>
   )
 }

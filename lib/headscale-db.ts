@@ -61,6 +61,11 @@ function inCidr(ip: number, cidr: string): boolean {
   return (ip & mask) === (base & mask)
 }
 
+export function ipInCidr(ip: string, cidr: string): boolean {
+  const n = parseIpv4(ip)
+  return n != null && inCidr(n, cidr)
+}
+
 // Private subnets. Deliberately exclude 100.64/10 (those are tailnet addresses) and 198.18/15
 // (fake IPs used by user-space implementations such as Surge, not real local network addresses).
 function isPrivateLan(ip: number): boolean {
