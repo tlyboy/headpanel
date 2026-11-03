@@ -1,7 +1,7 @@
 import type { TwinNode, TwinSite } from './twin'
 
 const CELL_WIDTH = 3
-const CELL_DEPTH = 2.8
+const CELL_DEPTH = 3.3
 const PADDING = 0.5
 const ZONE_GAP = 0.8
 /** Zones lean wide because the card is wide and depth is foreshortened anyway. */
