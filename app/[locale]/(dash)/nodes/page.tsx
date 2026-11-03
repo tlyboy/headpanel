@@ -15,12 +15,11 @@ import {
   visibleCount,
   type ColumnDef,
 } from '@/components/columns'
-import { KindCell } from './kind-cell'
 import { LocationCell } from './location-cell'
 import { PendingCard } from './pending-card'
 import { NodeSelection, RowSelect, SelectAll, TagCell } from './selection'
 import { NodeRowActions } from './row-actions'
-import { osLabel } from '@/components/os-icon'
+import { OsIcon, osLabel } from '@/components/os-icon'
 import { Badge } from '@/components/ui/badge'
 import { TableCell, TableHead } from '@/components/ui/table'
 import { LanIpCell } from '@/components/lan-ip-cell'
@@ -28,6 +27,16 @@ import { VirtualTable } from '@/components/virtual-table'
 import { STICKY_ACTIONS } from '@/lib/table'
 
 const PAGE = 'nodes'
+
+function SystemCell({ os }: { os: string | null | undefined }) {
+  if (!os) return <span className="text-muted-foreground">—</span>
+  return (
+    <span className="flex items-center gap-1.5 text-xs">
+      <OsIcon os={os} className="size-3.5 shrink-0" />
+      <span className="truncate">{osLabel(os)}</span>
+    </span>
+  )
+}
 
 export default async function NodesPage({
   searchParams,
@@ -44,7 +53,7 @@ export default async function NodesPage({
   const columns: ColumnDef[] = [
     { key: 'id', label: 'ID' },
     { key: 'alias', label: t('alias') },
-    { key: 'kind', label: t('kind') },
+    { key: 'system', label: t('system') },
     { key: 'location', label: t('location') },
     { key: 'ip', label: 'IP' },
     { key: 'lanIp', label: t('lanIp') },
@@ -152,7 +161,7 @@ export default async function NodesPage({
         defaultTag={approvedTag()}
       >
         <VirtualTable
-          minWidth="101rem"
+          minWidth="99rem"
           colSpan={visibleCount(columns, hidden) + 1}
           empty={t('empty')}
           head={
@@ -162,7 +171,7 @@ export default async function NodesPage({
               </TableHead>
               {show('id') && <TableHead className="w-12">ID</TableHead>}
               {show('alias') && <TableHead className="w-52">{t('alias')}</TableHead>}
-              {show('kind') && <TableHead className="w-32">{t('kind')}</TableHead>}
+              {show('system') && <TableHead className="w-28">{t('system')}</TableHead>}
               {show('location') && <TableHead className="w-36">{t('location')}</TableHead>}
               {show('ip') && <TableHead className="w-32">IP</TableHead>}
               {show('lanIp') && <TableHead className="w-44">{t('lanIp')}</TableHead>}
@@ -187,14 +196,9 @@ export default async function NodesPage({
                     {n.givenName}
                   </TableCell>
                 )}
-                {show('kind') && (
-                  <TableCell className="py-1">
-                    <KindCell
-                      id={n.id}
-                      kind={n.deviceKind}
-                      os={netInfo.get(n.id)?.os ?? null}
-                      deviceModel={netInfo.get(n.id)?.deviceModel ?? null}
-                    />
+                {show('system') && (
+                  <TableCell title={netInfo.get(n.id)?.deviceModel || undefined}>
+                    <SystemCell os={netInfo.get(n.id)?.os} />
                   </TableCell>
                 )}
                 {show('location') && (

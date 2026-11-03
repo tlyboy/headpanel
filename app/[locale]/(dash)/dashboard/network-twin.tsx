@@ -3,17 +3,15 @@
 import { useEffect, useSyncExternalStore } from 'react'
 import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
+import { CircleHelp } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { DeviceKindIcon } from '@/components/device-kind-icon'
-import { OsIcon, osLabel } from '@/components/os-icon'
+import { OsIcon, osLabel, osLogoPath } from '@/components/os-icon'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-import { DEVICE_KINDS, type ResolvedKind } from '@/lib/device-kind'
 import { isServing, type TwinNetwork } from './twin'
 
 const REFRESH_MS = 30_000
-const KIND_ORDER: ResolvedKind[] = [...DEVICE_KINDS, 'unset']
 /** The hidden list exists for screen readers. Past this size the nodes page serves them better. */
 const HIDDEN_LIST_LIMIT = 300
 const WIDE_QUERY = '(min-width: 640px)'
@@ -57,7 +55,6 @@ function useAutoRefresh() {
 
 function TwinList({ network, className }: { network: TwinNetwork; className?: string }) {
   const t = useTranslations('dashboard')
-  const kinds = useTranslations('deviceKinds')
   return (
     <div className={cn('flex flex-col gap-4', className)}>
       {network.sites.map((site) => (
@@ -87,18 +84,11 @@ function TwinList({ network, className }: { network: TwinNetwork; className?: st
                     node.online ? 'bg-success' : 'bg-muted-foreground',
                   )}
                 />
-                {node.kind === 'unset' && node.os ? (
+                {node.os && (
                   <OsIcon os={node.os} className="size-3.5 shrink-0 text-muted-foreground" />
-                ) : (
-                  <DeviceKindIcon
-                    kind={node.kind}
-                    className="size-3.5 shrink-0 text-muted-foreground"
-                  />
                 )}
                 <span className="truncate">{node.name}</span>
-                <span className="sr-only">
-                  {node.kind === 'unset' && node.os ? osLabel(node.os) : kinds(node.kind)}
-                </span>
+                {node.os && <span className="sr-only">{osLabel(node.os)}</span>}
                 <span className="sr-only">
                   {node.online ? t('twinLegendOnline') : t('twinLegendOffline')}
                 </span>
@@ -118,13 +108,13 @@ function TwinList({ network, className }: { network: TwinNetwork; className?: st
 
 export function NetworkTwin({ network, version }: { network: TwinNetwork; version: string }) {
   const t = useTranslations('dashboard')
-  const kinds = useTranslations('deviceKinds')
   const mode = useMode()
   useAutoRefresh()
 
   const nodes = network.sites.flatMap((s) => s.nodes)
   const empty = nodes.length === 0
-  const kindsInUse = KIND_ORDER.filter((kind) => nodes.some((n) => n.kind === kind))
+  const systems = [...new Set(nodes.flatMap((n) => n.os ?? []))].sort()
+  const hasNoLogo = nodes.some((n) => !osLogoPath(n.os))
 
   return (
     <Card className="flex min-h-[28rem] flex-1 flex-col">
@@ -138,12 +128,20 @@ export function NetworkTwin({ network, version }: { network: TwinNetwork; versio
             aria-hidden
             className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
           >
-            {kindsInUse.map((kind) => (
-              <span key={kind} className="flex items-center gap-1">
-                <DeviceKindIcon kind={kind} className="size-3.5" />
-                {kinds(kind)}
+            {systems
+              .filter((os) => osLogoPath(os))
+              .map((os) => (
+                <span key={os} className="flex items-center gap-1">
+                  <OsIcon os={os} className="size-3.5" />
+                  {osLabel(os)}
+                </span>
+              ))}
+            {hasNoLogo && (
+              <span className="flex items-center gap-1">
+                <CircleHelp className="size-3.5" />
+                {t('twinOsUnknown')}
               </span>
-            ))}
+            )}
             <span className="flex items-center gap-1.5">
               <span className="h-1 w-3.5 bg-primary" />
               {t('twinLegendGateway')}

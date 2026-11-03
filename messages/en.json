@@ -78,6 +78,7 @@
     "noSubnet": "No subnet routes",
     "noValidKey": "No usable key — new devices cannot join",
     "twinTitle": "Network status",
+    "twinOsUnknown": "Unknown OS",
     "twinDesc": "Zones follow the location you set, then the reported LAN address. Drag to pan, scroll to zoom",
     "twinOther": "Unzoned",
     "twinOnline": "{online}/{total} online",
@@ -136,8 +137,7 @@
     "tagCreated": "Created tag {tag}",
     "tagDeleted": "Deleted tag {tag}",
     "tagNoMatch": "No matching tags",
-    "kind": "Type",
-    "kindBulkDone": "Changed the type of {count} devices",
+    "system": "System",
     "location": "Location",
     "locationSearch": "Search or enter a new location",
     "locationCreate": "Set to “{location}”",
@@ -373,24 +373,6 @@
     "rule.delete": "Delete access rule",
     "tag.create": "Create tag",
     "tag.delete": "Delete tag",
-    "node.setKind": "Set device type",
     "node.setLocation": "Set device location"
-  },
-  "deviceKinds": {
-    "server": "Server",
-    "vm": "Virtual machine",
-    "nas": "NAS",
-    "desktop": "Desktop",
-    "laptop": "Laptop",
-    "phone": "Phone",
-    "tablet": "Tablet",
-    "router": "Router",
-    "camera": "Camera",
-    "printer": "Printer",
-    "sbc": "Dev board",
-    "iot": "IoT",
-    "industrial": "Industrial",
-    "other": "Other",
-    "unset": "Not set"
   }
 }

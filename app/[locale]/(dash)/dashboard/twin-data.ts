@@ -46,7 +46,6 @@ export function buildTwin(nodes: MergedNode[], netInfo: Map<string, NodeNetInfo>
       name: n.givenName,
       note: n.note,
       location: n.location,
-      kind: n.deviceKind ?? 'unset',
       os: info?.os ?? null,
       deviceModel: info?.deviceModel ?? null,
       ip: onlyIpv4(n.ipAddresses)[0] ?? null,

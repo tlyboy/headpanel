@@ -16,6 +16,9 @@ const OS_LOGOS: Record<string, { label: string; path: string }> = {
 /** The name the client reported, spelled the usual way. An OS not listed here is shown exactly as reported. */
 export const osLabel = (os: string) => OS_LOGOS[os.toLowerCase()]?.label ?? os
 
+/** The SVG path of the logo, on a 24 x 24 grid. Null for an OS with no logo here. */
+export const osLogoPath = (os: string | null) => (os && OS_LOGOS[os.toLowerCase()]?.path) || null
+
 export function OsIcon({ os, className }: { os: string; className?: string }) {
   const logo = OS_LOGOS[os.toLowerCase()]
   if (!logo) return null

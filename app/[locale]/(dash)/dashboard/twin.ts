@@ -1,11 +1,8 @@
-import type { ResolvedKind } from '@/lib/device-kind'
-
 export interface TwinNode {
   id: string
   name: string
   note: string | null
   location: string | null
-  kind: ResolvedKind
   /** What the client reports. Shown as is, never used to decide a kind. */
   os: string | null
   deviceModel: string | null

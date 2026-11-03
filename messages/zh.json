@@ -78,6 +78,7 @@
     "noSubnet": "未配置内网路由",
     "noValidKey": "没有可用 key，新设备无法接入",
     "twinTitle": "网络现状",
+    "twinOsUnknown": "未知系统",
     "twinDesc": "优先按位置分区，没有位置的按上报的内网地址分区。拖动平移，滚轮缩放",
     "twinOther": "未分区",
     "twinOnline": "{online}/{total} 在线",
@@ -136,8 +137,7 @@
     "tagCreated": "已新建标签 {tag}",
     "tagDeleted": "已删除标签 {tag}",
     "tagNoMatch": "没有匹配的标签",
-    "kind": "类型",
-    "kindBulkDone": "已修改 {count} 台设备的类型",
+    "system": "系统",
     "location": "位置",
     "locationSearch": "搜索或输入新位置",
     "locationCreate": "设为“{location}”",
@@ -373,24 +373,6 @@
     "rule.delete": "删除访问规则",
     "tag.create": "创建标签",
     "tag.delete": "删除标签",
-    "node.setKind": "修改设备类型",
     "node.setLocation": "修改设备位置"
-  },
-  "deviceKinds": {
-    "server": "服务器",
-    "vm": "虚拟机",
-    "nas": "NAS",
-    "desktop": "台式机",
-    "laptop": "笔记本",
-    "phone": "手机",
-    "tablet": "平板",
-    "router": "路由器",
-    "camera": "摄像头",
-    "printer": "打印机",
-    "sbc": "开发板",
-    "iot": "物联网",
-    "industrial": "工控设备",
-    "other": "其他",
-    "unset": "未设置"
   }
 }
