@@ -37,10 +37,10 @@ export interface TwinNetwork {
   sites: TwinSite[]
 }
 
-/** Keeps the devices carrying any of `tags`. A gateway without one stays out too, and empty zones go away. */
+/** Keeps the devices carrying all of `tags`. A gateway missing one stays out too, and empty zones go away. */
 export function filterByTags(network: TwinNetwork, tags: string[]): TwinNetwork {
   const sites = network.sites.flatMap((site) => {
-    const nodes = site.nodes.filter((n) => n.tags.some((t) => tags.includes(t)))
+    const nodes = site.nodes.filter((n) => tags.every((t) => n.tags.includes(t)))
     if (!nodes.length) return []
     const ids = new Set(nodes.map((n) => n.id))
     return [{ ...site, nodes, gateways: site.gateways.filter((g) => ids.has(g.id)) }]

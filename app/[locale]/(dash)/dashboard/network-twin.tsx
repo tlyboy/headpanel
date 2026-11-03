@@ -228,7 +228,9 @@ export function NetworkTwin({
       )}
       <CardContent className="relative min-h-0 flex-1">
         {empty ? (
-          <p className="text-sm text-muted-foreground">{t('twinEmpty')}</p>
+          <p className="text-sm text-muted-foreground">
+            {selected.length ? t('twinNoMatch') : t('twinEmpty')}
+          </p>
         ) : mode === 'list' ? (
           <TwinList network={network} />
         ) : (

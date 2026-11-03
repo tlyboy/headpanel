@@ -94,6 +94,7 @@
     "twinLegendGateway": "Gateway",
     "twinLanIp": "LAN {ip}",
     "twinLastSeen": "Last seen {time}",
+    "twinNoMatch": "No device has all of these tags",
     "twinEmpty": "No devices have joined yet",
     "twinSceneLabel": "Network topology: {sites} zones, {online}/{total} devices online. Arrow keys pan, plus and minus zoom",
     "twinZoomIn": "Zoom in",
