@@ -39,7 +39,7 @@ const COLUMN_REM: Record<string, number> = {
   tags: 12,
   lastSeen: 11,
 }
-const FIXED_REM = 2.5 + 3.25 + 11
+const FIXED_REM = 2.5 + 3.25 + 10
 
 function minWidthRem(show: (key: string) => boolean) {
   return Object.entries(COLUMN_REM).reduce(
