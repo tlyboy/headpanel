@@ -23,13 +23,11 @@
   a policy baseline file, so rules you write by hand sit next to them.
 - **Audit log** — every panel action, searchable, filterable and banded by what
   the action does.
-- **Dashboard** — online nodes, subnet coverage, pending approvals, valid keys,
+- **Overview** — online nodes, subnet coverage, pending approvals, valid keys,
   and a 3D view of the network. Devices are zoned by the location you set, then by
   LAN subnet, and shaped by the OS they report. Pan and zoom by mouse or keyboard.
   Filter by tag: selecting several shows only the devices with all of them, and
   the filter stays in the URL so you can share it.
-- **Overview** — online nodes, subnet coverage, pending approvals and valid keys,
-  over 30 days of activity.
 - **English and 简体中文.**
 
 ## Install
