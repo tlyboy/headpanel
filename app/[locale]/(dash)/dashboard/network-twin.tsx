@@ -185,11 +185,7 @@ export function NetworkTwin({
               variant={option === tag ? 'default' : 'outline'}
               size="xs"
               aria-pressed={option === tag}
-              className={cn(
-                'max-sm:h-9 max-sm:px-3',
-                // The primary token only reaches 3:1 against its foreground, too low for 12px text
-                option === tag && 'bg-foreground text-background hover:bg-foreground/90',
-              )}
+              className="max-sm:h-9 max-sm:px-3"
               onClick={() => setPickedTag(option)}
             >
               {option ?? t('twinTagAll')}
