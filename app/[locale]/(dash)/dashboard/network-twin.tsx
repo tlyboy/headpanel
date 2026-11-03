@@ -90,14 +90,14 @@ function TwinList({ network, className }: { network: TwinNetwork; className?: st
                 )}
                 <div className="min-w-0 flex-1">
                   <div className="flex items-baseline gap-2">
-                    <span className="truncate">{node.note ?? node.name}</span>
+                    <span className="min-w-0 wrap-anywhere">{node.note ?? node.name}</span>
                     {site.gateways.some((g) => g.id === node.id) && (
                       <span className="shrink-0 text-xs text-muted-foreground">
                         {t('twinLegendGateway')}
                       </span>
                     )}
                   </div>
-                  <div className="truncate text-xs text-muted-foreground">
+                  <div className="text-xs wrap-anywhere text-muted-foreground">
                     {[
                       node.note && node.name,
                       node.lanIp,
@@ -160,7 +160,7 @@ export function NetworkTwin({
       <CardHeader className="flex flex-wrap items-start justify-between gap-2">
         <div className="flex flex-col gap-1">
           <CardTitle className="text-base">{t('twinTitle')}</CardTitle>
-          <CardDescription>{t('twinDesc')}</CardDescription>
+          <CardDescription>{mode === 'scene' ? t('twinDescScene') : t('twinDesc')}</CardDescription>
         </div>
         {mode === 'scene' && !empty && (
           <div

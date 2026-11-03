@@ -103,8 +103,8 @@ export default async function DashboardPage({
   ]
 
   return (
-    <div className="flex h-full min-h-0 flex-col gap-4">
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
+    <div className="flex min-h-full flex-col gap-4">
+      <div className="grid grid-cols-2 gap-3 *:last:col-span-2 sm:gap-4 sm:*:last:col-span-1 lg:grid-cols-3 xl:grid-cols-5">
         {stats.map((s) => {
           const card = (
             <Card className={s.href ? 'h-full transition-colors hover:bg-muted/50' : 'h-full'}>
