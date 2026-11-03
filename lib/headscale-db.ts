@@ -17,6 +17,7 @@ export interface NodeNetInfo {
   routableIps: string[]
   os: string | null
   clientVersion: string | null
+  deviceModel: string | null
 }
 
 function resolveDbPath(): string {
@@ -176,6 +177,7 @@ export function readNodeNetInfo(): Map<string, NodeNetInfo> {
     let routable: string[] = []
     let os: string | null = null
     let clientVersion: string | null = null
+    let deviceModel: string | null = null
     if (r.host_info) {
       try {
         const h = JSON.parse(r.host_info) as Record<string, unknown>
@@ -183,6 +185,7 @@ export function readNodeNetInfo(): Map<string, NodeNetInfo> {
           routable = h.RoutableIPs.filter((x): x is string => typeof x === 'string')
         }
         if (typeof h.OS === 'string') os = h.OS
+        if (typeof h.DeviceModel === 'string' && h.DeviceModel) deviceModel = h.DeviceModel
         if (typeof h.IPNVersion === 'string') {
           clientVersion = h.IPNVersion.split('-')[0]
         }
@@ -195,6 +198,7 @@ export function readNodeNetInfo(): Map<string, NodeNetInfo> {
       routableIps: routable,
       os,
       clientVersion,
+      deviceModel,
     })
   }
   return out

@@ -1,5 +1,6 @@
 import { sql } from 'drizzle-orm'
 import { integer, sqliteTable, text } from 'drizzle-orm/sqlite-core'
+import { DEVICE_KINDS } from '@/lib/device-kind'
 
 // Admin login account. Every account manages the whole tailnet.
 export const admins = sqliteTable('admins', {
@@ -23,6 +24,8 @@ export const nodeMeta = sqliteTable('node_meta', {
   approvedAt: text('approved_at'),
   approvedBy: text('approved_by'),
   note: text('note'),
+  // Manual override; null means the kind is inferred from what the client reports
+  deviceKind: text('device_kind', { enum: DEVICE_KINDS }),
 })
 
 // Operation audit log

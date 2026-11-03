@@ -1,5 +1,5 @@
 /**
- * Audit action severity tiers. Chart colors and audit list badges share the same rules to avoid inconsistent standards.
+ * Audit action severity tiers. The audit list badges follow these rules.
  *
  * The tiers are ordered by "what would you look for after something goes wrong": deletions and failures are equally serious, so both use red;
  * approvals allow something through, so use yellow to check whether anything was approved by mistake; config changes use blue; other successfully completed actions use green.
@@ -25,14 +25,6 @@ export const AUDIT_KIND_VARIANT = {
   approve: 'warning',
   danger: 'destructive',
 } as const satisfies Record<AuditKind, string>
-
-/** Color variables for each tier, shared by chart segments and the hover card's color dots */
-export const AUDIT_KIND_COLOR: Record<AuditKind, string> = {
-  success: 'var(--success)',
-  update: 'var(--info)',
-  approve: 'var(--warning)',
-  danger: 'var(--destructive)',
-}
 
 /**
  * Node format in the audit "object" column: node name + ID. If only the ID is recorded, the log is left with just a string of numbers,

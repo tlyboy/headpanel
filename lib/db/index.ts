@@ -48,7 +48,8 @@ CREATE TABLE IF NOT EXISTS node_meta (
   first_seen   TEXT NOT NULL DEFAULT (current_timestamp),
   approved_at  TEXT,
   approved_by  TEXT,
-  note         TEXT
+  note         TEXT,
+  device_kind  TEXT
 );
 CREATE TABLE IF NOT EXISTS audit_log (
   id     INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -74,6 +75,9 @@ CREATE TABLE IF NOT EXISTS preauth_keys (
   }
 
   if (!hasColumn('audit_log', 'actor')) sqlite.exec('ALTER TABLE audit_log ADD COLUMN actor TEXT')
+  if (!hasColumn('node_meta', 'device_kind')) {
+    sqlite.exec('ALTER TABLE node_meta ADD COLUMN device_kind TEXT')
+  }
 
   // Groups were removed in favor of tags. A database that still holds groups has nodes tagged tag:ok-<slug>
   // whose tags would vanish from the policy, so refuse to start rather than cut those nodes off.

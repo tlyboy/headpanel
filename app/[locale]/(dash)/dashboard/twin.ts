@@ -1,5 +1,8 @@
+import type { ResolvedKind } from '@/lib/device-kind'
+
 export interface TwinNode {
   id: string
+  kind: ResolvedKind
   name: string
   ip: string | null
   lanIp: string | null

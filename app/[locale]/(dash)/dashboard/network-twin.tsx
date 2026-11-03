@@ -5,7 +5,9 @@ import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { DeviceKindIcon } from '@/components/device-kind-icon'
 import { Skeleton } from '@/components/ui/skeleton'
+import { DEVICE_KINDS } from '@/lib/device-kind'
 import { cn } from '@/lib/utils'
 import type { TwinNetwork } from './twin'
 
@@ -51,6 +53,7 @@ function useAutoRefresh() {
 
 function TwinList({ network, className }: { network: TwinNetwork; className?: string }) {
   const t = useTranslations('dashboard')
+  const kinds = useTranslations('deviceKinds')
   return (
     <div className={cn('flex flex-col gap-4', className)}>
       {network.sites.map((site) => (
@@ -73,7 +76,12 @@ function TwinList({ network, className }: { network: TwinNetwork; className?: st
                     node.online ? 'bg-success' : 'bg-muted-foreground',
                   )}
                 />
+                <DeviceKindIcon
+                  kind={node.kind}
+                  className="size-3.5 shrink-0 text-muted-foreground"
+                />
                 <span className="truncate">{node.name}</span>
+                <span className="sr-only">{kinds(node.kind)}</span>
                 <span className="sr-only">
                   {node.online ? t('twinLegendOnline') : t('twinLegendOffline')}
                 </span>
@@ -93,6 +101,7 @@ function TwinList({ network, className }: { network: TwinNetwork; className?: st
 
 export function NetworkTwin({ network, version }: { network: TwinNetwork; version: string }) {
   const t = useTranslations('dashboard')
+  const kinds = useTranslations('deviceKinds')
   const mode = useMode()
   useAutoRefresh()
 
@@ -107,7 +116,20 @@ export function NetworkTwin({ network, version }: { network: TwinNetwork; versio
           <CardDescription>{t('twinDesc')}</CardDescription>
         </div>
         {mode === 'scene' && !empty && (
-          <div aria-hidden className="flex items-center gap-3 text-xs text-muted-foreground">
+          <div
+            aria-hidden
+            className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground"
+          >
+            {DEVICE_KINDS.map((kind) => (
+              <span key={kind} className="flex items-center gap-1">
+                <DeviceKindIcon kind={kind} className="size-3.5" />
+                {kinds(kind)}
+              </span>
+            ))}
+            <span className="flex items-center gap-1.5">
+              <span className="h-1 w-3.5 bg-primary" />
+              {t('twinLegendGateway')}
+            </span>
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 bg-success" />
               {t('twinLegendOnline')}
@@ -115,10 +137,6 @@ export function NetworkTwin({ network, version }: { network: TwinNetwork; versio
             <span className="flex items-center gap-1.5">
               <span className="size-2.5 bg-muted-foreground" />
               {t('twinLegendOffline')}
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="h-3.5 w-2.5 bg-success" />
-              {t('twinLegendGateway')}
             </span>
           </div>
         )}

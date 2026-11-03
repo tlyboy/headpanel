@@ -15,6 +15,8 @@ import {
   visibleCount,
   type ColumnDef,
 } from '@/components/columns'
+import { inferDeviceKind } from '@/lib/device-kind'
+import { KindCell } from './kind-cell'
 import { PendingCard } from './pending-card'
 import { NodeSelection, RowSelect, SelectAll, TagCell } from './selection'
 import { NodeRowActions } from './row-actions'
@@ -41,6 +43,7 @@ export default async function NodesPage({
   const columns: ColumnDef[] = [
     { key: 'id', label: 'ID' },
     { key: 'alias', label: t('alias') },
+    { key: 'kind', label: t('kind') },
     { key: 'ip', label: 'IP' },
     { key: 'lanIp', label: t('lanIp') },
     { key: 'online', label: common('online') },
@@ -127,7 +130,7 @@ export default async function NodesPage({
         defaultTag={approvedTag()}
       >
         <VirtualTable
-          minWidth="84rem"
+          minWidth="92rem"
           colSpan={visibleCount(columns, hidden) + 1}
           empty={t('empty')}
           head={
@@ -137,6 +140,7 @@ export default async function NodesPage({
               </TableHead>
               {show('id') && <TableHead className="w-12">ID</TableHead>}
               {show('alias') && <TableHead className="w-52">{t('alias')}</TableHead>}
+              {show('kind') && <TableHead className="w-32">{t('kind')}</TableHead>}
               {show('ip') && <TableHead className="w-32">IP</TableHead>}
               {show('lanIp') && <TableHead className="w-44">{t('lanIp')}</TableHead>}
               {show('online') && <TableHead className="w-20">{common('online')}</TableHead>}
@@ -158,6 +162,15 @@ export default async function NodesPage({
                 {show('alias') && (
                   <TableCell className="truncate font-medium" title={n.givenName}>
                     {n.givenName}
+                  </TableCell>
+                )}
+                {show('kind') && (
+                  <TableCell className="py-1">
+                    <KindCell
+                      id={n.id}
+                      manual={n.deviceKind}
+                      inferred={inferDeviceKind(netInfo.get(n.id))}
+                    />
                   </TableCell>
                 )}
                 {show('ip') && (

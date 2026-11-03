@@ -3,12 +3,14 @@ import 'server-only'
 import { eq, inArray } from 'drizzle-orm'
 import { db } from '@/lib/db'
 import { nodeMeta } from '@/lib/db/schema'
+import type { DeviceKind } from '@/lib/device-kind'
 import { listNodes, type HsNode } from '@/lib/headscale'
 
 export interface MergedNode extends HsNode {
   status: 'pending' | 'approved' | 'rejected'
   approvedAt: string | null
   note: string | null
+  deviceKind: DeviceKind | null
 }
 
 // Sync headscale nodes against local node_meta (headscale has no pending concept, so this table fills the gap):
@@ -43,6 +45,7 @@ export async function syncAndListNodes(): Promise<MergedNode[]> {
         status: initial,
         approvedAt: null,
         note: null,
+        deviceKind: null,
       })
       continue
     }
@@ -51,6 +54,7 @@ export async function syncAndListNodes(): Promise<MergedNode[]> {
       status: meta.status,
       approvedAt: meta.approvedAt,
       note: meta.note,
+      deviceKind: meta.deviceKind,
     })
   }
   return merged
@@ -97,4 +101,12 @@ export function setNodeNote(headscaleId: string, note: string) {
   } else {
     db.insert(nodeMeta).values({ headscaleId, note: value }).run()
   }
+}
+
+// Null returns the node to its inferred kind.
+export function setNodeDeviceKind(headscaleId: string, deviceKind: DeviceKind | null) {
+  db.insert(nodeMeta)
+    .values({ headscaleId, deviceKind })
+    .onConflictDoUpdate({ target: nodeMeta.headscaleId, set: { deviceKind } })
+    .run()
 }

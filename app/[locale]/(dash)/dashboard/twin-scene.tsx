@@ -3,8 +3,10 @@
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { Canvas, useThree, type ThreeEvent } from '@react-three/fiber'
 import { Edges, Line } from '@react-three/drei'
+import { Color } from 'three'
 import { useFormatter, useTranslations } from 'next-intl'
 import type { TwinNetwork, TwinNode } from './twin'
+import { DEVICE_MODELS, modelHeight } from './twin-models'
 import { getThemeColors, subscribeTheme, type TwinColors } from './twin-colors'
 import {
   CAMERA_DIR,
@@ -24,11 +26,11 @@ const LABEL_CLASS =
 const CAMERA_DISTANCE = 80
 const FRAME_MARGIN_PX = 56
 
-const GATEWAY_SIZE = 0.85
-const DEVICE_SIZE = 0.6
-const GATEWAY_HEIGHT = 1.3
-const ONLINE_HEIGHT = 0.5
-const OFFLINE_HEIGHT = 0.16
+const GATEWAY_SCALE = 1.25
+const GATEWAY_PLATE_SIZE = 1.35
+const GATEWAY_PLATE_HEIGHT = 0.06
+const ACCENT_SHADE = 0.45
+const HIT_BOX_SIZE = 0.95
 
 function useViewSize() {
   const ref = useRef<HTMLDivElement>(null)
@@ -92,20 +94,44 @@ function Device({
   onHover: (e: ThreeEvent<PointerEvent>) => void
   onLeave: () => void
 }) {
-  const footprint = isGateway ? GATEWAY_SIZE : DEVICE_SIZE
-  const height = isGateway ? GATEWAY_HEIGHT : node.online ? ONLINE_HEIGHT : OFFLINE_HEIGHT
-  const color = node.online ? colors.success : colors['muted-foreground']
+  const body = node.online ? colors.success : colors['muted-foreground']
+  const accent = new Color(body).multiplyScalar(ACCENT_SHADE).getStyle()
+  const scale = isGateway ? GATEWAY_SCALE : 1
+  const baseY = PLATFORM_HEIGHT / 2 + (isGateway ? GATEWAY_PLATE_HEIGHT : 0)
   return (
-    <mesh
-      position={[x, PLATFORM_HEIGHT / 2 + height / 2, z]}
-      castShadow
-      onPointerOver={onHover}
-      onPointerMove={onHover}
-      onPointerOut={onLeave}
-    >
-      <boxGeometry args={[footprint, height, footprint]} />
-      <meshStandardMaterial color={color} emissive={color} emissiveIntensity={hovered ? 0.5 : 0} />
-    </mesh>
+    <group position={[x, 0, z]}>
+      {isGateway && (
+        <mesh position={[0, PLATFORM_HEIGHT / 2 + GATEWAY_PLATE_HEIGHT / 2, 0]} receiveShadow>
+          <boxGeometry args={[GATEWAY_PLATE_SIZE, GATEWAY_PLATE_HEIGHT, GATEWAY_PLATE_SIZE]} />
+          <meshStandardMaterial color={colors.primary} />
+        </mesh>
+      )}
+      <group position={[0, baseY, 0]} rotation={[0, Math.PI / 4, 0]} scale={scale}>
+        {DEVICE_MODELS[node.kind].map((part, i) => {
+          const color = part.tone === 'body' ? body : accent
+          return (
+            <mesh key={i} position={part.position} castShadow>
+              <boxGeometry args={part.size} />
+              <meshStandardMaterial
+                color={color}
+                emissive={color}
+                emissiveIntensity={hovered ? 0.5 : 0}
+              />
+            </mesh>
+          )
+        })}
+        {/* Thin models like phones would be hard to hit, so one box catches the pointer for all of them */}
+        <mesh
+          position={[0, HIT_BOX_SIZE / 2, 0]}
+          visible={false}
+          onPointerOver={onHover}
+          onPointerMove={onHover}
+          onPointerOut={onLeave}
+        >
+          <boxGeometry args={[HIT_BOX_SIZE, HIT_BOX_SIZE, HIT_BOX_SIZE]} />
+        </mesh>
+      </group>
+    </group>
   )
 }
 
@@ -171,7 +197,13 @@ function HubLinks({ layout, colors }: { layout: TwinLayout; colors: TwinColors }
     const gateway = nodes.find((n) => n.node.id === site.gatewayId)
     const toEdge = 1 - size / 2 / Math.max(Math.abs(x), Math.abs(z))
     const end: [number, number, number] = gateway
-      ? [x + gateway.x, PLATFORM_HEIGHT / 2 + GATEWAY_HEIGHT, z + gateway.z]
+      ? [
+          x + gateway.x,
+          PLATFORM_HEIGHT / 2 +
+            GATEWAY_PLATE_HEIGHT +
+            modelHeight(gateway.node.kind) * GATEWAY_SCALE,
+          z + gateway.z,
+        ]
       : [x * toEdge, PLATFORM_HEIGHT / 2, z * toEdge]
     const color = !site.serving
       ? colors.destructive
@@ -194,6 +226,7 @@ function HubLinks({ layout, colors }: { layout: TwinLayout; colors: TwinColors }
 
 export default function TwinScene({ network, version }: { network: TwinNetwork; version: string }) {
   const t = useTranslations('dashboard')
+  const kinds = useTranslations('deviceKinds')
   const format = useFormatter()
   const colors = useSyncExternalStore(subscribeTheme, getThemeColors, getThemeColors)
   const layout = useMemo(() => layoutTwin(network.sites), [network])
@@ -253,7 +286,10 @@ export default function TwinScene({ network, version }: { network: TwinNetwork; 
       </Canvas>
 
       {view && (
-        <div className={LABEL_CLASS} style={projectToView(layout, view, zoom, [HUB_RADIUS * 0.7, 0, HUB_RADIUS * 0.7])}>
+        <div
+          className={LABEL_CLASS}
+          style={projectToView(layout, view, zoom, [HUB_RADIUS * 0.7, 0, HUB_RADIUS * 0.7])}
+        >
           <span className="font-medium">Headscale</span>{' '}
           <span className="font-mono text-muted-foreground">{version}</span>
         </div>
@@ -286,6 +322,7 @@ export default function TwinScene({ network, version }: { network: TwinNetwork; 
           style={{ left: hovered.x, top: hovered.y - 12 }}
         >
           <div className="font-medium">{hovered.node.name}</div>
+          <div className="text-muted-foreground">{kinds(hovered.node.kind)}</div>
           {hovered.node.ip && (
             <div className="font-mono text-muted-foreground">{hovered.node.ip}</div>
           )}

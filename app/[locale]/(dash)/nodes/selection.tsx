@@ -28,7 +28,7 @@ interface Selection {
 
 const Ctx = createContext<Selection | null>(null)
 
-function useSelection(): Selection {
+export function useSelection(): Selection {
   const s = useContext(Ctx)
   if (!s) throw new Error('useSelection outside NodeSelection')
   return s

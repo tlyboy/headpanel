@@ -134,7 +134,11 @@
     "tagCreate": "Create tag \"{tag}\"",
     "tagCreated": "Created tag {tag}",
     "tagDeleted": "Deleted tag {tag}",
-    "tagNoMatch": "No matching tags"
+    "tagNoMatch": "No matching tags",
+    "kind": "Type",
+    "kindAuto": "Auto ({kind})",
+    "kindAutoHint": "Detected from what the device reports. You can change it",
+    "kindBulkDone": "Changed the type of {count} devices"
   },
   "pending": {
     "title": "{count} device(s) waiting for approval",
@@ -285,7 +289,8 @@
     "tagExists": "Tag already exists",
     "tagIsDefault": "The default tag is used to approve new devices and cannot be deleted",
     "tagInUse": "{count} device(s) still carry this tag; retag them first",
-    "lastTag": "{names}: this is the only tag left and cannot be removed"
+    "lastTag": "{names}: this is the only tag left and cannot be removed",
+    "kindAuto": "Auto"
   },
   "subnets": {
     "title": "Subnet routes",
@@ -360,6 +365,14 @@
     "rule.create": "Add access rule",
     "rule.delete": "Delete access rule",
     "tag.create": "Create tag",
-    "tag.delete": "Delete tag"
+    "tag.delete": "Delete tag",
+    "node.setKind": "Set device type"
+  },
+  "deviceKinds": {
+    "server": "Server",
+    "pc": "Computer",
+    "phone": "Phone",
+    "iot": "IoT",
+    "unknown": "Unknown"
   }
 }

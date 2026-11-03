@@ -7,7 +7,8 @@ import { nodeTarget } from '@/lib/audit'
 import { auditAfter } from '@/lib/db'
 import { addTag, declaredTags, removeTag, updateBaselineAndApply } from '@/lib/policy'
 import { approvedTag, defaultHsUserName } from '@/lib/default-zone'
-import { setNodeNote, setNodeStatus } from '@/lib/nodes-sync'
+import { isDeviceKind, type DeviceKind } from '@/lib/device-kind'
+import { setNodeDeviceKind, setNodeNote, setNodeStatus } from '@/lib/nodes-sync'
 import {
   deleteNode,
   expireNode,
@@ -83,6 +84,32 @@ export async function saveNoteAction(id: string, note: string): Promise<ActionRe
       actor: session.sub,
     })
     revalidatePath('/nodes')
+    return { ok: true }
+  } catch (e) {
+    return fail(e, t('unknown'))
+  }
+}
+
+export async function setDeviceKindAction(
+  ids: string[],
+  kind: DeviceKind | null,
+): Promise<ActionResult> {
+  const [session, t, kinds] = await Promise.all([
+    requireSession(),
+    getTranslations('actionErrors'),
+    getTranslations('deviceKinds'),
+  ])
+  if (kind !== null && !isDeviceKind(kind)) return { ok: false, error: t('unknown') }
+  try {
+    const nodes = await Promise.all(ids.map(getNode))
+    for (const node of nodes) {
+      setNodeDeviceKind(node.id, kind)
+      auditAfter('node.setKind', nodeTarget(node), kind ? kinds(kind) : t('kindAuto'), {
+        actor: session.sub,
+      })
+    }
+    revalidatePath('/nodes')
+    revalidatePath('/dashboard')
     return { ok: true }
   } catch (e) {
     return fail(e, t('unknown'))

@@ -1,5 +1,6 @@
 import 'server-only'
 
+import { inferDeviceKind } from '@/lib/device-kind'
 import { onlyIpv4 } from '@/lib/format'
 import { ipInCidr, type NodeNetInfo } from '@/lib/headscale-db'
 import type { MergedNode } from '@/lib/nodes-sync'
@@ -44,9 +45,11 @@ export function buildTwin(nodes: MergedNode[], netInfo: Map<string, NodeNetInfo>
   }
 
   for (const n of nodes) {
-    const lanIps = netInfo.get(n.id)?.lanIps ?? []
+    const info = netInfo.get(n.id)
+    const lanIps = info?.lanIps ?? []
     const node: TwinNode = {
       id: n.id,
+      kind: n.deviceKind ?? inferDeviceKind(info),
       name: n.givenName,
       ip: onlyIpv4(n.ipAddresses)[0] ?? null,
       lanIp: lanIps[0] ?? null,

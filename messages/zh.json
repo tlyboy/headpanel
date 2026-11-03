@@ -134,7 +134,11 @@
     "tagCreate": "新建标签“{tag}”",
     "tagCreated": "已新建标签 {tag}",
     "tagDeleted": "已删除标签 {tag}",
-    "tagNoMatch": "没有匹配的标签"
+    "tagNoMatch": "没有匹配的标签",
+    "kind": "类型",
+    "kindAuto": "自动（{kind}）",
+    "kindAutoHint": "根据设备上报的系统自动判断，可手动修改",
+    "kindBulkDone": "已修改 {count} 台设备的类型"
   },
   "pending": {
     "title": "{count} 台设备等待审批",
@@ -285,7 +289,8 @@
     "tagExists": "标签已存在",
     "tagIsDefault": "默认标签用于审批新设备，不能删除",
     "tagInUse": "还有 {count} 台设备使用该标签，先把它们的标签改掉",
-    "lastTag": "{names} 只剩这一个标签，不能移出"
+    "lastTag": "{names} 只剩这一个标签，不能移出",
+    "kindAuto": "自动判断"
   },
   "subnets": {
     "title": "内网路由",
@@ -360,6 +365,14 @@
     "rule.create": "添加访问规则",
     "rule.delete": "删除访问规则",
     "tag.create": "创建标签",
-    "tag.delete": "删除标签"
+    "tag.delete": "删除标签",
+    "node.setKind": "修改设备类型"
+  },
+  "deviceKinds": {
+    "server": "服务器",
+    "pc": "电脑",
+    "phone": "手机",
+    "iot": "物联网",
+    "unknown": "未知"
   }
 }
