@@ -132,7 +132,7 @@ export default async function DashboardPage({
       <NetworkTwin
         network={buildTwin(nodes, readNodeNetInfo())}
         version={version.version}
-        initialTag={typeof tag === 'string' ? tag : null}
+        initialTags={[tag ?? []].flat()}
       />
     </div>
   )

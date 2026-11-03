@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { OsIcon, osLabel, osLogoPath } from '@/components/os-icon'
 import { Skeleton } from '@/components/ui/skeleton'
 import { cn } from '@/lib/utils'
-import { filterByTag, isServing, type TwinNetwork } from './twin'
+import { filterByTags, isServing, type TwinNetwork } from './twin'
 
 const REFRESH_MS = 30_000
 /** The hidden list exists for screen readers. Past this size the nodes page serves them better. */
@@ -125,33 +125,35 @@ function TwinList({ network, className }: { network: TwinNetwork; className?: st
 export function NetworkTwin({
   network: fullNetwork,
   version,
-  initialTag,
+  initialTags,
 }: {
   network: TwinNetwork
   version: string
-  initialTag: string | null
+  initialTags: string[]
 }) {
   const t = useTranslations('dashboard')
   const available = useMode()
   const [listView, setListView] = useState(false)
   const mode: Mode = available === 'scene' && listView ? 'list' : available
   useAutoRefresh()
-  const [pickedTag, setPickedTag] = useState(initialTag)
+  const [pickedTags, setPickedTags] = useState(initialTags)
   const allNodes = fullNetwork.sites.flatMap((s) => s.nodes)
   const tagCounts = new Map<string, number>()
   for (const n of allNodes) for (const t of n.tags) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1)
   const tags = [...tagCounts.keys()].sort()
-  // The tag may be gone after a refresh, and the filter then simply clears
-  const tag = pickedTag && tags.includes(pickedTag) ? pickedTag : null
-  const network = tag ? filterByTag(fullNetwork, tag) : fullNetwork
+  // A tag may be gone after a refresh, and it then simply drops out of the filter
+  const selected = pickedTags.filter((t) => tagCounts.has(t))
+  const network = selected.length ? filterByTags(fullNetwork, selected) : fullNetwork
 
-  const pickTag = (next: string | null) => {
-    setPickedTag(next)
+  const selectTags = (next: string[]) => {
+    setPickedTags(next)
     const url = new URL(window.location.href)
-    if (next) url.searchParams.set('tag', next)
-    else url.searchParams.delete('tag')
+    url.searchParams.delete('tag')
+    for (const t of next) url.searchParams.append('tag', t)
     window.history.replaceState(null, '', url)
   }
+  const toggleTag = (t: string) =>
+    selectTags(selected.includes(t) ? selected.filter((s) => s !== t) : [...selected, t])
 
   const nodes = network.sites.flatMap((s) => s.nodes)
   const empty = nodes.length === 0
@@ -207,21 +209,24 @@ export function NetworkTwin({
             className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground"
           >
             <span aria-hidden>{t('twinTagFilter')}</span>
-            {[null, ...tags].map((option) => (
-              <Button
-                key={option ?? 'all'}
-                variant={option === tag ? 'default' : 'outline'}
-                size="xs"
-                aria-pressed={option === tag}
-                className="max-sm:h-9 max-sm:px-3"
-                onClick={() => pickTag(option)}
-              >
-                {option ?? t('twinTagAll')}
-                <span className="tabular-nums opacity-70">
-                  {option ? tagCounts.get(option) : allNodes.length}
-                </span>
-              </Button>
-            ))}
+            {[null, ...tags].map((option) => {
+              const active = option ? selected.includes(option) : selected.length === 0
+              return (
+                <Button
+                  key={option ?? 'all'}
+                  variant={active ? 'default' : 'outline'}
+                  size="xs"
+                  aria-pressed={active}
+                  className="max-sm:h-9 max-sm:px-3"
+                  onClick={() => (option ? toggleTag(option) : selectTags([]))}
+                >
+                  {option ?? t('twinTagAll')}
+                  <span className="tabular-nums opacity-70">
+                    {option ? tagCounts.get(option) : allNodes.length}
+                  </span>
+                </Button>
+              )
+            })}
           </div>
         )}
         {available === 'scene' && !empty && (
@@ -258,7 +263,7 @@ export function NetworkTwin({
               <TwinScene
                 network={network}
                 version={version}
-                fitKey={tag}
+                fitKey={selected.join(',') || null}
                 label={t('twinSceneLabel', {
                   sites: network.sites.length,
                   online: nodes.filter((n) => n.online).length,
