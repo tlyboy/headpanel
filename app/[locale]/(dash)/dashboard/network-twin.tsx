@@ -135,12 +135,9 @@ export function NetworkTwin({
   const mode = useMode()
   useAutoRefresh()
   const [pickedTags, setPickedTags] = useState(initialTags)
-  const allNodes = fullNetwork.sites.flatMap((s) => s.nodes)
-  const tagCounts = new Map<string, number>()
-  for (const n of allNodes) for (const t of n.tags) tagCounts.set(t, (tagCounts.get(t) ?? 0) + 1)
-  const tags = [...tagCounts.keys()].sort()
+  const tags = [...new Set(fullNetwork.sites.flatMap((s) => s.nodes.flatMap((n) => n.tags)))].sort()
   // A tag may be gone after a refresh, and it then simply drops out of the filter
-  const selected = pickedTags.filter((t) => tagCounts.has(t))
+  const selected = pickedTags.filter((t) => tags.includes(t))
   const network = selected.length ? filterByTags(fullNetwork, selected) : fullNetwork
 
   const selectTags = (next: string[]) => {
@@ -218,9 +215,6 @@ export function NetworkTwin({
                 onClick={() => (option ? toggleTag(option) : selectTags([]))}
               >
                 {option ?? t('twinTagAll')}
-                <span className="tabular-nums opacity-70">
-                  {option ? tagCounts.get(option) : allNodes.length}
-                </span>
               </Button>
             )
           })}
